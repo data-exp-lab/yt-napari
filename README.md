@@ -23,27 +23,24 @@ https://napari.org/plugins/stable/index.html
 
 ## Installation
 
-This plugin is built for napari's new plugin engine, `npe2`. At present this requires a couple of manual installation steps:
+This plugin is built for napari's new plugin engine, `npe2`. At present this requires a couple of manual installation steps to install napari from source:
+```
+git clone https://github.com/napari/napari
+cd napari
+pip install .[all]
+```    
 
-1. install napari from source:
-
-    git clone https://github.com/napari/napari
-    cd napari
-    pip install .[all]
-
-2. install `npe2`:
-
-    pip install npe2
-
-You can install `yt-napari` via [pip]:
+After that, you can can install `yt-napari` via [pip]:
 
     pip install yt-napari
-
 
 To install latest development version :
 
     pip install git+https://github.com/data-exp-lab/yt-napari.git
 
+For local development, clone or fork this repo and then
+
+    pip install -e .
 
 ## Contributing
 
