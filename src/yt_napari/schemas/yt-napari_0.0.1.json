@@ -1,0 +1,99 @@
+{
+  "title": "InputModel",
+  "type": "object",
+  "properties": {
+    "dataset": {
+      "title": "Dataset",
+      "type": "string"
+    },
+    "field_type": {
+      "title": "Field Type",
+      "type": "string"
+    },
+    "field_name": {
+      "title": "Field Name",
+      "type": "string"
+    },
+    "left_edge": {
+      "title": "Left Edge",
+      "default": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "right_edge": {
+      "title": "Right Edge",
+      "default": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "edge_units": {
+      "title": "Edge Units",
+      "default": "code_length",
+      "type": "string"
+    },
+    "resolution": {
+      "title": "Resolution",
+      "default": [
+        400,
+        400,
+        400
+      ],
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "take_log": {
+      "title": "Take Log",
+      "default": true,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "dataset",
+    "field_type",
+    "field_name"
+  ]
+}

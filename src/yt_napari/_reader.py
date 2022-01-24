@@ -9,6 +9,8 @@ Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/dev/plugins/index.html
 """
 import numpy as np
+import json
+from yt_napari._data_model import InputModel
 
 
 def napari_get_reader(path):
@@ -32,8 +34,18 @@ def napari_get_reader(path):
         path = path[0]
 
     # if we know we cannot read the file, we immediately return None.
-    if not path.endswith(".npy"):
+    print("are we even here")
+    if not path.endswith(".json"):
         return None
+
+    with open(path, "r") as jhandle:
+        schema_raw = json.load(jhandle)
+        schema_version = schema_raw.get("$schema", None)
+
+    if schema_version is None or InputModel._schema_prefix not in schema_version:
+        return None
+
+    print("yes it can read")
 
     # otherwise we return the *function* that can read ``path``.
     return reader_function
@@ -61,15 +73,13 @@ def reader_function(path):
         Both "meta", and "layer_type" are optional. napari will default to
         layer_type=="image" if not provided
     """
+    from yt_napari._model_ingestor import load_from_json
+
     # handle both a string and a list of strings
-    paths = [path] if isinstance(path, str) else path
-    # load all files into array
-    arrays = [np.load(_path) for _path in paths]
-    # stack arrays into single array
-    data = np.squeeze(np.stack(arrays))
+    if not isinstance(path, str):
+        raise NotImplementedError("schema loader only supports a single path")
 
-    # optional kwargs for the corresponding viewer.add_* method
-    add_kwargs = {}
-
+    data =  load_from_json(path)  # the data
+    add_kwargs = {}  # optional kwargs for the corresponding viewer.add_* method
     layer_type = "image"  # optional, default is "image"
     return [(data, add_kwargs, layer_type)]
