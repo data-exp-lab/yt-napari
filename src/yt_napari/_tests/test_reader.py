@@ -1,5 +1,6 @@
 import json
 
+import numpy as np
 import pytest
 import yt
 
@@ -10,20 +11,37 @@ from yt_napari import napari_get_reader
 # the IsolatedGalaxy file so will only pass locally.
 valid_jdict = {
     "$schema": "yt-napari_0.0.1.json",
-    "dataset": "IsolatedGalaxy/galaxy0030/galaxy0030",
-    "field_type": "enzo",
-    "field_name": "Density",
-    "left_edge": [0.45, 0.45, 0.45],
-    "right_edge": [0.55, 0.55, 0.55],
-    "edge_units": "code_length",
-    "resolution": [500, 500, 500],
+    "dataset": None,
+    "field_type": "gas",
+    "field_name": "density",
+    "resolution": [50, 50, 50],
     "take_log": False,
 }
 
 
+@pytest.fixture(scope="session")
+def yt_ugrid_ds_fn(tmpdir_factory):
+
+    # this fixture generates a random yt dataset saved to disk that can be
+    # re-loaded and sampled.
+    arr = np.random.random(size=(64, 64, 64))
+    d = dict(density=(arr, "g/cm**3"))
+    bbox = np.array([[-1.5, 1.5], [-1.5, 1.5], [-1.5, 1.5]])
+    shp = arr.shape
+    ds = yt.load_uniform_grid(d, shp, length_unit="Mpc", bbox=bbox, nprocs=64)
+    ad = ds.all_data()
+    fn = str(tmpdir_factory.mktemp("data").join("uniform_grid_data.h5"))
+    ad.save_as_dataset(fields=("stream", "density"), filename=fn)
+
+    return fn
+
+
 @pytest.fixture
-def json_file_fixture(tmp_path):
-    # write some fake data using your supported file format
+def json_file_fixture(tmp_path, yt_ugrid_ds_fn):
+    # this fixture is the json file for napari to load, with
+    # reference to the session-wide yt dataset
+    valid_jdict["dataset"] = yt_ugrid_ds_fn
+
     json_file = str(tmp_path / "valid_json.json")
     with open(json_file, "w") as fp:
         json.dump(valid_jdict, fp)
@@ -43,8 +61,9 @@ def cannot_load_file(dataset_file: str) -> bool:
 
 
 # tmp_path is a pytest fixture for a temporary directory
-def test_cannot_load_file():
+def test_cannot_load_file(json_file_fixture, yt_ugrid_ds_fn):
     assert cannot_load_file("/this/file/does/not/exist")
+    assert cannot_load_file(yt_ugrid_ds_fn) is False
 
 
 def test_reader_identification(json_file_fixture):
@@ -54,9 +73,6 @@ def test_reader_identification(json_file_fixture):
     assert callable(reader)
 
 
-@pytest.mark.skipif(
-    cannot_load_file(valid_jdict["dataset"]), reason="Cannot find test dataset"
-)
 def test_reader_load(json_file_fixture):
     # make sure we're delivering the right format
 
