@@ -1,7 +1,8 @@
-import json
-from yt_napari._data_model import InputModel
-import yt
 import numpy as np
+import yt
+
+from yt_napari._data_model import InputModel
+
 
 def _validate_edges(ds, model):
     LE = ds.arr(model.left_edge, model.edge_units)
@@ -20,9 +21,9 @@ def load_from_json(json_path: str):
 
     # create the fixed resolution buffer
     frb = ds.r[
-          LE[0]: RE[0]: complex(0, model.resolution[0]),
-          LE[1]: RE[1]: complex(0, model.resolution[1]),
-          LE[2]: RE[2]: complex(1, model.resolution[2])
+        LE[0] : RE[0] : complex(0, model.resolution[0]),  # noqa: E203
+        LE[1] : RE[1] : complex(0, model.resolution[1]),  # noqa: E203
+        LE[2] : RE[2] : complex(0, model.resolution[2]),  # noqa: E203
     ]
 
     data = frb[field]
@@ -31,4 +32,3 @@ def load_from_json(json_path: str):
         return np.log10(data)
 
     return data
-
