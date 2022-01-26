@@ -8,4 +8,4 @@ contributions:
   readers:
     - command: yt-napari.get_reader
       accepts_directories: false
-      filename_patterns: ['*.npy']  
+      filename_patterns: ['*.json']
