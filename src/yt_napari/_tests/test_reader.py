@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import yt
 
-from yt_napari._reader import napari_get_reader
+from yt_napari import napari_get_reader
 
 # the following should be a valid json, need to add some functionality to
 # test infrastructure for loading an actual dataset... as is, this requires
