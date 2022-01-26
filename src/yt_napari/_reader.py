@@ -8,8 +8,8 @@ https://napari.org/plugins/stable/npe2_manifest_specification.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/dev/plugins/index.html
 """
-import numpy as np
 import json
+
 from yt_napari._data_model import InputModel
 
 
@@ -37,11 +37,12 @@ def napari_get_reader(path):
     if not path.endswith(".json"):
         return None
 
-    with open(path, "r") as jhandle:
+    with open(path) as jhandle:
         schema_raw = json.load(jhandle)
         schema_version = schema_raw.get("$schema", None)
 
-    if schema_version is None or InputModel._schema_prefix not in schema_version:
+    pfx = InputModel._schema_prefix
+    if schema_version is None or pfx not in schema_version:
         # To Do: check schema against a list of valid schemas rather than a
         # single schema.
         # the schema does not match a known schema for this plugin
@@ -68,10 +69,10 @@ def reader_function(path):
     layer_data : list of tuples
         A list of LayerData tuples where each tuple in the list contains
         (data, metadata, layer_type), where data is a numpy array, metadata is
-        a dict of keyword arguments for the corresponding viewer.add_* method
-        in napari, and layer_type is a lower-case string naming the type of layer.
-        Both "meta", and "layer_type" are optional. napari will default to
-        layer_type=="image" if not provided
+        a dict of keyword arguments for the corresponding viewer.add_*
+        method in napari, and layer_type is a lower-case string naming the
+        type of layer. Both "meta", and "layer_type" are optional. napari
+        will default to layer_type=="image" if not provided
     """
     from yt_napari._model_ingestor import load_from_json
 
@@ -79,7 +80,7 @@ def reader_function(path):
     if not isinstance(path, str):
         raise NotImplementedError("schema loader only supports a single path")
 
-    data =  load_from_json(path)  # the data
-    add_kwargs = {}  # optional kwargs for the corresponding viewer.add_* method
+    data = load_from_json(path)  # the data
+    add_kwargs = {}  # optional kwargs for the viewer.add_* method
     layer_type = "image"  # optional, default is "image"
     return [(data, add_kwargs, layer_type)]
