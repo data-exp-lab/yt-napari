@@ -61,7 +61,7 @@ def cannot_load_file(dataset_file: str) -> bool:
 
 
 # tmp_path is a pytest fixture for a temporary directory
-def test_cannot_load_file(json_file_fixture, yt_ugrid_ds_fn):
+def test_cannot_load_file(yt_ugrid_ds_fn):
     assert cannot_load_file("/this/file/does/not/exist")
     assert cannot_load_file(yt_ugrid_ds_fn) is False
 
