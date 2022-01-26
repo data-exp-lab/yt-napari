@@ -66,3 +66,7 @@ def test_schema_generation(tmp_path):
     expected_file = tmp_path.joinpath(m._filename(pfx, "0.0.1"))
     file_exists = expected_file.is_file()
     assert file_exists
+
+    schema_contents = InputModel.schema_json(indent=2)
+    with pytest.raises(ValueError):
+        m.write_new_schema(schema_contents, schema_prefix="bad_prefix")

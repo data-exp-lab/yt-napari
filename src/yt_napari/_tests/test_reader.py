@@ -48,18 +48,6 @@ def json_file_fixture(tmp_path, yt_ugrid_ds_fn):
     return json_file
 
 
-@pytest.fixture
-def invalid_json_file_fixture(tmp_path, yt_ugrid_ds_fn):
-    # this fixture is the json file for napari to load, with
-    # reference to the session-wide yt dataset
-    valid_jdict["dataset"] = yt_ugrid_ds_fn
-    valid_jdict["$schema"] = "unsupported_schema.json"
-    json_file = str(tmp_path / "invalid_json.json")
-    with open(json_file, "w") as fp:
-        json.dump(valid_jdict, fp)
-    return json_file
-
-
 def cannot_load_file(dataset_file: str) -> bool:
     # returns True if yt cannot load the provided file.
     # There may be a simpler way to handle this, perhaps something in the
@@ -101,9 +89,29 @@ def test_reader_load(json_file_fixture):
         _ = reader([json_file_fixture])  # lists not suported here
 
 
-def test_invalid_schema(invalid_json_file_fixture):
-    reader = napari_get_reader(invalid_json_file_fixture)
+def test_json_options(tmp_path, json_file_fixture):
+
+    # test invalid schema
+    with open(json_file_fixture) as jhandle:
+        jdict = json.load(jhandle)
+
+    sch = jdict["$schema"]
+    jdict["$schema"] = "unsupported_schema.json"
+    json_file = str(tmp_path / "invalid_json.json")
+    with open(json_file, "w") as fp:
+        json.dump(jdict, fp)
+    reader = napari_get_reader(json_file)
     assert reader is None
+    jdict["$schema"] = sch
+
+    # test log
+    jdict["take_log"] = True
+    json_file = str(tmp_path / "logged_json.json")
+    with open(json_file, "w") as fp:
+        json.dump(jdict, fp)
+    reader = napari_get_reader(json_file)
+    data = reader(json_file)
+    assert isinstance(data[0][0], np.ndarray)
 
 
 def test_get_reader_pass():
