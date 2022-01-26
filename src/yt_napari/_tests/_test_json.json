@@ -6,4 +6,4 @@
   "right_edge": [0.55, 0.55, 0.55],
   "edge_units": "code_length",
   "resolution": [500, 500, 500],
-  "take_log": false}
+  "take_log": true}

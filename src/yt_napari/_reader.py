@@ -34,7 +34,6 @@ def napari_get_reader(path):
         path = path[0]
 
     # if we know we cannot read the file, we immediately return None.
-    print("are we even here")
     if not path.endswith(".json"):
         return None
 
@@ -43,9 +42,10 @@ def napari_get_reader(path):
         schema_version = schema_raw.get("$schema", None)
 
     if schema_version is None or InputModel._schema_prefix not in schema_version:
+        # To Do: check schema against a list of valid schemas rather than a
+        # single schema.
+        # the schema does not match a known schema for this plugin
         return None
-
-    print("yes it can read")
 
     # otherwise we return the *function* that can read ``path``.
     return reader_function
