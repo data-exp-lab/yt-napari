@@ -48,6 +48,18 @@ def json_file_fixture(tmp_path, yt_ugrid_ds_fn):
     return json_file
 
 
+@pytest.fixture
+def invalid_json_file_fixture(tmp_path, yt_ugrid_ds_fn):
+    # this fixture is the json file for napari to load, with
+    # reference to the session-wide yt dataset
+    valid_jdict["dataset"] = yt_ugrid_ds_fn
+    valid_jdict["$schema"] = "unsupported_schema.json"
+    json_file = str(tmp_path / "invalid_json.json")
+    with open(json_file, "w") as fp:
+        json.dump(valid_jdict, fp)
+    return json_file
+
+
 def cannot_load_file(dataset_file: str) -> bool:
     # returns True if yt cannot load the provided file.
     # There may be a simpler way to handle this, perhaps something in the
@@ -71,6 +83,8 @@ def test_reader_identification(json_file_fixture):
     # try to read it back in
     reader = napari_get_reader(json_file_fixture)
     assert callable(reader)
+    reader = napari_get_reader([json_file_fixture])
+    assert callable(reader)
 
 
 def test_reader_load(json_file_fixture):
@@ -82,6 +96,14 @@ def test_reader_load(json_file_fixture):
     assert isinstance(layer_data_list, list) and len(layer_data_list) > 0
     layer_tuple = layer_data_list[0]
     assert isinstance(layer_tuple, tuple) and len(layer_tuple) > 0
+
+    with pytest.raises(NotImplementedError):
+        _ = reader([json_file_fixture])  # lists not suported here
+
+
+def test_invalid_schema(invalid_json_file_fixture):
+    reader = napari_get_reader(invalid_json_file_fixture)
+    assert reader is None
 
 
 def test_get_reader_pass():
