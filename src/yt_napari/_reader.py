@@ -8,6 +8,10 @@ https://napari.org/plugins/stable/npe2_manifest_specification.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/dev/plugins/index.html
 """
+# <-----temporary
+# bad
+from PyQt5 import QtWidgets
+# ----->
 import json
 
 from yt_napari._data_model import InputModel
