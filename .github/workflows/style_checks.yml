@@ -1,3 +1,6 @@
+name: Style Checks
+on: [push, pull_request]
+
 jobs:
   flake8:
     name: flake8
