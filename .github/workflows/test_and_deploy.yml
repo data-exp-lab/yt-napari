@@ -64,7 +64,6 @@ jobs:
           # run tox using the version of Python in `PATH`
           run: |
             tox --version
-            tox -vvv
         env:
           PLATFORM: ${{ matrix.platform }}
 
