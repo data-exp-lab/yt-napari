@@ -1,5 +1,5 @@
 name: yt-napari
-display_name: napari FooBar
+display_name: yt-napari
 contributions:
   commands:
     - id: yt-napari.get_reader
