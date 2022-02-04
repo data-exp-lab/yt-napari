@@ -4,20 +4,18 @@ import yt
 from yt_napari._data_model import InputModel
 
 
-def _validate_edges(ds, model):
-    LE = ds.arr(model.left_edge, model.edge_units)
-    RE = ds.arr(model.right_edge, model.edge_units)
-    return LE, RE
+def _process_validated_model(model: InputModel) -> np.ndarray:
 
-
-def load_from_json(json_path: str):
-    model = InputModel.parse_file(json_path)
+    # our model is already validated, so we can assume the fields exist with
+    # their correct types. This is all the yt-specific code required to load a
+    # dataset and return a plain numpy array
 
     ds = yt.load(model.dataset)
     field = (model.field_type, model.field_name)
-    # To do: check for field in ds
 
-    LE, RE = _validate_edges(ds, model)
+    # get the left, right edge as a unitful array
+    LE = ds.arr(model.left_edge, model.edge_units)
+    RE = ds.arr(model.right_edge, model.edge_units)
 
     # create the fixed resolution buffer
     frb = ds.r[
@@ -26,9 +24,18 @@ def load_from_json(json_path: str):
         LE[2] : RE[2] : complex(0, model.resolution[2]),  # noqa: E203
     ]
 
-    data = frb[field]
+    data = frb[field]  # extract the field (the slow part)
 
     if model.take_log:
         return np.log10(data)
-
     return data
+
+
+def load_from_json(json_path: str):
+
+    # InputModel is a pydantic class, the following will validate the json
+    model = InputModel.parse_file(json_path)
+
+    # now that we have a validated model, we can use the model attributes to
+    # execute the code that will actually return our array for the image
+    return _process_validated_model(model)
