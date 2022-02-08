@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/data-exp-lab/yt-napari/branch/main/graph/badge.svg)](https://codecov.io/gh/data-exp-lab/yt-napari)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/yt-napari)](https://napari-hub.org/plugins/yt-napari)
 
-A napari plugin for loading data from yt
+A [napari] plugin for loading data from [yt]
 
 ----------------------------------
 
@@ -23,29 +23,63 @@ https://napari.org/plugins/stable/index.html
 
 ## Installation
 
-This plugin is built for napari's new plugin engine, `npe2`. At present this requires a couple of manual installation steps to install napari from source:
-```
-git clone https://github.com/napari/napari
-cd napari
-pip install .[all]
-```    
+### 1. (optional) install `yt` and `napari`
 
-After that, you can can install `yt-napari` via [pip]:
+If you skip this step, the installation in the following section will only install the minimal package requirements for `yt` or `napari`, in which case you will likely need to manually install some packages. So if you are new to either package, or if you are installing in a clean environment, it may be simpler to  install these packages first.
+
+For `napari`,
+
+    pip install napari[all]
+
+will install `napari` with the default `Qt` backend (see [here](https://napari.org/tutorials/fundamentals/installation#choosing-a-different-qt-backend) for how to choose between `PyQt5` or `PySide2`).
+
+For `yt`, you will need `yt>=4.0.1` and any of the optional dependencies for your particular workflow. If you know that you'll need more than the base `yt` install, you can install the full suite of dependent packages with
+
+    pip install yt[full]
+
+See the [`yt` documentation](https://yt-project.org/doc/installing.html#leveraging-optional-yt-runtime-dependencies) for more information. If you're not sure which packages you'll need but don't want the full yt installation, you can proceed to the next step and then install any packages as needed (you will receive error messages when a required package is missing).
+
+### 2. install `yt-napari`
+
+You can install the `yt-napari` plugin with:
 
     pip install yt-napari
 
-To install latest development version :
+If you are missing either `yt` or `napari` (or they need to be updated), the above installation will fetch and run a minimal installation for both.
+
+To install the latest development version of the plugin instead, use:
 
     pip install git+https://github.com/data-exp-lab/yt-napari.git
 
-For local development, clone or fork this repo and then
-
-    pip install -e .
 
 ## Contributing
 
-Contributions are very welcome. Tests can be run with [tox], please ensure
-the coverage at least stays the same before you submit a pull request.
+Contributions are very welcome! Development follows a fork and pull request workflow. To get started, you'll need a development installation and a testing environment.
+
+### development environment
+
+To start developing, fork the repository and clone your fork to get a local copy. You can then install in development mode with
+
+    pip install -e .
+
+### tests and style checks
+
+Both bug fixes and new features will need to pass the existing test suite and style checks. While both will be run automatically when you submit a pull request, it is helpful to run the test suites locally and run style checks throughout development. For testing, you can use [tox].
+
+    pip install tox
+
+And then from the top level of the `yt-napari` directory, run
+
+    tox .
+
+Tox will then run a series of tests in isolated environments. In addition to checking the terminal output for test results, the tox run will generate a test coverage report: a `coverage.xml` file and a `htmlcov` folder -- to view the results, open `htmlcov/index.html` in a browser.
+
+For style checks, you can use [pre-commit](https://pre-commit.com/) to run checks as you develop. To set up `pre-commit`:
+
+    pip install pre-commit
+    pre-commit install
+
+after which, every time you run `git commit`, some automatic style adjustments and checks will run. The same style checks will run when you submit a pull request, but it's often easier to catch them early.
 
 ## License
 
@@ -73,3 +107,4 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/
+[yt]: https://yt-project.org/
