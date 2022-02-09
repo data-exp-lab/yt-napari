@@ -19,11 +19,10 @@ def _process_validated_model(model: InputModel) -> List[Layer]:
 
     ds = yt.load(model.dataset)
 
-    field_list = [
-        (model.field_type, model.field_name),
-    ]
+    for field_container in model.field_list:
 
-    for field in field_list:
+        field = (field_container.field_type, field_container.field_name)
+
         # get the left, right edge as a unitful array
         LE = ds.arr(model.left_edge, model.edge_units)
         RE = ds.arr(model.right_edge, model.edge_units)
@@ -36,7 +35,7 @@ def _process_validated_model(model: InputModel) -> List[Layer]:
         ]
 
         data = frb[field]  # extract the field (the slow part)
-        if model.take_log:
+        if field_container.take_log:
             data = np.log10(data)
 
         # writing the full pydanctic model dict to the metadata attribute for

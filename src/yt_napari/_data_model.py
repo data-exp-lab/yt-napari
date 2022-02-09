@@ -1,23 +1,27 @@
 import inspect
 from pathlib import PosixPath
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
 from yt_napari.schemas import _manager
 
 
+class Field(BaseModel):
+    field_type: str
+    field_name: str
+    take_log: Optional[bool] = True
+
+
 class InputModel(BaseModel):
 
     dataset: str
-    field_type: str
-    field_name: str
+    field_list: List[Field]
 
     left_edge: Optional[Tuple[float, float, float]] = [0.0, 0.0, 0.0]
     right_edge: Optional[Tuple[float, float, float]] = [1.0, 1.0, 1.0]
     edge_units: Optional[str] = "code_length"
     resolution: Optional[Tuple[int, int, int]] = [400, 400, 400]
-    take_log: Optional[bool] = True
 
     _schema_prefix = "yt-napari"
 
