@@ -80,7 +80,4 @@ def reader_function(path):
     if not isinstance(path, str):
         raise NotImplementedError("schema loader only supports a single path")
 
-    data = load_from_json(path)  # the data
-    add_kwargs = {}  # optional kwargs for the viewer.add_* method
-    layer_type = "image"  # optional, default is "image"
-    return [(data, add_kwargs, layer_type)]
+    return load_from_json(path)
