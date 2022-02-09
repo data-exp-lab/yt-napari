@@ -12,10 +12,11 @@ from yt_napari import napari_get_reader
 valid_jdict = {
     "$schema": "yt-napari_0.0.1.json",
     "dataset": None,
-    "field_type": "gas",
-    "field_name": "density",
+    "field_list": [
+        {"field_type": "gas", "field_name": "density", "take_log": False},
+        {"field_type": "gas", "field_name": "temperature", "take_log": True},
+    ],
     "resolution": [50, 50, 50],
-    "take_log": False,
 }
 
 
@@ -25,13 +26,15 @@ def yt_ugrid_ds_fn(tmpdir_factory):
     # this fixture generates a random yt dataset saved to disk that can be
     # re-loaded and sampled.
     arr = np.random.random(size=(64, 64, 64))
-    d = dict(density=(arr, "g/cm**3"))
+    d = dict(density=(arr, "g/cm**3"), temperature=(arr, "K"))
     bbox = np.array([[-1.5, 1.5], [-1.5, 1.5], [-1.5, 1.5]])
     shp = arr.shape
     ds = yt.load_uniform_grid(d, shp, length_unit="Mpc", bbox=bbox, nprocs=64)
     ad = ds.all_data()
     fn = str(tmpdir_factory.mktemp("data").join("uniform_grid_data.h5"))
-    ad.save_as_dataset(fields=("stream", "density"), filename=fn)
+    ad.save_as_dataset(
+        fields=[("stream", "density"), ("stream", "temperature")], filename=fn
+    )
 
     return fn
 
@@ -84,34 +87,25 @@ def test_reader_load(json_file_fixture):
     assert isinstance(layer_data_list, list) and len(layer_data_list) > 0
     layer_tuple = layer_data_list[0]
     assert isinstance(layer_tuple, tuple) and len(layer_tuple) > 0
+    assert isinstance(layer_tuple[0][0], np.ndarray)
+    assert "temperature" in layer_data_list[1][1]["name"]
 
     with pytest.raises(NotImplementedError):
         _ = reader([json_file_fixture])  # lists not suported here
 
 
-def test_json_options(tmp_path, json_file_fixture):
+def test_invalid_schema(tmp_path, json_file_fixture):
 
     # test invalid schema
     with open(json_file_fixture) as jhandle:
         jdict = json.load(jhandle)
 
-    sch = jdict["$schema"]
     jdict["$schema"] = "unsupported_schema.json"
     json_file = str(tmp_path / "invalid_json.json")
     with open(json_file, "w") as fp:
         json.dump(jdict, fp)
     reader = napari_get_reader(json_file)
     assert reader is None
-    jdict["$schema"] = sch
-
-    # test log
-    jdict["take_log"] = True
-    json_file = str(tmp_path / "logged_json.json")
-    with open(json_file, "w") as fp:
-        json.dump(jdict, fp)
-    reader = napari_get_reader(json_file)
-    data = reader(json_file)
-    assert isinstance(data[0][0], np.ndarray)
 
 
 def test_get_reader_pass():
