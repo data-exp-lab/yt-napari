@@ -17,11 +17,25 @@ def _le_re_to_cen_wid(
 
 
 class LayerDomain:
-    # domain info for a single layer
-    def __init__(self, left_edge: unyt_array, right_edge: unyt_array):
+    # container for domain info for a single layer
+    def __init__(
+        self, left_edge: unyt_array, right_edge: unyt_array, resolution: tuple
+    ):
+
+        if len(left_edge) != len(right_edge):
+            raise ValueError("length of edge arrays must match")
+
+        if len(resolution) != len(left_edge):
+            if len(resolution) == 1:
+                resolution = resolution * 3  # assume same in every dim
+            else:
+                raise ValueError("length of resolution does not match edge arrays")
+
         self.left_edge = left_edge
         self.right_edge = right_edge
         self.center, self.width = _le_re_to_cen_wid(left_edge, right_edge)
+        self.resolution = unyt_array(resolution)
+        self.grid_width = self.width / self.resolution
 
 
 Layer = Tuple[np.ndarray, dict, str]
@@ -29,19 +43,42 @@ SpatialLayer = Tuple[np.ndarray, dict, str, LayerDomain]
 
 
 class PhysicalDomainTracker:
-    # a helpful container for tracking the domain coordinate extents in
-    # physical units
+    # a container for tracking the domain coordinate extents in
+    # physical units for handling alignmnet between layers
     left_edge: unyt_array = None
     right_edge: unyt_array = None
     center: unyt_array = None
     width: unyt_array = None
+    grid_width: unyt_array = None
 
     def __init__(self, unit: Union[str, unit_object.Unit] = "kpc"):
         self.unit = unit
-        self.layer_extents = {}
 
     def update_unit(self, unit: Union[str, unit_object.Unit]):
         self.unit = unit
+
+    def update_from_layer(
+        self, layer_domain: LayerDomain, update_c_w: Optional[bool] = True
+    ):
+        # update the full domain edges and effective grid width
+        self.update_edges(
+            left_edge=layer_domain.left_edge,
+            right_edge=layer_domain.right_edge,
+            update_c_w=update_c_w,
+        )
+        self.update_grid_width(layer_domain.grid_width)
+
+    def update_grid_width(self, grid_width: unyt_array):
+        # grid_width is the width of a single pixel in physical units. the
+        # full domain tracks the smallest width, which is used for scaling
+        # the pixels of each layer.
+
+        grid_width = self._sanitize_length(grid_width)
+        if self.grid_width is None:
+            self.grid_width = grid_width
+        else:
+            new_gw = np.min([self.grid_width, grid_width], axis=0)
+            self.grid_width = unyt_array(new_gw, self.unit)
 
     def update_edges(
         self,
@@ -53,7 +90,7 @@ class PhysicalDomainTracker:
         # then width and center will be calculated and updated.
         edge_updated = False
         if left_edge is not None:
-            new_edge = self._sanitize_input_edge(left_edge)
+            new_edge = self._sanitize_length(left_edge)
             edge_updated = True
             if self.left_edge is None:
                 self.left_edge = new_edge
@@ -62,7 +99,7 @@ class PhysicalDomainTracker:
                 self.left_edge = unyt_array(new_edge, self.unit)
 
         if right_edge is not None:
-            new_edge = self._sanitize_input_edge(right_edge)
+            new_edge = self._sanitize_length(right_edge)
             edge_updated = True
             if self.right_edge is None:
                 self.right_edge = new_edge
@@ -73,7 +110,7 @@ class PhysicalDomainTracker:
         if edge_updated and update_c_w:
             self.update_width_and_center()
 
-    def _sanitize_input_edge(self, input_edge: unyt_array):
+    def _sanitize_length(self, input_edge: unyt_array):
         # ensures an input left/right edge are in correct units, necessary
         # because operations like np.min([unyt_array, unyt_array], axis=0)
         # will pull the value of the array without first converting units.
@@ -84,26 +121,45 @@ class PhysicalDomainTracker:
         center_wid = _le_re_to_cen_wid(self.left_edge, self.right_edge)
         self.center, self.width = center_wid
 
-    def align_sanitize_layers(self, layer_list: List[SpatialLayer]) -> List[Layer]:
-        # calculate scale and translation for each layer using the
-        # current domain extents, return a list of standard Layer tuple
+    def align_sanitize_layers(
+        self, layer_list: List[SpatialLayer], process_layers: bool = False
+    ) -> List[Layer]:
+        # calculate scale and translation for each layer
+        # will use the current domain extents if process_layers is False
+        # (the default), otherwise the domain extent will be updated with the
+        # layer_list
+        if process_layers:
+            for _, _, _, domain in layer_list:
+                self.update_from_layer(domain, update_c_w=False)
+            self.update_width_and_center()
+
         return [self.align_sanitize_layer(layer) for layer in layer_list]
 
     def align_sanitize_layer(self, layer: SpatialLayer) -> Layer:
         # align and scale a single SpatialLayer relative to the current domain
         # extents, return a standard Layer tuple
 
+        if self.grid_width is None:
+            raise RuntimeError("grid_width is not set!")
+
         # pull out the elements of the SpatialLayer tuple
         im_arr, im_kwargs, layer_type, domain = layer
 
-        # image coordinates go from 0 to 1 in all dims, so in our full spatial
-        # domain, self.width corresponds to an image width of 1. So we need to
-        # normalize all distances by self.width
-        scale = domain.width / self.width
-        translate = (domain.center - self.center) / self.width  # sign here???
+        # translation vector is in screen coords, can simply scale by total
+        # domain width (may need a - sign? may need an additional offset to
+        # shift center to 0.5, 0.5, 0.5 in screen coords?)
+        translate = (domain.center - self.center) / self.width
 
-        # store these in the image layer keyword arguments only if they are
-        # needed.
+        # the scale accounts for different grid resolutions and is calculated
+        # relative to the minimum grid resolution in each direction across
+        # layers. scale > 1 will take a small number of pixels and stretch them
+        # to cover more pixels. Since we are scaling by the minimum grid_width,
+        # scale >= 1  always. This avoids shrinking a fine resolution grid to
+        # fewer screen-pixels (i.e., finest spacing is the width of one image
+        # pixel).
+        scale = domain.grid_width / self.grid_width
+
+        # store these in the image layer keyword arguments only if they are used
         if np.any(scale != 1.0):
             im_kwargs["scale"] = scale.tolist()
         if np.any(translate != 0):
@@ -134,14 +190,15 @@ def _process_validated_model(
         # domain tracking for this layer and update the global domain extent
         LE = ds.arr(model.left_edge, model.edge_units)
         RE = ds.arr(model.right_edge, model.edge_units)
-        layer_domain = LayerDomain(left_edge=LE, right_edge=RE)
+        res = model.resolution
+        layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
         domain_info.update_edges(left_edge=LE, right_edge=RE, update_c_w=False)
 
         # create the fixed resolution buffer
         frb = ds.r[
-            LE[0] : RE[0] : complex(0, model.resolution[0]),  # noqa: E203
-            LE[1] : RE[1] : complex(0, model.resolution[1]),  # noqa: E203
-            LE[2] : RE[2] : complex(0, model.resolution[2]),  # noqa: E203
+            LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
+            LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
+            LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
         ]
 
         data = frb[field]  # extract the field (the slow part)
