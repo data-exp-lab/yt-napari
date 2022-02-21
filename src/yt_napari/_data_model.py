@@ -20,8 +20,9 @@ class InputModel(BaseModel):
 
     left_edge: Optional[Tuple[float, float, float]] = [0.0, 0.0, 0.0]
     right_edge: Optional[Tuple[float, float, float]] = [1.0, 1.0, 1.0]
-    edge_units: Optional[str] = "code_length"
+    edge_units: Optional[str] = None
     resolution: Optional[Tuple[int, int, int]] = [400, 400, 400]
+    scene_center: Optional[Tuple[float, float, float]] = None
 
     _schema_prefix = "yt-napari"
 

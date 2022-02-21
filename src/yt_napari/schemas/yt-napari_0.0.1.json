@@ -84,10 +84,22 @@
         }
       ]
     },
-    "take_log": {
-      "title": "Take Log",
-      "default": true,
-      "type": "boolean"
+    "scene_center": {
+      "title": "Scene Center",
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ]
     }
   },
   "required": [
@@ -106,6 +118,11 @@
         "field_name": {
           "title": "Field Name",
           "type": "string"
+        },
+        "take_log": {
+          "title": "Take Log",
+          "default": true,
+          "type": "boolean"
         }
       },
       "required": [

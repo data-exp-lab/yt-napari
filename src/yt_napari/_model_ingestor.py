@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yt
-from unyt import unit_object, unyt_array
+from unyt import unit_object, unit_registry, unyt_array
 
 from yt_napari._data_model import InputModel
 
@@ -47,15 +47,35 @@ class PhysicalDomainTracker:
     # physical units for handling alignmnet between layers
     left_edge: unyt_array = None
     right_edge: unyt_array = None
-    center: unyt_array = None
+    center: unyt_array = None  # the true center of the domain
     width: unyt_array = None
     grid_width: unyt_array = None
+    scene_center: unyt_array = None  # user-supplied center to align
 
-    def __init__(self, unit: Union[str, unit_object.Unit] = "kpc"):
-        self.unit = unit
+    def __init__(
+        self,
+        unit: Optional[Union[str, unit_object.Unit]] = "kpc",
+        registry: Optional[unit_registry.UnitRegistry] = None,
+    ):
 
-    def update_unit(self, unit: Union[str, unit_object.Unit]):
-        self.unit = unit
+        self.unit = None
+        self.unit_registry = None
+        self.update_unit_info(unit=unit, registry=registry)
+
+    def update_unit_info(
+        self,
+        unit: Union[str, unit_object.Unit] = None,
+        registry: Optional[unit_registry.UnitRegistry] = None,
+    ):
+
+        if unit == "code_length" and registry is None:
+            raise ValueError("To use 'code_length', you must provide a unit_registry")
+
+        if unit is not None:
+            self.unit = unit
+
+        if registry is not None:
+            self.unit_registry = registry
 
     def update_from_layer(
         self, layer_domain: LayerDomain, update_c_w: Optional[bool] = True
@@ -96,7 +116,7 @@ class PhysicalDomainTracker:
                 self.left_edge = new_edge
             else:
                 new_edge = np.min([self.left_edge, new_edge], axis=0)
-                self.left_edge = unyt_array(new_edge, self.unit)
+                self.left_edge = self._arr(new_edge, self.unit)
 
         if right_edge is not None:
             new_edge = self._sanitize_length(right_edge)
@@ -105,10 +125,15 @@ class PhysicalDomainTracker:
                 self.right_edge = new_edge
             else:
                 new_edge = np.max([self.right_edge, new_edge], axis=0)
-                self.right_edge = unyt_array(new_edge, self.unit)
+                # will not have code length
+                self.right_edge = self._arr(new_edge, self.unit)
 
         if edge_updated and update_c_w:
             self.update_width_and_center()
+
+    def _arr(self, x: np.ndarray, unit):
+        # return an array with the full unit registry (handles code_length)
+        return unyt_array(x, unit, registry=self.unit_registry)
 
     def _sanitize_length(self, input_edge: unyt_array):
         # ensures an input left/right edge are in correct units, necessary
@@ -120,6 +145,9 @@ class PhysicalDomainTracker:
         # set the domain center and width based on current edges
         center_wid = _le_re_to_cen_wid(self.left_edge, self.right_edge)
         self.center, self.width = center_wid
+
+    def set_scene_center(self, scene_center: unyt_array, update_c_w: bool = True):
+        self.scene_center = scene_center.to(self.unit)
 
     def align_sanitize_layers(
         self, layer_list: List[SpatialLayer], process_layers: bool = False
@@ -145,11 +173,6 @@ class PhysicalDomainTracker:
         # pull out the elements of the SpatialLayer tuple
         im_arr, im_kwargs, layer_type, domain = layer
 
-        # translation vector is in screen coords, can simply scale by total
-        # domain width (may need a - sign? may need an additional offset to
-        # shift center to 0.5, 0.5, 0.5 in screen coords?)
-        translate = (domain.center - self.center) / self.width
-
         # the scale accounts for different grid resolutions and is calculated
         # relative to the minimum grid resolution in each direction across
         # layers. scale > 1 will take a small number of pixels and stretch them
@@ -158,6 +181,17 @@ class PhysicalDomainTracker:
         # fewer screen-pixels (i.e., finest spacing is the width of one image
         # pixel).
         scale = domain.grid_width / self.grid_width
+
+        # translation vector is in PIXELS, so get a translation vector in
+        # physical units and then normalize by the reference grid width to get
+        # the number of pixels required to offset
+        if self.scene_center is not None:
+            # the user provided a scene center, so use it!
+            alignment_center = self.scene_center
+        else:
+            # no user-provided center, use the calculated domain center
+            alignment_center = self.center
+        translate = (domain.center - alignment_center) / self.grid_width
 
         # store these in the image layer keyword arguments only if they are used
         if np.any(scale != 1.0):
@@ -182,8 +216,12 @@ def _process_validated_model(
 
     ds = yt.load(model.dataset)
 
-    for field_container in model.field_list:
+    if domain_info.unit_registry is None:
+        # this happens only once, so if using 'code_length', the datasets need
+        # to have the same `code_length`, which is not verified...
+        domain_info.update_unit_info(unit=model.edge_units, registry=ds.unit_registry)
 
+    for field_container in model.field_list:
         field = (field_container.field_type, field_container.field_name)
 
         # get the left, right edge as a unitful array, initialize the layer
@@ -192,8 +230,8 @@ def _process_validated_model(
         RE = ds.arr(model.right_edge, model.edge_units)
         res = model.resolution
         layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
-        domain_info.update_edges(left_edge=LE, right_edge=RE, update_c_w=False)
-
+        # domain_info.update_edges(left_edge=LE, right_edge=RE, update_c_w=False)
+        domain_info.update_from_layer(layer_domain, update_c_w=False)
         # create the fixed resolution buffer
         frb = ds.r[
             LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
@@ -213,6 +251,11 @@ def _process_validated_model(
 
         layer_list.append((data, add_kwargs, layer_type, layer_domain))
 
+    if model.scene_center is not None:
+        # the user has set a scene center, store it for final translation
+        scene_center = ds.arr(model.scene_center, model.edge_units)
+        domain_info.set_scene_center(scene_center)
+
     return layer_list
 
 
@@ -224,10 +267,6 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
     for i_path, json_path in enumerate(json_paths):
         # InputModel is a pydantic class, the following will validate the json
         model = InputModel.parse_file(json_path)
-
-        if i_path == 0:
-            # set the length unit to work in based on the first path
-            domain_info.update_unit(model.edge_units)
 
         # now that we have a validated model, we can use the model attributes
         # to execute the code that will return our array for the image

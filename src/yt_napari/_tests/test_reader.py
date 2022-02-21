@@ -16,6 +16,7 @@ valid_jdict = {
         {"field_type": "gas", "field_name": "density", "take_log": False},
         {"field_type": "gas", "field_name": "temperature", "take_log": True},
     ],
+    "edge_units": "Mpc",
     "resolution": [50, 50, 50],
 }
 
@@ -90,8 +91,9 @@ def test_reader_load(json_file_fixture):
     assert isinstance(layer_tuple[0][0], np.ndarray)
     assert "temperature" in layer_data_list[1][1]["name"]
 
-    with pytest.raises(NotImplementedError):
-        _ = reader([json_file_fixture])  # lists not suported here
+    layer_data_list_2 = reader([json_file_fixture])
+    layer_tuple_2 = layer_data_list_2[0]
+    assert np.all(layer_tuple_2[0] == layer_tuple[0])
 
 
 def test_invalid_schema(tmp_path, json_file_fixture):

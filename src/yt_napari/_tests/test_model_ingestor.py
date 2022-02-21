@@ -96,7 +96,7 @@ def test_layer_domain(domains_to_test):
 def test_domain_tracking(domains_to_test):
 
     full_domain = _mi.PhysicalDomainTracker()
-    full_domain.update_unit("m")
+    full_domain.update_unit_info(unit="m")
 
     for d in domains_to_test.domain_sets:
         full_domain.update_edges(d.left_edge, d.right_edge, update_c_w=True)
@@ -110,7 +110,7 @@ def test_domain_tracking(domains_to_test):
 
     # test again with different combination of edge args
     full_domain = _mi.PhysicalDomainTracker()
-    full_domain.update_unit("m")
+    full_domain.update_unit_info(unit="m")
 
     for d in domains_to_test.domain_sets:
         full_domain.update_edges(left_edge=d.left_edge, update_c_w=False)
@@ -126,6 +126,9 @@ def test_domain_tracking(domains_to_test):
         expected = getattr(enclosing_domain, attr)
         actual = getattr(full_domain, attr)
         assert np.all(expected == actual)
+
+    with pytest.raises(ValueError):
+        full_domain.update_unit_info(unit="code_length")
 
 
 def test_layer_alignment(domains_to_test):
