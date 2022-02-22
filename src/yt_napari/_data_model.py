@@ -13,15 +13,20 @@ class Field(BaseModel):
     take_log: Optional[bool] = True
 
 
-class InputModel(BaseModel):
+class DataSelection(BaseModel):
 
-    dataset: str
+    filename: str
     field_list: List[Field]
 
     left_edge: Optional[Tuple[float, float, float]] = [0.0, 0.0, 0.0]
     right_edge: Optional[Tuple[float, float, float]] = [1.0, 1.0, 1.0]
     edge_units: Optional[str] = None
     resolution: Optional[Tuple[int, int, int]] = [400, 400, 400]
+
+
+class InputModel(BaseModel):
+
+    data: Union[DataSelection, List[DataSelection]]
     scene_center: Optional[Tuple[float, float, float]] = None
 
     _schema_prefix = "yt-napari"

@@ -214,24 +214,31 @@ def _process_validated_model(
     # their correct types. This is all the yt-specific code required to load a
     # dataset and return a plain numpy array
 
-    ds = yt.load(model.dataset)
+    if isinstance(model.data, dict):
+        data_selections = [model.data]
+    else:
+        data_selections = model.data
 
-    if domain_info.unit_registry is None:
-        # this happens only once, so if using 'code_length', the datasets need
-        # to have the same `code_length`, which is not verified...
-        domain_info.update_unit_info(unit=model.edge_units, registry=ds.unit_registry)
+    for m_data in data_selections:
 
-    for field_container in model.field_list:
-        field = (field_container.field_type, field_container.field_name)
+        ds = yt.load(m_data.filename)
+
+        if domain_info.unit_registry is None:
+            # this happens only once, so if using 'code_length', the datasets need
+            # to have the same `code_length`, which is not verified...
+            domain_info.update_unit_info(
+                unit=m_data.edge_units, registry=ds.unit_registry
+            )
 
         # get the left, right edge as a unitful array, initialize the layer
         # domain tracking for this layer and update the global domain extent
-        LE = ds.arr(model.left_edge, model.edge_units)
-        RE = ds.arr(model.right_edge, model.edge_units)
-        res = model.resolution
+        LE = ds.arr(m_data.left_edge, m_data.edge_units)
+        RE = ds.arr(m_data.right_edge, m_data.edge_units)
+        res = m_data.resolution
         layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
         # domain_info.update_edges(left_edge=LE, right_edge=RE, update_c_w=False)
         domain_info.update_from_layer(layer_domain, update_c_w=False)
+
         # create the fixed resolution buffer
         frb = ds.r[
             LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
@@ -239,17 +246,20 @@ def _process_validated_model(
             LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
         ]
 
-        data = frb[field]  # extract the field (the slow part)
-        if field_container.take_log:
-            data = np.log10(data)
+        for field_container in m_data.field_list:
+            field = (field_container.field_type, field_container.field_name)
 
-        # writing the full pydanctic model dict to the metadata attribute for
-        # now -- this does not actually seem to get displayed though.
-        fieldname = ":".join(field)
-        add_kwargs = {"name": fieldname, "metadata": model.dict()}
-        layer_type = "image"
+            data = frb[field]  # extract the field (the slow part)
+            if field_container.take_log:
+                data = np.log10(data)
 
-        layer_list.append((data, add_kwargs, layer_type, layer_domain))
+            # writing the full pydanctic model dict to the metadata attribute for
+            # now -- this does not actually seem to get displayed though.
+            fieldname = ":".join(field)
+            add_kwargs = {"name": fieldname, "metadata": model.dict()}
+            layer_type = "image"
+
+            layer_list.append((data, add_kwargs, layer_type, layer_domain))
 
     if model.scene_center is not None:
         # the user has set a scene center, store it for final translation
