@@ -264,7 +264,7 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
     layer_lists = []  # we will concatenate layers across json paths
 
     domain_info = PhysicalDomainTracker()
-    for i_path, json_path in enumerate(json_paths):
+    for json_path in json_paths:
         # InputModel is a pydantic class, the following will validate the json
         model = InputModel.parse_file(json_path)
 
