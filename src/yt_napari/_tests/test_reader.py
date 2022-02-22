@@ -102,12 +102,37 @@ def test_invalid_schema(tmp_path, json_file_fixture):
     with open(json_file_fixture) as jhandle:
         jdict = json.load(jhandle)
 
+    # check that invlaid schema does not return a reader
     jdict["$schema"] = "unsupported_schema.json"
     json_file = str(tmp_path / "invalid_json.json")
     with open(json_file, "w") as fp:
         json.dump(jdict, fp)
     reader = napari_get_reader(json_file)
     assert reader is None
+
+    # test that including one invalid raises a warning
+    jpaths = [json_file_fixture, json_file]
+    reader = napari_get_reader(jpaths)  # should succeed
+    with pytest.raises(RuntimeWarning):
+        _ = reader(jpaths)
+
+
+def test_scene_scenter(tmp_path, json_file_fixture):
+
+    with open(json_file_fixture) as jhandle:
+        jdict = json.load(jhandle)
+
+    # add a scene center
+    jdict["scene_center"] = [100.0, 100.0, 100.0]
+    json_file = str(tmp_path / "scene_center.json")
+    with open(json_file, "w") as fp:
+        json.dump(jdict, fp)
+
+    # check that the image layer has a nonzero translate keyword
+    reader = napari_get_reader(json_file)
+    result = reader(json_file)
+    for _, im_kwargs, _ in result:
+        assert np.all(np.array(im_kwargs["translate"]) != 0.0)
 
 
 def test_get_reader_pass():

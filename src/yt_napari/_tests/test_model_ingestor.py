@@ -33,7 +33,7 @@ class Expectations:
         # build a list of domain boundaries that will be combined, flagging
         # the one that should enclose all the others
         self.domain_sets = []
-
+        # sets of left_edge, right_edge, center, width, res
         d = DomainExpectation(
             unyt_array([1, 1, 1], "km"),
             unyt_array([2000.0, 2000.0, 2000.0], "m"),
@@ -172,3 +172,19 @@ def test_layer_alignment(domains_to_test):
         spatial_layer_list, process_layers=True
     )
     check_layer_list(layer_list)
+
+    full_domain = _mi.PhysicalDomainTracker()
+    with pytest.raises(RuntimeError):
+        # grid_width will not be set, raise error
+        layer_list = full_domain.align_sanitize_layer(spatial_layer_list[0])
+
+    # check that a scene center outside the domain results in a translation for
+    # all layers
+    scene_center = unyt_array([1000.0, 1000.0, 1000.0], "km")
+    full_domain.set_scene_center(scene_center)
+    assert np.all(full_domain.scene_center == scene_center)
+    layer_list = full_domain.align_sanitize_layers(
+        spatial_layer_list, process_layers=True
+    )
+    for _, imkwargs, _ in layer_list:
+        assert np.all(np.array(imkwargs["translate"]) != 0)
