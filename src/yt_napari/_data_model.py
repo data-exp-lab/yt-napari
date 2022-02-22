@@ -13,16 +13,21 @@ class Field(BaseModel):
     take_log: Optional[bool] = True
 
 
-class InputModel(BaseModel):
-
-    dataset: str
-    field_list: List[Field]
-
+class SelectionObject(BaseModel):
+    fields: List[Field]
     left_edge: Optional[Tuple[float, float, float]] = [0.0, 0.0, 0.0]
     right_edge: Optional[Tuple[float, float, float]] = [1.0, 1.0, 1.0]
-    edge_units: Optional[str] = "code_length"
     resolution: Optional[Tuple[int, int, int]] = [400, 400, 400]
 
+
+class DataContainer(BaseModel):
+    filename: str
+    selections: List[SelectionObject]
+    edge_units: Optional[str] = None
+
+
+class InputModel(BaseModel):
+    data: List[DataContainer]
     _schema_prefix = "yt-napari"
 
 

@@ -1,9 +1,17 @@
 {"$schema": "yt-napari_0.0.1.json",
-  "dataset": "IsolatedGalaxy/galaxy0030/galaxy0030",
-  "field_list": [{"field_type": "enzo",
-                  "field_name": "density",
-                  "take_log":  true}],
-  "left_edge": [0.45, 0.45, 0.45],
-  "right_edge": [0.55, 0.55, 0.55],
-  "edge_units": "code_length",
-  "resolution": [500, 500, 500]}
+ "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
+           "selections": [{
+                            "fields": [{"field_name": "Density", "field_type": "enzo", "take_log": true}],
+                            "left_edge": [0.4, 0.4, 0.4],
+                            "right_edge": [0.5, 0.5, 0.5],
+                            "resolution": [200, 200, 200]
+                          },
+                          {
+                            "fields": [{"field_name": "Density", "field_type": "enzo", "take_log": true}],
+                            "left_edge": [0.5, 0.4, 0.4],
+                            "right_edge": [0.6, 0.5, 0.5],
+                            "resolution": [100, 100, 100]
+                          }],
+           "edge_units": "Mpc"
+         }]
+}

@@ -33,10 +33,18 @@ def napari_get_reader(path):
         # so we are only going to look at the first file.
         path = path[0]
 
-    # if we know we cannot read the file, we immediately return None.
-    if not path.endswith(".json"):
-        return None
+    if path_is_valid(path):
+        # if the path is valid, return the function that can read it
+        return reader_function
+    return None  # otherwise, return None
 
+
+def path_is_valid(path: str) -> bool:
+    # if we know we cannot read the file, we immediately return False.
+    if not path.endswith(".json"):
+        return False
+
+    # check the schema
     with open(path) as jhandle:
         schema_raw = json.load(jhandle)
         schema_version = schema_raw.get("$schema", None)
@@ -46,10 +54,8 @@ def napari_get_reader(path):
         # To Do: check schema against a list of valid schemas rather than a
         # single schema.
         # the schema does not match a known schema for this plugin
-        return None
-
-    # otherwise we return the *function* that can read ``path``.
-    return reader_function
+        return False
+    return True
 
 
 def reader_function(path):
@@ -77,7 +83,13 @@ def reader_function(path):
     from yt_napari._model_ingestor import load_from_json
 
     # handle both a string and a list of strings
-    if not isinstance(path, str):
-        raise NotImplementedError("schema loader only supports a single path")
+    if isinstance(path, list):
+        path_list = [p for p in path if path_is_valid(p)]
+        if len(path) != len(path_list):
+            raise RuntimeWarning(
+                "Some of the provided paths are not valid yt-napari json files"
+            )
+    else:
+        path_list = [path]
 
-    return load_from_json(path)
+    return load_from_json(path_list)
