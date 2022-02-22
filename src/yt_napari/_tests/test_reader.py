@@ -11,13 +11,29 @@ from yt_napari import napari_get_reader
 # the IsolatedGalaxy file so will only pass locally.
 valid_jdict = {
     "$schema": "yt-napari_0.0.1.json",
-    "dataset": None,
-    "field_list": [
-        {"field_type": "gas", "field_name": "density", "take_log": False},
-        {"field_type": "gas", "field_name": "temperature", "take_log": True},
+    "data": [
+        {
+            "filename": None,
+            "selections": [
+                {
+                    "fields": [
+                        {
+                            "field_type": "gas",
+                            "field_name": "density",
+                            "take_log": False,
+                        },
+                        {
+                            "field_type": "gas",
+                            "field_name": "temperature",
+                            "take_log": True,
+                        },
+                    ],
+                    "resolution": [50, 50, 50],
+                }
+            ],
+            "edge_units": "Mpc",
+        }
     ],
-    "edge_units": "Mpc",
-    "resolution": [50, 50, 50],
 }
 
 
@@ -44,7 +60,7 @@ def yt_ugrid_ds_fn(tmpdir_factory):
 def json_file_fixture(tmp_path, yt_ugrid_ds_fn):
     # this fixture is the json file for napari to load, with
     # reference to the session-wide yt dataset
-    valid_jdict["dataset"] = yt_ugrid_ds_fn
+    valid_jdict["data"][0]["filename"] = yt_ugrid_ds_fn
 
     json_file = str(tmp_path / "valid_json.json")
     with open(json_file, "w") as fp:
@@ -115,24 +131,6 @@ def test_invalid_schema(tmp_path, json_file_fixture):
     reader = napari_get_reader(jpaths)  # should succeed
     with pytest.raises(RuntimeWarning):
         _ = reader(jpaths)
-
-
-def test_scene_scenter(tmp_path, json_file_fixture):
-
-    with open(json_file_fixture) as jhandle:
-        jdict = json.load(jhandle)
-
-    # add a scene center
-    jdict["scene_center"] = [100.0, 100.0, 100.0]
-    json_file = str(tmp_path / "scene_center.json")
-    with open(json_file, "w") as fp:
-        json.dump(jdict, fp)
-
-    # check that the image layer has a nonzero translate keyword
-    reader = napari_get_reader(json_file)
-    result = reader(json_file)
-    for _, im_kwargs, _ in result:
-        assert np.all(np.array(im_kwargs["translate"]) != 0.0)
 
 
 def test_get_reader_pass():

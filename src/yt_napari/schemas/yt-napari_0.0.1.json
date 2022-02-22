@@ -2,19 +2,12 @@
   "title": "InputModel",
   "type": "object",
   "properties": {
-    "data_selection": {
-      "title": "Data Selection",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/DataSelection"
-        },
-        {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataSelection"
-          }
-        }
-      ]
+    "data": {
+      "title": "Data",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DataContainer"
+      }
     },
     "scene_center": {
       "title": "Scene Center",
@@ -35,7 +28,7 @@
     }
   },
   "required": [
-    "data_selection"
+    "data"
   ],
   "definitions": {
     "Field": {
@@ -61,16 +54,12 @@
         "field_name"
       ]
     },
-    "DataSelection": {
-      "title": "DataSelection",
+    "SelectionObject": {
+      "title": "SelectionObject",
       "type": "object",
       "properties": {
-        "filename": {
-          "title": "Filename",
-          "type": "string"
-        },
-        "field_list": {
-          "title": "Field List",
+        "fields": {
+          "title": "Fields",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Field"
@@ -148,8 +137,28 @@
         }
       },
       "required": [
+        "fields"
+      ]
+    },
+    "DataContainer": {
+      "title": "DataContainer",
+      "type": "object",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "selections": {
+          "title": "Selections",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SelectionObject"
+          }
+        }
+      },
+      "required": [
         "filename",
-        "field_list"
+        "selections"
       ]
     }
   }
