@@ -184,14 +184,16 @@ class PhysicalDomainTracker:
 
         # translation vector is in PIXELS, so get a translation vector in
         # physical units and then normalize by the reference grid width to get
-        # the number of pixels required to offset
+        # the number of pixels required to offset. Furthermore, the screen
+        # origin is in standard image coordinates (origin is bottom
+        # left corner), so translate relative to left edge not the domain center
         if self.scene_center is not None:
             # the user provided a scene center, so use it!
-            alignment_center = self.scene_center
+            origin = self.scene_center
         else:
             # no user-provided center, use the calculated domain center
-            alignment_center = self.center
-        translate = (domain.center - alignment_center) / self.grid_width
+            origin = self.left_edge
+        translate = (domain.left_edge - origin) / self.grid_width
 
         # store these in the image layer keyword arguments only if they are used
         if np.any(scale != 1.0):
