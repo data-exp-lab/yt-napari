@@ -60,11 +60,7 @@ class PhysicalDomainTracker:
 
         self.unit = None
         self.unit_registry = None
-        self._lock_grid_width = False
         self.update_unit_info(unit=unit, registry=registry)
-
-    def toggle_grid_width_lock(self):
-        self._lock_grid_width = not self._lock_grid_width
 
     def update_unit_info(
         self,
@@ -97,13 +93,12 @@ class PhysicalDomainTracker:
         # full domain tracks the smallest width, which is used for scaling
         # the pixels of each layer.
 
-        if self._lock_grid_width is False:
-            grid_width = self._sanitize_length(grid_width)
-            if self.grid_width is None:
-                self.grid_width = grid_width
-            else:
-                new_gw = np.min([self.grid_width, grid_width], axis=0)
-                self.grid_width = unyt_array(new_gw, self.unit)
+        grid_width = self._sanitize_length(grid_width)
+        if self.grid_width is None:
+            self.grid_width = grid_width
+        else:
+            new_gw = np.min([self.grid_width, grid_width], axis=0)
+            self.grid_width = unyt_array(new_gw, self.unit)
 
     def update_edges(
         self,

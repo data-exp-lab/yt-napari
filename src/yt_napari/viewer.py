@@ -32,10 +32,11 @@ class Scene:
         viewer: Viewer,
         ds,
         fields: List[Tuple[str, str]],
-        left_edge: unyt_array,
-        right_edge: unyt_array,
-        resolution: Tuple[int, int, int],
+        resolution: Optional[Tuple[int, int, int]] = None,
+        left_edge: Optional[unyt_array] = None,
+        right_edge: Optional[unyt_array] = None,
         log_fields: Optional[List[Tuple[str, str]]] = None,
+        **kwargs,
     ):
         """
         create a uniform sampling of ds and add it to the napari viewer
@@ -55,10 +56,20 @@ class Scene:
             the right edge of the bounding box
         resolution: Tuple[int, int, int]
             the sampling resolution in each dimension, e.g., (400, 400, 400)
-        log_fields : Optional[List[
-            any fields in this list will be
-
+        log_fields : Optional[List[Tuple[str, str]]
+            np.log10 will be applied to of the any fields in this list
+        **kwargs :
+            any keyword argument accepted by Viewer.add_image()
         """
+
+        # check defaults
+        if left_edge is None:
+            left_edge = ds.domain_left_edge
+        if right_edge is None:
+            right_edge = ds.domain_right_edge
+        if resolution is None:
+            resolution = (400, 400, 400)
+
         # setup the domain tracker
         if self._domain is None:
             if len(viewer.layers):
@@ -95,4 +106,20 @@ class Scene:
             tr = im_kwargs.get("translate", None)
             sc = im_kwargs.get("scale", None)
             md = {"_layer_domain": layer_domain}
-            viewer.add_image(data, translate=tr, scale=sc, metadata=md)
+            fname = f"{field[0]}_{field[1]}"
+
+            if "translate" in kwargs:
+                raise RuntimeWarning(
+                    "translate is calculated internally, ignoring provided value"
+                )
+                _ = kwargs.pop("translate")
+
+            if "scale" in kwargs:
+                raise RuntimeWarning(
+                    "scale is calculated internally, ignoring provided value"
+                )
+                _ = kwargs.pop("scale")
+
+            viewer.add_image(
+                data, name=fname, translate=tr, scale=sc, metadata=md, **kwargs
+            )
