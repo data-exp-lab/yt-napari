@@ -188,3 +188,12 @@ def test_layer_alignment(domains_to_test):
     )
     for _, imkwargs, _ in layer_list:
         assert np.all(np.array(imkwargs["translate"]) != 0)
+
+
+def test_metadata():
+    left_edge = unyt_array([0, 0, 0], "m")
+    right_edge = unyt_array([1, 1, 1], "m")
+    layer_domain = _mi.LayerDomain(left_edge, right_edge, (100, 100, 100))
+    fake_data = np.ones((10, 10))
+    md = _mi.LayerMetadata(fake_data, layer_domain, True)
+    assert isinstance(md, dict)

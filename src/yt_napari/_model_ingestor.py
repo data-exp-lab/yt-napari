@@ -38,6 +38,15 @@ class LayerDomain:
         self.grid_width = self.width / self.resolution
 
 
+class LayerMetadata(dict):
+    # a container for standard metadata for a layer
+    def __init__(self, data: np.ndarray, layer_domain: LayerDomain, is_log: bool):
+        self.__setitem__("_data_range", (data.min(), data.max()))
+        self.__setitem__("_layer_domain", layer_domain)
+        self.__setitem__("_is_log", is_log)
+        self.__setitem__("_yt_napari_layer", True)
+
+
 Layer = Tuple[np.ndarray, dict, str]
 SpatialLayer = Tuple[np.ndarray, dict, str, LayerDomain]
 
@@ -201,7 +210,6 @@ class PhysicalDomainTracker:
         if np.any(translate != 0):
             im_kwargs["translate"] = translate.tolist()
 
-        im_kwargs["_layer_domain"] = domain
         # return a standard image layer tuple
         return (im_arr, im_kwargs, layer_type)
 
@@ -213,7 +221,7 @@ def _process_validated_model(
 
     layer_list = []
 
-    # our model is already validated, so we can assume the fields exist with
+    # our model is already validated, so we can assume the field exist with
     # their correct types. This is all the yt-specific code required to load a
     # dataset and return a plain numpy array
     for m_data in model.data:
@@ -253,7 +261,8 @@ def _process_validated_model(
                 # writing the full pydanctic model dict to the metadata attribute for
                 # now -- this does not actually seem to get displayed though.
                 fieldname = ":".join(field)
-                add_kwargs = {"name": fieldname, "metadata": model.dict()}
+                md = LayerMetadata(data, layer_domain, field_container.take_log)
+                add_kwargs = {"name": fieldname, "metadata": md}
                 layer_type = "image"
 
                 layer_list.append((data, add_kwargs, layer_type, layer_domain))
