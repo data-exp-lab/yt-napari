@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -117,10 +118,9 @@ class Scene:
         # check that the user has not supplied translate or scale separately
         for attr in ["translate", "scale"]:
             if attr in kwargs:
-                raise RuntimeWarning(
-                    f"{attr} is calculated internally, ignoring provided value"
-                )
-                _ = kwargs.pop("translate")
+                msg = f"{attr} is calculated internally, ignoring provided value"
+                warnings.warn(msg, RuntimeWarning)
+                _ = kwargs.pop(attr)
 
         # set the display name
         if "name" in kwargs:
