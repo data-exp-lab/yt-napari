@@ -146,7 +146,7 @@ class Scene:
 
     def normalize_color_limits(
         self,
-        layers: List[Union[str, Tuple]],
+        layers: List[Union[str, Layer]],
         layer_list: Optional[LayerList] = None,
         check_linked: Optional[bool] = True,
     ):
@@ -156,16 +156,18 @@ class Scene:
 
         Parameters
         ----------
-
-        layer_list : a napari LayerList
-            the LayerList from an active napari Viewer
-
+        layers: List[Union[str, Tuple]]
+            a list of the layers to normalize across
+        layer_list : Optional[LayerList]
+            the LayerList from an active napari Viewer. Required if you are
+            providing layers by layer name only
+        check_linked: Optional[bool]
+            if True (default), will also check for linked layers even if they
+            are not explicitly included in `layers`.
 
         Notes
         -----
-        If you want to normalize across linked layers, simply provide one of the
-        linked layers. Furthermore, this method has no affect on the linked state
-        of layers.
+        This method does not affect the linked state of any layers.
         """
 
         # sanitize
@@ -185,6 +187,23 @@ class Scene:
         value: Any,
         layer_list: Optional[LayerList] = None,
     ):
+        """
+        set the value of an attribute for all the provided layers
+
+        Parameters
+        ----------
+        layers
+            a list of napari Layer objects or string names of layers.
+        attribute
+            the layer attribute to set
+        value
+            the value of the attribute to set
+        layer_list
+            the active napari LayerList. required if providing layers by name.
+
+        Note that any existing layers that are linked to the provided layers
+        will also be updated.
+        """
 
         # note that we never need to check_linked since we are setting attributes
         # in this function, so any linked layers will always be updated as well.
@@ -200,7 +219,24 @@ class Scene:
         layer_list: Optional[LayerList] = None,
         check_linked: Optional[bool] = True,
     ) -> Set[Layer]:
-        # returns a set of napari Layer objects
+        """
+        returns a set of napari Layer objects scrubbed of string names
+
+        Parameters
+        ----------
+        layers
+            input layers
+        layer_list
+            the active LayerList, only needed if there are strings in layers
+        check_linked
+            if True (default), will add any linked layers to the final set
+
+        Returns
+        -------
+        set
+            the napari Layer objects
+        """
+        #
 
         if any([isinstance(i, str) for i in layers]):
             # scrub string names from the layers
@@ -229,8 +265,27 @@ class Scene:
         layers: List[Union[str, Layer]],
         layer_list: Optional[LayerList] = None,
         check_linked: Optional[bool] = True,
-    ):
-        # return the data range across a layer list
+    ) -> Tuple[float, float]:
+        """
+        retrieve the extrema across layers
+
+        Parameters
+        ----------
+        layers: List[Union[str, Tuple]]
+            a list of the layers to normalize across
+        layer_list : Optional[LayerList]
+            the LayerList from an active napari Viewer. Required if you are
+            providing layers by layer name only
+        check_linked: Optional[bool]
+            if True (default), will also check for linked layers even if they
+            are not explicitly included in `layers`.
+
+        Returns
+        -------
+        Tuple(float, float)
+            length-2 tuple with the min and max across layers
+
+        """
 
         clean_layers = self._sanitize_layers(layers, layer_list, check_linked)
 
