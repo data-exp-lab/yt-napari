@@ -25,25 +25,28 @@ def test_viewer(make_napari_viewer, yt_ds):
     ####################
     # test add_to_viewer
     sc = Scene()
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"))
+    res = (10, 10, 10)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), resolution=res)
 
     expected_layers = 1
     assert len(viewer.layers) == expected_layers
 
     with pytest.warns(RuntimeWarning):
-        sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), translate=10)
+        sc.add_to_viewer(
+            viewer, yt_ds, ("gas", "density"), translate=10, resolution=res
+        )
     with pytest.warns(RuntimeWarning):
-        sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), scale=10)
+        sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), scale=10, resolution=res)
     expected_layers += 2  # the above will add layers!
     assert len(viewer.layers) == expected_layers
 
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"))
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), resolution=res)
     expected_layers += 1
     assert len(viewer.layers) == expected_layers
 
     # build a new scene so it builds from prior
     sc = Scene()
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"))
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), resolution=res)
     expected_layers += 1
     assert len(viewer.layers) == expected_layers
 
@@ -53,8 +56,9 @@ def test_sanitize_layers(make_napari_viewer, yt_ds):
     viewer = make_napari_viewer()
 
     sc = Scene()
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0")
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "mass"), name="layer1")
+    res = (10, 10, 10)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0", resolution=res)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "mass"), name="layer1", resolution=res)
 
     clean_layers = sc._sanitize_layers(["layer0", "layer1"], viewer.layers)
     assert len(clean_layers) == 2
@@ -86,8 +90,9 @@ def test_get_data_range(make_napari_viewer, yt_ds):
     viewer = make_napari_viewer()
 
     sc = Scene()
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0")
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer1")
+    res = (10, 10, 10)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0", resolution=res)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer1", resolution=res)
     expected = (viewer.layers[0].data.min(), viewer.layers[0].data.max())
     actual = sc.get_data_range(viewer.layers)
     assert np.allclose(actual, expected)
@@ -104,8 +109,9 @@ def test_cross_layer_features(make_napari_viewer, yt_ds):
     viewer = make_napari_viewer()
 
     sc = Scene()
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0")
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer1")
+    res = (10, 10, 10)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0", resolution=res)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer1", resolution=res)
 
     sc.set_across_layers(viewer.layers, "colormap", "viridis")
     assert all([layer.colormap == "viridis"] for layer in viewer.layers)
