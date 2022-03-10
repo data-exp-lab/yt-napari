@@ -121,6 +121,13 @@ def test_cross_layer_features(make_napari_viewer, yt_ds):
     for layer in viewer.layers:
         assert np.allclose(layer.contrast_limits, expected)
 
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer2", link_to="layer1")
+    sc.add_to_viewer(
+        viewer,
+        yt_ds,
+        ("gas", "density"),
+        name="layer2",
+        link_to="layer1",
+        resolution=res,
+    )
     linked = get_linked_layers(viewer.layers["layer2"])
     assert viewer.layers["layer1"] in linked

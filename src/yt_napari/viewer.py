@@ -66,8 +66,22 @@ class Scene:
             default behavior for the field set by ds.
         colormap : Optional[str]
             the color map to use, default is "viridis"
+        link_to : Optional[Union[str, Layer]]
+            specify a layer to which the new layer should link
         **kwargs :
             any keyword argument accepted by Viewer.add_image()
+
+        Examples
+        --------
+
+        >>> import napari
+        >>> import yt
+        >>> from yt_napari.viewer import Scene
+        >>> viewer = napari.Viewer()
+        >>> ds = yt.load_sample("IsolatedGalaxy")
+        >>> yt_scene = Scene()
+        >>> yt_scene.add_to_viewer(viewer, ds, ("enzo", "Temperature"))
+
         """
 
         # set defaults
@@ -168,6 +182,38 @@ class Scene:
         Notes
         -----
         This method does not affect the linked state of any layers.
+
+        Examples
+        --------
+        The following adds two layers and then normalizes the color scale between
+        the two:
+
+        >>> import napari
+        >>> import yt
+        >>> from yt_napari.viewer import Scene
+        >>> viewer = napari.Viewer()
+        >>> ds = yt.load_sample("IsolatedGalaxy")
+        >>> yt_scene = Scene()
+        >>> le = ds.domain_center - ds.arr([10, 10, 10], 'kpc')
+        >>> re = ds.domain_center + ds.arr([10, 10, 10], 'kpc')
+        >>> yt_scene.add_to_viewer(viewer,
+        >>>                        ds,
+        >>>                        ("enzo", "Density"),
+        >>>                        left_edge = le,
+        >>>                        right_edge = re,
+        >>>                        resolution=(600, 600, 600),
+        >>>                        name="Density_1")
+        >>> le = ds.domain_center + ds.arr([10, 10, 10], 'kpc')
+        >>> re = le + ds.arr([20, 20, 20], 'kpc')
+        >>> yt_scene.add_to_viewer(viewer,
+        >>>                        ds,
+        >>>                        ("enzo", "Density"),
+        >>>                        left_edge = le,
+        >>>                        right_edge = re,
+        >>>                        resolution=(300, 300, 300),
+        >>>                        name="Density_2")
+        >>> yt_scene.normalize_color_limits(["Density_2", "Density_1"], viewer.layers)
+
         """
 
         # sanitize
@@ -283,7 +329,20 @@ class Scene:
         Returns
         -------
         Tuple(float, float)
-            length-2 tuple with the min and max across layers
+            length-2 tuple with the min and max values across layers.
+
+        Examples
+        --------
+
+        >>> import napari
+        >>> import yt
+        >>> from yt_napari.viewer import Scene
+        >>> viewer = napari.Viewer()
+        >>> ds = yt.load_sample("IsolatedGalaxy")
+        >>> yt_scene = Scene()
+        >>> yt_scene.add_to_viewer(viewer, ds, ("enzo", "Temperature"))
+        >>> yt_scene.get_data_range(viewer.layers)
+        (3.2446250040130398, 5.003147905498429)
 
         """
 
