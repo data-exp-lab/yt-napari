@@ -47,9 +47,10 @@ def test_viewer(make_napari_viewer, yt_ds):
     expected_layers += 1
     assert len(viewer.layers) == expected_layers
 
-    ########################
-    # test _sanitize_layers
-    viewer.layers.clear()
+
+def test_sanitize_layers(make_napari_viewer, yt_ds):
+
+    viewer = make_napari_viewer()
 
     sc = Scene()
     sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0")
@@ -79,9 +80,10 @@ def test_viewer(make_napari_viewer, yt_ds):
     with pytest.raises(ValueError):
         _ = sc._sanitize_layers(["layer1"])
 
-    ######################
-    # test get_data_range
-    viewer.layers.clear()
+
+def test_get_data_range(make_napari_viewer, yt_ds):
+
+    viewer = make_napari_viewer()
 
     sc = Scene()
     sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0")
@@ -96,19 +98,23 @@ def test_viewer(make_napari_viewer, yt_ds):
     actual = sc.get_data_range(viewer.layers)
     assert np.allclose(actual, expected)
 
-    ########################
-    # test set_across_layers
+
+def test_cross_layer_features(make_napari_viewer, yt_ds):
+
+    viewer = make_napari_viewer()
+
+    sc = Scene()
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer0")
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer1")
+
     sc.set_across_layers(viewer.layers, "colormap", "viridis")
     assert all([layer.colormap == "viridis"] for layer in viewer.layers)
 
-    #############################
-    # test normalize_color_limits
+    expected = (viewer.layers[0].data.min(), viewer.layers[0].data.max())
     sc.normalize_color_limits(viewer.layers)
     for layer in viewer.layers:
         assert np.allclose(layer.contrast_limits, expected)
 
-    ################
-    # test linkiness
     sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), name="layer2", link_to="layer1")
     linked = get_linked_layers(viewer.layers["layer2"])
     assert viewer.layers["layer1"] in linked
