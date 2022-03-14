@@ -195,5 +195,5 @@ def test_metadata():
     right_edge = unyt_array([1, 1, 1], "m")
     layer_domain = _mi.LayerDomain(left_edge, right_edge, (100, 100, 100))
     fake_data = np.ones((10, 10))
-    md = _mi.LayerMetadata(fake_data, layer_domain, True)
+    md = _mi.create_metadata_dict(fake_data, layer_domain, True, a="a")
     assert isinstance(md, dict)

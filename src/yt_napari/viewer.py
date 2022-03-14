@@ -142,7 +142,7 @@ class Scene:
         else:
             fname = f"{field[0]}_{field[1]}"
 
-        md = _mi.LayerMetadata(data, layer_domain, take_log)
+        md = _mi.create_metadata_dict(data, layer_domain, take_log)
 
         viewer.add_image(
             data,

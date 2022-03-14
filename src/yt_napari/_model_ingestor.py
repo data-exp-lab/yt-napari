@@ -38,13 +38,46 @@ class LayerDomain:
         self.grid_width = self.width / self.resolution
 
 
-class LayerMetadata(dict):
-    # a container for standard metadata for a layer
-    def __init__(self, data: np.ndarray, layer_domain: LayerDomain, is_log: bool):
-        self.__setitem__("_data_range", (data.min(), data.max()))
-        self.__setitem__("_layer_domain", layer_domain)
-        self.__setitem__("_is_log", is_log)
-        self.__setitem__("_yt_napari_layer", True)
+def create_metadata_dict(
+    data: np.ndarray, layer_domain: LayerDomain, is_log: bool, **kwargs
+) -> dict:
+    """
+    returns a metadata dict with some consistent keys for helping yt-napari
+    functionality
+
+    Parameters
+    ----------
+    data :
+        the image data for the new layer
+    layer_domain :
+        the LayerDomain object of the new layer
+    is_log :
+        True if the data has been logged
+    kwargs :
+        any additional keyword arguments will be added to the dict
+
+    Returns
+    -------
+    dict
+        a metadata dict for napari with some consistent key-value pairs, will
+        always include the following:
+        _data_range : Tuple(float, float)
+            the min/max value of the supplied data
+        _layer_domain :
+            the LayerDomain object of the new layer
+        _is_log :
+            True if the data has been logged
+        _yt_napari_layer :
+            bool, always True.
+    """
+    md = {}
+    md["_data_range"] = (data.min(), data.max())
+    md["_layer_domain"] = layer_domain
+    md["_is_log"] = is_log
+    md["_yt_napari_layer"] = True
+    for ky, val in kwargs.items():
+        md[ky] = val
+    return md
 
 
 Layer = Tuple[np.ndarray, dict, str]
@@ -258,10 +291,9 @@ def _process_validated_model(
                 if field_container.take_log:
                     data = np.log10(data)
 
-                # writing the full pydanctic model dict to the metadata attribute for
-                # now -- this does not actually seem to get displayed though.
+                # create a metadata dict and set a name
                 fieldname = ":".join(field)
-                md = LayerMetadata(data, layer_domain, field_container.take_log)
+                md = create_metadata_dict(data, layer_domain, field_container.take_log)
                 add_kwargs = {"name": fieldname, "metadata": md}
                 layer_type = "image"
 
