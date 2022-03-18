@@ -12,24 +12,18 @@ import yt_napari._model_ingestor as _mi
 
 
 class Scene:
-    def __init__(self):
-        self._domain: _mi.PhysicalDomainTracker = None
+    def __init__(self, reference_layer: Optional[_mi.ReferenceLayer] = None):
+        self._reference_layer = reference_layer
 
-    def _setup_domain_from_layers(self, layers: list):
-        # note: this may be problematic... if there exists more than one
-        # layer initially, which is the "reference". Or if layers get deleted
-        layer_domains = []
-        for layer in layers:
-            if "_layer_domain" in layer.metadata:
-                layer_domains.append(layer.metadata["_layer_domain"])
-
-        if layer_domains:
-            # there is at least one existing layer to set up from
-            pdt = _mi.PhysicalDomainTracker()
-            for l_dom in layer_domains:
-                pdt.update_from_layer(l_dom, update_c_w=False)
-            pdt.update_width_and_center()
-            self._domain = pdt
+    def _check_for_reference_layer(
+        self, current_layers: list
+    ) -> Optional[_mi.ReferenceLayer]:
+        # check the napari viewer layer list for an existing reference layer
+        for layer in current_layers:
+            if "_yt_napari_layer" in layer.metadata:
+                if layer.metadata["_reference_layer"] is not None:
+                    return layer.metadata["_reference_layer"]
+        return None
 
     def add_to_viewer(
         self,
@@ -99,18 +93,15 @@ class Scene:
             # would need to check against available cmaps in napari
             colormap = "viridis"
 
-        # setup the domain tracker
-        if self._domain is None:
-            if len(viewer.layers):
-                self._setup_domain_from_layers(viewer.layers)
+        if self._reference_layer is None:
+            self._reference_layer = self._check_for_reference_layer(viewer.layers)
 
         # add the bounds of this new layer
         layer_domain = _mi.LayerDomain(left_edge, right_edge, resolution)
-        if self._domain is None:
-            # there were no prior layers, create the tracker. All
-            # subsequent layers that we add will be relative to this one.
-            self._domain = _mi.PhysicalDomainTracker()
-            self._domain.update_from_layer(layer_domain, update_c_w=True)
+        if self._reference_layer is None:
+            self._reference_layer = _mi.ReferenceLayer(
+                layer_domain
+            )  # no reference yet, use this one
 
         # create the fixed resolution buffer
         frb = ds.r[
@@ -124,7 +115,7 @@ class Scene:
 
         # initialize the spatial layer then sanitize it
         splayer = (data, {}, "image", layer_domain)
-        _, im_kwargs, _ = self._domain.align_sanitize_layer(splayer)
+        _, im_kwargs, _ = self._reference_layer.align_sanitize_layer(splayer)
 
         # extract the translate and scale values
         tr = im_kwargs.get("translate", None)
@@ -142,8 +133,9 @@ class Scene:
         else:
             fname = f"{field[0]}_{field[1]}"
 
-        md = _mi.create_metadata_dict(data, layer_domain, take_log)
-
+        md = _mi.create_metadata_dict(
+            data, layer_domain, take_log, reference_layer=self._reference_layer
+        )
         viewer.add_image(
             data,
             name=fname,

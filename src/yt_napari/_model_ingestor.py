@@ -38,8 +38,83 @@ class LayerDomain:
         self.grid_width = self.width / self.resolution
 
 
+# define types for the napari layer tuples
+Layer = Tuple[np.ndarray, dict, str]
+SpatialLayer = Tuple[np.ndarray, dict, str, LayerDomain]
+
+
+class ReferenceLayer:
+    # a layer to use as reference from which to calculate transformations for
+    # aligning layers.
+
+    def __init__(self, ref_layer_domain: LayerDomain):
+
+        # copy over standard layer attributes
+        self.left_edge = ref_layer_domain.left_edge
+        self.right_edge = ref_layer_domain.right_edge
+        self.center = ref_layer_domain.center
+        self.width = ref_layer_domain.width
+        self.resolution = ref_layer_domain.resolution
+        self.grid_width = ref_layer_domain.grid_width
+
+    def calculate_scale(self, other_layer: LayerDomain) -> unyt_array:
+        # calculate the pixel scale for a layer relative to the reference
+
+        # the scale accounts for different grid resolutions and is calculated
+        # relative to the minimum grid resolution in each direction across
+        # layers. scale > 1 will take a small number of pixels and stretch them
+        # to cover more pixels. scale < 1 will shrink them.
+        return other_layer.grid_width / self.grid_width
+
+    def calculate_translation(self, other_layer: LayerDomain) -> unyt_array:
+        # get the translation vector for another layer relative to the left edge
+        # of the reference layer
+
+        # the translation vector is in PIXELS, so get a translation vector in
+        # physical units and then normalize by the reference grid width to get
+        # the number of pixels required to offset. Furthermore, the screen
+        # origin is in standard image coordinates (origin is bottom
+        # left corner), so translate relative to left edge not the domain center
+        return (other_layer.left_edge - self.left_edge) / self.grid_width
+
+    def align_sanitize_layer(self, layer: SpatialLayer) -> Layer:
+        # align and scale a single SpatialLayer relative to the reference layer,
+        # return a standard Layer tuple
+
+        # pull out the elements of the SpatialLayer tuple
+        im_arr, im_kwargs, layer_type, domain = layer
+
+        # calculate scale and translation
+        scale = self.calculate_scale(domain)
+        translate = self.calculate_translation(domain)
+
+        # store these in the image layer keyword arguments only if they are used
+        if np.any(scale != 1.0):
+            im_kwargs["scale"] = scale.tolist()
+        if np.any(translate != 0):
+            im_kwargs["translate"] = translate.tolist()
+
+        if "metadata" not in im_kwargs:
+            im_kwargs["metadata"] = {}
+        im_kwargs["metadata"]["_reference_layer"] = self
+
+        # return a standard image layer tuple
+        return (im_arr, im_kwargs, layer_type)
+
+    def align_sanitize_layers(self, layer_list: List[SpatialLayer]) -> List[Layer]:
+        # calculate scale and translation for each layer
+        # will use the current domain extents if process_layers is False
+        # (the default), otherwise the domain extent will be updated with the
+        # layer_list
+        return [self.align_sanitize_layer(layer) for layer in layer_list]
+
+
 def create_metadata_dict(
-    data: np.ndarray, layer_domain: LayerDomain, is_log: bool, **kwargs
+    data: np.ndarray,
+    layer_domain: LayerDomain,
+    is_log: bool,
+    reference_layer: Optional[ReferenceLayer] = None,
+    **kwargs
 ) -> dict:
     """
     returns a metadata dict with some consistent keys for helping yt-napari
@@ -69,30 +144,28 @@ def create_metadata_dict(
             True if the data has been logged
         _yt_napari_layer :
             bool, always True.
+        _reference_layer :
+            the ReferenceLayer object used in aligning this layer
     """
     md = {}
     md["_data_range"] = (data.min(), data.max())
     md["_layer_domain"] = layer_domain
     md["_is_log"] = is_log
     md["_yt_napari_layer"] = True
+    md["_reference_layer"] = reference_layer
     for ky, val in kwargs.items():
         md[ky] = val
     return md
 
 
-Layer = Tuple[np.ndarray, dict, str]
-SpatialLayer = Tuple[np.ndarray, dict, str, LayerDomain]
-
-
 class PhysicalDomainTracker:
-    # a container for tracking the domain coordinate extents in
-    # physical units for handling alignmnet between layers
+    # a container for tracking the domain coordinate extents across layers
+
+    # the following track across layers
     left_edge: unyt_array = None
     right_edge: unyt_array = None
     center: unyt_array = None  # the true center of the domain
     width: unyt_array = None
-    grid_width: unyt_array = None
-    scene_center: unyt_array = None  # user-supplied center to align
 
     def __init__(
         self,
@@ -113,34 +186,45 @@ class PhysicalDomainTracker:
         if unit == "code_length" and registry is None:
             raise ValueError("To use 'code_length', you must provide a unit_registry")
 
+        changed = False
         if unit is not None:
-            self.unit = unit
+            if self.unit != unit:
+                changed = True
+                self.unit = unit
 
         if registry is not None:
+            changed = True
             self.unit_registry = registry
+
+        if changed:
+            # re-initialize all the arrays so they have the proper registry
+            for attr in ["left_edge", "right_edge", "center", "width"]:
+                current = getattr(self, attr)
+                if current is not None:
+                    setattr(self, attr, self._register_array(current))
 
     def update_from_layer(
         self, layer_domain: LayerDomain, update_c_w: Optional[bool] = True
     ):
-        # update the full domain edges and effective grid width
+        """
+        update the full extent of the domain given a new layer
+
+        Parameters
+        ----------
+        layer_domain : LayerDomain
+            the new layer to add
+        update_c_w : Optional[bool]
+            if True (default), will update the center and width value
+
+        Note that if the current PhysicalDomainTracker does not have a grid_width
+        value, then it will be set to that of layer_domain.
+        """
+
         self.update_edges(
             left_edge=layer_domain.left_edge,
             right_edge=layer_domain.right_edge,
             update_c_w=update_c_w,
         )
-        self.update_grid_width(layer_domain.grid_width)
-
-    def update_grid_width(self, grid_width: unyt_array):
-        # grid_width is the width of a single pixel in physical units. the
-        # full domain tracks the smallest width, which is used for scaling
-        # the pixels of each layer.
-
-        grid_width = self._sanitize_length(grid_width)
-        if self.grid_width is None:
-            self.grid_width = grid_width
-        else:
-            new_gw = np.min([self.grid_width, grid_width], axis=0)
-            self.grid_width = unyt_array(new_gw, self.unit)
 
     def update_edges(
         self,
@@ -173,6 +257,11 @@ class PhysicalDomainTracker:
         if edge_updated and update_c_w:
             self.update_width_and_center()
 
+    def _register_array(self, input_array: unyt_array) -> unyt_array:
+        # return a new unyt array with proper registry in the expected unit
+        new_array = unyt_array(input_array, registry=self.unit_registry)
+        return self._sanitize_length(new_array)
+
     def _arr(self, x: np.ndarray, unit):
         # return an array with the full unit registry (handles code_length)
         return unyt_array(x, unit, registry=self.unit_registry)
@@ -188,68 +277,8 @@ class PhysicalDomainTracker:
         center_wid = _le_re_to_cen_wid(self.left_edge, self.right_edge)
         self.center, self.width = center_wid
 
-    def set_scene_center(self, scene_center: unyt_array, update_c_w: bool = True):
-        self.scene_center = scene_center.to(self.unit)
 
-    def align_sanitize_layers(
-        self, layer_list: List[SpatialLayer], process_layers: bool = False
-    ) -> List[Layer]:
-        # calculate scale and translation for each layer
-        # will use the current domain extents if process_layers is False
-        # (the default), otherwise the domain extent will be updated with the
-        # layer_list
-        if process_layers:
-            for _, _, _, domain in layer_list:
-                self.update_from_layer(domain, update_c_w=False)
-            self.update_width_and_center()
-
-        return [self.align_sanitize_layer(layer) for layer in layer_list]
-
-    def align_sanitize_layer(self, layer: SpatialLayer) -> Layer:
-        # align and scale a single SpatialLayer relative to the current domain
-        # extents, return a standard Layer tuple
-
-        if self.grid_width is None:
-            raise RuntimeError("grid_width is not set!")
-
-        # pull out the elements of the SpatialLayer tuple
-        im_arr, im_kwargs, layer_type, domain = layer
-
-        # the scale accounts for different grid resolutions and is calculated
-        # relative to the minimum grid resolution in each direction across
-        # layers. scale > 1 will take a small number of pixels and stretch them
-        # to cover more pixels. Since we are scaling by the minimum grid_width,
-        # scale >= 1  always. This avoids shrinking a fine resolution grid to
-        # fewer screen-pixels (i.e., finest spacing is the width of one image
-        # pixel).
-        scale = domain.grid_width / self.grid_width
-
-        # translation vector is in PIXELS, so get a translation vector in
-        # physical units and then normalize by the reference grid width to get
-        # the number of pixels required to offset. Furthermore, the screen
-        # origin is in standard image coordinates (origin is bottom
-        # left corner), so translate relative to left edge not the domain center
-        if self.scene_center is not None:
-            # the user provided a scene center, so use it!
-            origin = self.scene_center
-        else:
-            # no user-provided center, use the calculated domain center
-            origin = self.left_edge
-        translate = (domain.left_edge - origin) / self.grid_width
-
-        # store these in the image layer keyword arguments only if they are used
-        if np.any(scale != 1.0):
-            im_kwargs["scale"] = scale.tolist()
-        if np.any(translate != 0):
-            im_kwargs["translate"] = translate.tolist()
-
-        # return a standard image layer tuple
-        return (im_arr, im_kwargs, layer_type)
-
-
-def _process_validated_model(
-    model: InputModel, domain_info: PhysicalDomainTracker
-) -> List[SpatialLayer]:
+def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     # return a list of layer tuples with domain information
 
     layer_list = []
@@ -261,13 +290,6 @@ def _process_validated_model(
 
         ds = yt.load(m_data.filename)
 
-        if domain_info.unit_registry is None:
-            # this happens only once, so if using 'code_length', the datasets need
-            # to have the same `code_length`, which is not verified...
-            domain_info.update_unit_info(
-                unit=m_data.edge_units, registry=ds.unit_registry
-            )
-
         for sel in m_data.selections:
             # get the left, right edge as a unitful array, initialize the layer
             # domain tracking for this layer and update the global domain extent
@@ -275,7 +297,6 @@ def _process_validated_model(
             RE = ds.arr(sel.right_edge, m_data.edge_units)
             res = sel.resolution
             layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
-            domain_info.update_from_layer(layer_domain, update_c_w=False)
 
             # create the fixed resolution buffer
             frb = ds.r[
@@ -306,18 +327,20 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
 
     layer_lists = []  # we will concatenate layers across json paths
 
-    domain_info = PhysicalDomainTracker()
     for json_path in json_paths:
         # InputModel is a pydantic class, the following will validate the json
         model = InputModel.parse_file(json_path)
 
         # now that we have a validated model, we can use the model attributes
         # to execute the code that will return our array for the image
-        layer_lists += _process_validated_model(model, domain_info)
+        layer_lists += _process_validated_model(model)
 
-    # domain_info has tracked the overall domain here, so now we have the full
-    # domain extent and can align and scale each layer
-    domain_info.update_width_and_center()
-    layer_lists = domain_info.align_sanitize_layers(layer_lists)
+    # now we need to align all our layers!
+    # choose a reference layer -- using the first in the list at present, could
+    # make this user configurable and/or use the layer with highest pixel density
+    # as the reference so that high density layers do not lose resolution
+    layer_0 = layer_lists[0][3]
+    ref_layer = ReferenceLayer(layer_0)
+    layer_lists = ref_layer.align_sanitize_layers(layer_lists)
 
     return layer_lists
