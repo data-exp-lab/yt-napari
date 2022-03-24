@@ -21,6 +21,61 @@ and review the napari docs for plugin developers:
 https://napari.org/plugins/stable/index.html
 -->
 
+## Quick Start
+
+After [installation](#Installation), there are three modes of using `yt-napari`:
+
+1. jupyter notebook interaction
+2. loading a json file from the napari gui
+3. napari widget plugins (in progress)
+
+### jupyter notebook interaction
+
+`yt-napari` provides a helper class, `yt_napari.viewer.Scene` that assists in properly aligning new yt selections in the napari viewer when working in a Jupyter notebook.
+
+```python
+import napari
+import yt
+from yt_napari.viewer import Scene
+from napari.utils import nbscreenshot
+
+viewer = napari.Viewer()
+ds = yt.load("IsolatedGalaxy/galaxy0030/galaxy0030")
+yt_scene = Scene()
+
+left_edge = ds.domain_center - ds.arr([40, 40, 40], 'kpc')
+right_edge = ds.domain_center + ds.arr([40, 40, 40], 'kpc')
+res = (600, 600, 600)
+
+yt_scene.add_to_viewer(viewer,
+                       ds,
+                       ("enzo", "Temperature"),
+                       left_edge = left_edge,
+                       right_edge = right_edge,
+                       resolution = res)
+
+yt_scene.add_to_viewer(viewer,
+                       ds,
+                       ("enzo", "Density"),
+                       left_edge = left_edge,
+                       right_edge = right_edge,
+                       resolution = res)
+
+nbscreenshot(viewer)
+```
+
+ ![Loading a subset of a yt dataset in napari from a Jupyter notebook](./assets/images/readme_ex_001.png)
+
+`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (NEED LINK) for more examples, including additional helper methods for linking layer appearance.
+
+### loading a json file from the napari gui
+
+
+
+### napari widget plugins (in progress)
+
+A napari dockable widget is in progress that will allow you to load data from within the napari GUI without a json file.
+
 ## Installation
 
 ### 1. (optional) install `yt` and `napari`
