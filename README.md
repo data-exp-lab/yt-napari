@@ -7,19 +7,44 @@
 [![codecov](https://codecov.io/gh/data-exp-lab/yt-napari/branch/main/graph/badge.svg)](https://codecov.io/gh/data-exp-lab/yt-napari)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/yt-napari)](https://napari-hub.org/plugins/yt-napari)
 
-A [napari] plugin for loading data from [yt]
+A [napari] plugin for loading data from [yt].
 
-----------------------------------
+This readme provides a brief overview including:
 
-This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
+1. [Installation](#Installation)
+2. [Quick Start](#Quick-Start)
 
-<!--
-Don't miss the full getting started guide to set up your new package:
-https://github.com/napari/cookiecutter-napari-plugin#getting-started
+Full documentation is available at [!!! NEED LINK !!!]().
 
-and review the napari docs for plugin developers:
-https://napari.org/plugins/stable/index.html
--->
+## Installation
+
+### 1. (optional) install `yt` and `napari`
+
+If you skip this step, the installation in the following section will only install the minimal package requirements for `yt` or `napari`, in which case you will likely need to manually install some packages. So if you are new to either package, or if you are installing in a clean environment, it may be simpler to  install these packages first.
+
+For `napari`,
+
+    pip install napari[all]
+
+will install `napari` with the default `Qt` backend (see [here](https://napari.org/tutorials/fundamentals/installation#choosing-a-different-qt-backend) for how to choose between `PyQt5` or `PySide2`).
+
+For `yt`, you will need `yt>=4.0.1` and any of the optional dependencies for your particular workflow. If you know that you'll need more than the base `yt` install, you can install the full suite of dependent packages with
+
+    pip install yt[full]
+
+See the [`yt` documentation](https://yt-project.org/doc/installing.html#leveraging-optional-yt-runtime-dependencies) for more information. If you're not sure which packages you'll need but don't want the full yt installation, you can proceed to the next step and then install any packages as needed (you will receive error messages when a required package is missing).
+
+### 2. install `yt-napari`
+
+You can install the `yt-napari` plugin with:
+
+    pip install yt-napari
+
+If you are missing either `yt` or `napari` (or they need to be updated), the above installation will fetch and run a minimal installation for both.
+
+To install the latest development version of the plugin instead, use:
+
+    pip install git+https://github.com/data-exp-lab/yt-napari.git
 
 ## Quick Start
 
@@ -97,37 +122,6 @@ See the full documentation (!!!NEED LINK!!!) for a complete specification.
 
 A napari dockable widget is in progress that will allow you to load data from within the napari GUI without a json file.
 
-## Installation
-
-### 1. (optional) install `yt` and `napari`
-
-If you skip this step, the installation in the following section will only install the minimal package requirements for `yt` or `napari`, in which case you will likely need to manually install some packages. So if you are new to either package, or if you are installing in a clean environment, it may be simpler to  install these packages first.
-
-For `napari`,
-
-    pip install napari[all]
-
-will install `napari` with the default `Qt` backend (see [here](https://napari.org/tutorials/fundamentals/installation#choosing-a-different-qt-backend) for how to choose between `PyQt5` or `PySide2`).
-
-For `yt`, you will need `yt>=4.0.1` and any of the optional dependencies for your particular workflow. If you know that you'll need more than the base `yt` install, you can install the full suite of dependent packages with
-
-    pip install yt[full]
-
-See the [`yt` documentation](https://yt-project.org/doc/installing.html#leveraging-optional-yt-runtime-dependencies) for more information. If you're not sure which packages you'll need but don't want the full yt installation, you can proceed to the next step and then install any packages as needed (you will receive error messages when a required package is missing).
-
-### 2. install `yt-napari`
-
-You can install the `yt-napari` plugin with:
-
-    pip install yt-napari
-
-If you are missing either `yt` or `napari` (or they need to be updated), the above installation will fetch and run a minimal installation for both.
-
-To install the latest development version of the plugin instead, use:
-
-    pip install git+https://github.com/data-exp-lab/yt-napari.git
-
-
 ## Contributing
 
 Contributions are very welcome! Development follows a fork and pull request workflow. To get started, you'll need a development installation and a testing environment.
@@ -165,6 +159,18 @@ Distributed under the terms of the [BSD-3] license,
 ## Issues
 
 If you encounter any problems, please [file an issue] along with a detailed description.
+
+----------------------------------
+
+This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
+
+<!--
+Don't miss the full getting started guide to set up your new package:
+https://github.com/napari/cookiecutter-napari-plugin#getting-started
+
+and review the napari docs for plugin developers:
+https://napari.org/plugins/stable/index.html
+-->
 
 [napari]: https://github.com/napari/napari
 [Cookiecutter]: https://github.com/audreyr/cookiecutter
