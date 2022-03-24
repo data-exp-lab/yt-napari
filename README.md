@@ -25,9 +25,9 @@ https://napari.org/plugins/stable/index.html
 
 After [installation](#Installation), there are three modes of using `yt-napari`:
 
-1. jupyter notebook interaction
-2. loading a json file from the napari gui
-3. napari widget plugins (in progress)
+1. jupyter notebook interaction ([jump down](#jupyter-notebook-interaction))
+2. loading a json file from the napari gui ([jump down](#loading-a-json-file-from-the-napari-gui))
+3. napari widget plugins (in progress) ([jump down](#napari-widget-plugins))
 
 ### jupyter notebook interaction
 
@@ -66,13 +66,34 @@ nbscreenshot(viewer)
 
  ![Loading a subset of a yt dataset in napari from a Jupyter notebook](./assets/images/readme_ex_001.png)
 
-`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (NEED LINK) for more examples, including additional helper methods for linking layer appearance.
+`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (!!!NEED LINK!!!) for more examples, including additional helper methods for linking layer appearance.
 
 ### loading a json file from the napari gui
 
+`yt-napari` also provides the ability to load json directive files from the napari GUI as you would load any image file (`File->Open`). The json file describes the selection process for a dataset as described by a json-schema. The following json file results in similar layers as the above notebook example
 
+```json
+{"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
+ "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
+           "selections": [{
+                            "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
+                                       {"field_name": "Density", "field_type": "enzo", "take_log": true}],
+                            "left_edge": [460.0, 460.0, 460.0],
+                            "right_edge": [560.0, 560.0, 560.0],
+                            "resolution": [600, 600, 600]
+                          }],
+           "edge_units": "kpc"
+         }]
+}
+```
 
-### napari widget plugins (in progress)
+Note that when live-editing the json in a development environment like vscode, you will get hints and autocomplete:
+
+![interactive json completion for yt-napari](./assets/images/readme_ex_002_json.png)
+
+See the full documentation (!!!NEED LINK!!!) for a complete specification.
+
+### napari widget plugins
 
 A napari dockable widget is in progress that will allow you to load data from within the napari GUI without a json file.
 
