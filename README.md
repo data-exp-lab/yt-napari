@@ -6,6 +6,7 @@
 [![tests](https://github.com/data-exp-lab/yt-napari/workflows/tests/badge.svg)](https://github.com/data-exp-lab/yt-napari/actions)
 [![codecov](https://codecov.io/gh/data-exp-lab/yt-napari/branch/main/graph/badge.svg)](https://codecov.io/gh/data-exp-lab/yt-napari)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/yt-napari)](https://napari-hub.org/plugins/yt-napari)
+[![Documentation Status](https://readthedocs.org/projects/yt-napari/badge/?version=latest)](https://yt-napari.readthedocs.io/en/latest/?badge=latest)
 
 A [napari] plugin for loading data from [yt].
 
@@ -14,7 +15,7 @@ This readme provides a brief overview including:
 1. [Installation](#Installation)
 2. [Quick Start](#Quick-Start)
 
-Full documentation is available at [!!! NEED LINK !!!]().
+Full documentation is available at [yt-napari.readthedocs.io].
 
 ## Installation
 
@@ -116,7 +117,7 @@ Note that when live-editing the json in a development environment like vscode, y
 
 ![interactive json completion for yt-napari](./assets/images/readme_ex_002_json.png)
 
-See the full documentation (!!!NEED LINK!!!) for a complete specification.
+See the full documentation at [yt-napari.readthedocs.io] for a complete specification.
 
 ### napari widget plugins
 
@@ -196,6 +197,7 @@ https://napari.org/plugins/stable/index.html
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
+[yt-napari.readthedocs.io]: https://yt-napari.readthedocs.io/
 
 [file an issue]: https://github.com/data-exp-lab/yt-napari/issues
 
