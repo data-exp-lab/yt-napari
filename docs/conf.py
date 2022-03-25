@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "yt_napari"
+project = "yt-napari"
 copyright = "2022, Chris Havlin, Matthew Turk"
 author = "Chris Havlin, Matthew Turk"
 

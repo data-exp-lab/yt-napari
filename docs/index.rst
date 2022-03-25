@@ -3,12 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to yt_napari's documentation!
+Welcome to yt-napari's documentation!
 =====================================
+
+:code:`yt-napari` is a suite of plugins and methods for loading data from :code:`yt` in :code:`napari`.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   installation
+   quickstart
+   source/modules
 
 
 
