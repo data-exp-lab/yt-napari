@@ -14,6 +14,7 @@ Welcome to yt-napari's documentation!
 
    installation
    quickstart
+   notebooks
    source/modules
 
 

@@ -1,7 +1,7 @@
 Quick Start
 ===========
 
-After installation, there are three modes of using `yt-napari`:
+After installation, there are three modes of using :code:`yt-napari`:
 
 1. :ref:`jupyter notebook interaction<jupyusage>`
 2. :ref:`loading a json file from the napari gui<jsonload>`
@@ -48,7 +48,7 @@ jupyter notebook interaction
 
 :code:`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by :code:`viewer.add_image`.
 
-See :meth:`yt_napari.viewer.Scene` for all available methods.
+See :meth:`yt_napari.viewer.Scene` for all available methods and the :doc:`example notebooks <notebooks>` for further examples.
 
 .. _jsonload:
 
