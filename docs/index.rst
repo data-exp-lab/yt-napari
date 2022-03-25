@@ -15,6 +15,7 @@ Welcome to yt-napari's documentation!
    installation
    quickstart
    notebooks
+   schema
    source/modules
 
 
