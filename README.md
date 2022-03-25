@@ -151,6 +151,20 @@ For style checks, you can use [pre-commit](https://pre-commit.com/) to run check
 
 after which, every time you run `git commit`, some automatic style adjustments and checks will run. The same style checks will run when you submit a pull request, but it's often easier to catch them early.
 
+### rebuilding documentation
+
+Documentation is built using `sphinx` in two steps. First, update the api mapping with
+
+```
+sphinx-apidoc -f -o docs/source src/yt_napari/
+```
+
+This will update the `rst` files in `docs/source/` with the latest docstrings in `yt_napari`. Next, build the html documentation with
+
+```
+make html
+```
+
 ## License
 
 Distributed under the terms of the [BSD-3] license,
