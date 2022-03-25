@@ -2,6 +2,7 @@
 # Requirements of your napari plugin should be listed in setup.cfg
 # See also: https://caremad.io/posts/2013/07/setup-vs-requirement/
 sphinx
-nbsphinx
+nbsphinx!=0.8.8
 sphinx-jsonschema
+Jinja2!=3.1.0
 -e .
