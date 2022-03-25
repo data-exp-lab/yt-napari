@@ -7,19 +7,14 @@
 [![codecov](https://codecov.io/gh/data-exp-lab/yt-napari/branch/main/graph/badge.svg)](https://codecov.io/gh/data-exp-lab/yt-napari)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/yt-napari)](https://napari-hub.org/plugins/yt-napari)
 
-A [napari] plugin for loading data from [yt]
+A [napari] plugin for loading data from [yt].
 
-----------------------------------
+This readme provides a brief overview including:
 
-This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
+1. [Installation](#Installation)
+2. [Quick Start](#Quick-Start)
 
-<!--
-Don't miss the full getting started guide to set up your new package:
-https://github.com/napari/cookiecutter-napari-plugin#getting-started
-
-and review the napari docs for plugin developers:
-https://napari.org/plugins/stable/index.html
--->
+Full documentation is available at [!!! NEED LINK !!!]().
 
 ## Installation
 
@@ -51,6 +46,81 @@ To install the latest development version of the plugin instead, use:
 
     pip install git+https://github.com/data-exp-lab/yt-napari.git
 
+## Quick Start
+
+After [installation](#Installation), there are three modes of using `yt-napari`:
+
+1. jupyter notebook interaction ([jump down](#jupyter-notebook-interaction))
+2. loading a json file from the napari gui ([jump down](#loading-a-json-file-from-the-napari-gui))
+3. napari widget plugins (in progress) ([jump down](#napari-widget-plugins))
+
+### jupyter notebook interaction
+
+`yt-napari` provides a helper class, `yt_napari.viewer.Scene` that assists in properly aligning new yt selections in the napari viewer when working in a Jupyter notebook.
+
+```python
+import napari
+import yt
+from yt_napari.viewer import Scene
+from napari.utils import nbscreenshot
+
+viewer = napari.Viewer()
+ds = yt.load("IsolatedGalaxy/galaxy0030/galaxy0030")
+yt_scene = Scene()
+
+left_edge = ds.domain_center - ds.arr([40, 40, 40], 'kpc')
+right_edge = ds.domain_center + ds.arr([40, 40, 40], 'kpc')
+res = (600, 600, 600)
+
+yt_scene.add_to_viewer(viewer,
+                       ds,
+                       ("enzo", "Temperature"),
+                       left_edge = left_edge,
+                       right_edge = right_edge,
+                       resolution = res)
+
+yt_scene.add_to_viewer(viewer,
+                       ds,
+                       ("enzo", "Density"),
+                       left_edge = left_edge,
+                       right_edge = right_edge,
+                       resolution = res)
+
+nbscreenshot(viewer)
+```
+
+ ![Loading a subset of a yt dataset in napari from a Jupyter notebook](./assets/images/readme_ex_001.png)
+
+`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (!!!NEED LINK!!!) for more examples, including additional helper methods for linking layer appearance.
+
+### loading a json file from the napari gui
+
+`yt-napari` also provides the ability to load json directive files from the napari GUI as you would load any image file (`File->Open`). The json file describes the selection process for a dataset as described by a json-schema. The following json file results in similar layers as the above notebook example
+
+```json
+{"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
+ "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
+           "selections": [{
+                            "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
+                                       {"field_name": "Density", "field_type": "enzo", "take_log": true}],
+                            "left_edge": [460.0, 460.0, 460.0],
+                            "right_edge": [560.0, 560.0, 560.0],
+                            "resolution": [600, 600, 600]
+                          }],
+           "edge_units": "kpc"
+         }]
+}
+```
+
+Note that when live-editing the json in a development environment like vscode, you will get hints and autocomplete:
+
+![interactive json completion for yt-napari](./assets/images/readme_ex_002_json.png)
+
+See the full documentation (!!!NEED LINK!!!) for a complete specification.
+
+### napari widget plugins
+
+A napari dockable widget is in progress that will allow you to load data from within the napari GUI without a json file.
 
 ## Contributing
 
@@ -81,6 +151,20 @@ For style checks, you can use [pre-commit](https://pre-commit.com/) to run check
 
 after which, every time you run `git commit`, some automatic style adjustments and checks will run. The same style checks will run when you submit a pull request, but it's often easier to catch them early.
 
+### building documentation locally
+
+Documentation can be built using `sphinx` in two steps. First, update the api mapping with
+
+```
+sphinx-apidoc -f -o docs/source src/yt_napari/
+```
+
+This will update the `rst` files in `docs/source/` with the latest docstrings in `yt_napari`. Next, build the html documentation with
+
+```
+make html
+```
+
 ## License
 
 Distributed under the terms of the [BSD-3] license,
@@ -89,6 +173,18 @@ Distributed under the terms of the [BSD-3] license,
 ## Issues
 
 If you encounter any problems, please [file an issue] along with a detailed description.
+
+----------------------------------
+
+This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
+
+<!--
+Don't miss the full getting started guide to set up your new package:
+https://github.com/napari/cookiecutter-napari-plugin#getting-started
+
+and review the napari docs for plugin developers:
+https://napari.org/plugins/stable/index.html
+-->
 
 [napari]: https://github.com/napari/napari
 [Cookiecutter]: https://github.com/audreyr/cookiecutter
