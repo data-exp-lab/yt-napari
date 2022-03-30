@@ -5,24 +5,13 @@ contributions:
     - id: yt-napari.get_reader
       python_name: yt_napari._reader:napari_get_reader
       title: Open data with yt-napari
-    - id: yt-napari.my_widget
-      title: Open my widget
-      python_name: yt_napari._widget_reader:MyWidget
     - id: yt-napari.threshold_widget
       title: Make threshold widget with magic_factory
       python_name: yt_napari._widget_reader:widget_factory
-    - id: yt-napari.do_threshold
-      title: Perform threshold on image, return new image
-      python_name: yt_napari._widget_reader:threshold
   readers:
     - command: yt-napari.get_reader
       accepts_directories: false
       filename_patterns: ['*.json']
   widgets:
-    - command: yt-napari.my_widget
-      display_name: yt Reader
     - command: yt-napari.threshold_widget
-      display_name: Threshold
-    - command: yt-napari.do_threshold
-      display_name: Threshold doer
-      autogenerate: true
+      display_name: yt Reader
