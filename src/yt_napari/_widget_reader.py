@@ -1,61 +1,41 @@
-from typing import Union
-
-import magicgui
 import napari
-import qtpy
-from magicgui import magic_factory
+from magicgui import widgets
+from qtpy.QtWidgets import QVBoxLayout, QWidget
 
-# example_plugin.some_module
-Widget = Union["magicgui.widgets.Widget", "qtpy.QtWidgets.QWidget"]
-from yt_napari.viewer import Scene
+from yt_napari._data_model import DataContainer, InputModel
+from yt_napari._gui_utilities import data_container, get_pydantic_kwargs
+from yt_napari._model_ingestor import _process_validated_model
 
 
-# a manual reader to get things started
-@magic_factory(call_button="Load")
-def widget_factory(
-    viewer: "napari.viewer.Viewer",
-    filename: str,
-    field_type: str,
-    field_name: str,
-    take_log: bool = True,
-    left_x: float = 0.0,
-    left_y: float = 0.0,
-    left_z: float = 0.0,
-    right_x: float = 1.0,
-    right_y: float = 1.0,
-    right_z: float = 1.0,
-    res_x: int = 400,
-    res_y: int = 400,
-    res_z: int = 400,
-    edge_units: str = "code_length",
-):
-    """Generate thresholded image.
+class ReaderWidget(QWidget):
+    def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
+        super().__init__(parent)
+        self.setLayout(QVBoxLayout())
+        self.viewer = napari_viewer
 
-    This pattern uses magicgui.magic_factory directly to turn a function
-    into a callable that returns a widget.
-    """
-    # import yt here so that it is only imported when the plugin first
-    # activates:
+        # QCollapsible creates a collapse container for inner widgets
+        self.big_container = widgets.Container()
+        self.data_container = data_container
+        self.big_container.append(self.data_container)
 
-    import yt  # noqa: E402
+        pb = widgets.PushButton(text="Load")
+        pb.clicked.connect(self.load_data)
+        self.big_container.append(pb)
+        self.layout().addWidget(self.big_container.native)
 
-    ds = yt.load(filename)
-
-    scene = Scene()
-
-    # instantiate the pydanctic model objects here
-
-    # should refactor add_to_viewer to get the new layer data without adding
-    # it to the viewer so that the widget can return a new layer rather than
-    # internally modifying the viewer object (though it does seem to work)
-    le = ds.arr((left_x, left_y, left_z), edge_units)
-    re = ds.arr((right_x, right_y, right_z), edge_units)
-    scene.add_to_viewer(
-        viewer,
-        ds,
-        (field_type, field_name),
-        take_log=take_log,
-        resolution=(res_x, res_y, res_z),
-        left_edge=le,
-        right_edge=re,
-    )
+    def load_data(self):
+        # first extract all the pydantic arguments from the container
+        py_kwargs = {}
+        get_pydantic_kwargs(self.data_container, DataContainer, py_kwargs)
+        # instantiate the base model
+        py_kwargs = {
+            "data": [
+                py_kwargs,
+            ]
+        }
+        print(py_kwargs)
+        model = InputModel.parse_obj(py_kwargs)
+        # process it!
+        layer_list = _process_validated_model(model)
+        self.viewer.add_image(layer_list[0][0])
+        # TODO: account for Scene!!!!
