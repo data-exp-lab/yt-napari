@@ -25,6 +25,25 @@ class Scene:
                     return layer.metadata["_reference_layer"]
         return None
 
+    def _get_reference_layer(
+        self,
+        layer_list: List[Layer],
+        default_if_missing: Optional[_mi.LayerDomain] = None,
+    ):
+        if len(layer_list) == 0:
+            # always check, in case all layers have been deleted.
+            self._reference_layer = None
+
+        if self._reference_layer is None:
+            # first check the active layers for a reference
+            ref_layer = self._check_for_reference_layer(layer_list)
+            if ref_layer is None:
+                # still None, use this layer:
+                layer_domain = default_if_missing
+                ref_layer = _mi.ReferenceLayer(layer_domain)
+            self._reference_layer = ref_layer
+        return self._reference_layer
+
     def add_to_viewer(
         self,
         viewer: Viewer,
@@ -93,15 +112,11 @@ class Scene:
             # would need to check against available cmaps in napari
             colormap = "viridis"
 
-        if self._reference_layer is None:
-            self._reference_layer = self._check_for_reference_layer(viewer.layers)
-
         # add the bounds of this new layer
         layer_domain = _mi.LayerDomain(left_edge, right_edge, resolution)
-        if self._reference_layer is None:
-            self._reference_layer = _mi.ReferenceLayer(
-                layer_domain
-            )  # no reference yet, use this one
+        ref_layer = self._get_reference_layer(
+            viewer.layers, default_if_missing=layer_domain
+        )
 
         # create the fixed resolution buffer
         frb = ds.r[
@@ -115,7 +130,7 @@ class Scene:
 
         # initialize the spatial layer then sanitize it
         splayer = (data, {}, "image", layer_domain)
-        _, im_kwargs, _ = self._reference_layer.align_sanitize_layer(splayer)
+        _, im_kwargs, _ = ref_layer.align_sanitize_layer(splayer)
 
         # extract the translate and scale values
         tr = im_kwargs.get("translate", None)
@@ -134,7 +149,7 @@ class Scene:
             fname = f"{field[0]}_{field[1]}"
 
         md = _mi.create_metadata_dict(
-            data, layer_domain, take_log, reference_layer=self._reference_layer
+            data, layer_domain, take_log, reference_layer=ref_layer
         )
         viewer.add_image(
             data,

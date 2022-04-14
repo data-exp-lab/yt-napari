@@ -237,11 +237,9 @@ def get_magicguidefault(field_def: pydantic.fields.ModelField):
 
 
 def embed_in_list(default_widget_instance):
-    print("hello!")
     returnval = [
         default_widget_instance.value,
     ]
-    print(returnval)
     return returnval
 
 
