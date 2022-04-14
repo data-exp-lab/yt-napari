@@ -77,6 +77,10 @@ def set_default(variable, default):
     return variable
 
 
+# the following class builds a registry framework for converting from pydantic
+# field to a magicgui widget and back. This is useful for modifying the type
+# of widgets used for specific pydantic model fields without over-riding the
+# default widget selection of magicgui.
 class MagicPydanticRegistry:
 
     registry = defaultdict(dict)
@@ -162,26 +166,16 @@ class MagicPydanticRegistry:
             return func(widget_instance, *args, **kwargs)
 
 
-translator = MagicPydanticRegistry()
-
-# register some data model fields:
+# set some functions for handling specific pydantic fields.
 
 
 def get_file_widget(*args, **kwargs):
+    # could remove the need for this if the model uses pathlib.Path for typing
     return widgets.FileEdit(*args, **kwargs)
 
 
 def get_filename(file_widget: widgets.FileEdit):
     return str(file_widget.value)
-
-
-translator.register(
-    _data_model.DataContainer,
-    "filename",
-    magicgui_factory=get_file_widget,
-    magicgui_kwargs={"name": "filename"},
-    pydantic_attr_factory=get_filename,
-)
 
 
 def create_vector_widget(
@@ -210,25 +204,9 @@ def get_vector_kwargs(vector_widget_instance):
     return tuple(i.value for i in vector_widget_instance)
 
 
-for edge, box_type in zip(
-    ("left_edge", "right_edge", "resolution"), (float, float, int)
-):
-    defs = _data_model.SelectionObject.__fields__[edge].default
-    translator.register(
-        _data_model.SelectionObject,
-        edge,
-        magicgui_factory=create_vector_widget,
-        magicgui_kwargs={
-            "length": 3,
-            "name": edge,
-            "default_values": defs,
-            "box_type": box_type,
-        },
-        pydantic_attr_factory=get_vector_kwargs,
-    )
-
-
 def get_magicguidefault(field_def: pydantic.fields.ModelField):
+    # a passthrough function that returns an instance of the default widget
+    # selected by magicgui.
     ftype = field_def.type_
     new_widget_cls, ops = type_map.get_widget_class(
         None, ftype, dict(name=field_def.name, value=field_def.default)
@@ -236,31 +214,60 @@ def get_magicguidefault(field_def: pydantic.fields.ModelField):
     return new_widget_cls(**ops)
 
 
-def embed_in_list(default_widget_instance):
-    returnval = [
-        default_widget_instance.value,
-    ]
+def embed_in_list(widget_instance):
+    # for when the widget value should be embedded in a list
+    returnval = [widget_instance.value]
     return returnval
 
 
-py_model, field = _data_model.SelectionObject, "fields"
-translator.register(
-    py_model,
-    field,
-    magicgui_factory=get_magicguidefault,
-    magicgui_args=(py_model.__fields__[field]),
-    pydantic_attr_factory=embed_in_list,
-)
+def _register_yt_data_model(translator: MagicPydanticRegistry):
+    # registers some special cases for pydantic fields.
+    translator.register(
+        _data_model.DataContainer,
+        "filename",
+        magicgui_factory=get_file_widget,
+        magicgui_kwargs={"name": "filename"},
+        pydantic_attr_factory=get_filename,
+    )
 
-py_model, field = _data_model.DataContainer, "selections"
-translator.register(
-    py_model,
-    field,
-    magicgui_factory=get_magicguidefault,
-    magicgui_args=(py_model.__fields__[field]),
-    pydantic_attr_factory=embed_in_list,
-)
+    for edge, box_type in zip(
+        ("left_edge", "right_edge", "resolution"), (float, float, int)
+    ):
+        defs = _data_model.SelectionObject.__fields__[edge].default
+        translator.register(
+            _data_model.SelectionObject,
+            edge,
+            magicgui_factory=create_vector_widget,
+            magicgui_kwargs={
+                "length": 3,
+                "name": edge,
+                "default_values": defs,
+                "box_type": box_type,
+            },
+            pydantic_attr_factory=get_vector_kwargs,
+        )
 
+    py_model, field = _data_model.SelectionObject, "fields"
+    translator.register(
+        py_model,
+        field,
+        magicgui_factory=get_magicguidefault,
+        magicgui_args=(py_model.__fields__[field]),
+        pydantic_attr_factory=embed_in_list,
+    )
+
+    py_model, field = _data_model.DataContainer, "selections"
+    translator.register(
+        py_model,
+        field,
+        magicgui_factory=get_magicguidefault,
+        magicgui_args=(py_model.__fields__[field]),
+        pydantic_attr_factory=embed_in_list,
+    )
+
+
+translator = MagicPydanticRegistry()
+_register_yt_data_model(translator)
 
 data_container = widgets.Container()
 add_pydantic_to_container(_data_model.DataContainer, data_container)
