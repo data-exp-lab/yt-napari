@@ -1,74 +1,11 @@
 import warnings
 from collections import defaultdict
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import pydantic
 from magicgui import type_map, widgets
 
 from yt_napari import _data_model
-
-
-def add_pydantic_to_container(
-    py_model: Union[pydantic.BaseModel, pydantic.main.ModelMetaclass],
-    container: widgets.Container,
-):
-    # recursively traverse a pydantic model adding widgets to a container. When a nested
-    # pydantic model is encountered, add a new nested container
-    for field, field_def in py_model.__fields__.items():
-        ftype = field_def.type_
-        if isinstance(ftype, pydantic.BaseModel) or isinstance(
-            ftype, pydantic.main.ModelMetaclass
-        ):
-            # the field is a pydantic class, add a container for it and fill it
-            new_widget_cls = widgets.Container
-            new_widget = new_widget_cls(name=field_def.name)
-            add_pydantic_to_container(ftype, new_widget)
-        elif translator.is_registered(py_model, field):
-            new_widget = translator.get_widget_instance(py_model, field)
-        else:
-            # use a magicgui default
-            new_widget_cls, ops = type_map.get_widget_class(
-                None, ftype, dict(name=field_def.name, value=field_def.default)
-            )
-            new_widget = new_widget_cls(**ops)
-            if isinstance(new_widget, widgets.EmptyWidget):
-                msg = "magicgui could not identify a widget for "
-                msg += f" {py_model}.{field}, which has type {ftype}"
-                warnings.warn(message=msg)
-        container.append(new_widget)
-
-
-def get_pydantic_kwargs(container: widgets.Container, py_model, pydantic_kwargs: dict):
-    # given a container that was instantiated from a pydantic model, get the arguments
-    # needed to instantiate that pydantic model from the container.
-
-    # traverse model fields, pull out values from container
-    for field, field_def in py_model.__fields__.items():
-        ftype = field_def.type_
-        if isinstance(ftype, pydantic.BaseModel) or isinstance(
-            ftype, pydantic.main.ModelMetaclass
-        ):
-            new_kwargs = {}  # new dictionary for the new nest level
-            # any pydantic class will be a container, so pull that out to pass
-            # to the recursive call
-            sub_container = getattr(container, field_def.name)
-            get_pydantic_kwargs(sub_container, ftype, new_kwargs)
-            if "typing.List" in str(field_def.outer_type_):
-                new_kwargs = [
-                    new_kwargs,
-                ]
-            pydantic_kwargs[field] = new_kwargs
-
-        elif translator.is_registered(py_model, field):
-            widget_instance = getattr(container, field_def.name)  # pull from container
-            pydantic_kwargs[field] = translator.get_pydantic_attr(
-                py_model, field, widget_instance
-            )
-        else:
-            # not a pydantic class, just pull the field value from the container
-            if hasattr(container, field_def.name):
-                value = getattr(container, field_def.name).value
-                pydantic_kwargs[field] = value
 
 
 def set_default(variable, default):
@@ -82,8 +19,8 @@ def set_default(variable, default):
 # of widgets used for specific pydantic model fields without over-riding the
 # default widget selection of magicgui.
 class MagicPydanticRegistry:
-
-    registry = defaultdict(dict)
+    def __init__(self):
+        self.registry = defaultdict(dict)
 
     def register(
         self,
@@ -165,6 +102,68 @@ class MagicPydanticRegistry:
             func, args, kwargs = self.registry[pydantic_model][field]["pydantic"]
             return func(widget_instance, *args, **kwargs)
 
+    def add_pydantic_to_container(
+        self,
+        py_model: Union[pydantic.BaseModel, pydantic.main.ModelMetaclass],
+        container: widgets.Container,
+    ):
+        # recursively traverse a pydantic model adding widgets to a container.
+        # When a nested pydantic model is encountered, add a new container
+        for field, field_def in py_model.__fields__.items():
+            ftype = field_def.type_
+            if isinstance(ftype, pydantic.BaseModel) or isinstance(
+                ftype, pydantic.main.ModelMetaclass
+            ):
+                # the field is a pydantic class, add a container for it and fill it
+                new_widget_cls = widgets.Container
+                new_widget = new_widget_cls(name=field_def.name)
+                self.add_pydantic_to_container(ftype, new_widget)
+            elif self.is_registered(py_model, field):
+                new_widget = self.get_widget_instance(py_model, field)
+            else:
+                new_widget = get_magicguidefault(field_def)
+                if isinstance(new_widget, widgets.EmptyWidget):
+                    msg = "magicgui could not identify a widget for "
+                    msg += f" {py_model}.{field}, which has type {ftype}"
+                    warnings.warn(message=msg)
+            container.append(new_widget)
+
+    def get_pydantic_kwargs(
+        self, container: widgets.Container, py_model, pydantic_kwargs: dict
+    ):
+        # given a container that was instantiated from a pydantic model, get
+        # the arguments needed to instantiate that pydantic model
+
+        # traverse model fields, pull out values from container
+        for field, field_def in py_model.__fields__.items():
+            ftype = field_def.type_
+            if isinstance(ftype, pydantic.BaseModel) or isinstance(
+                ftype, pydantic.main.ModelMetaclass
+            ):
+                new_kwargs = {}  # new dictionary for the new nest level
+                # any pydantic class will be a container, so pull that out to pass
+                # to the recursive call
+                sub_container = getattr(container, field_def.name)
+                self.get_pydantic_kwargs(sub_container, ftype, new_kwargs)
+                if "typing.List" in str(field_def.outer_type_):
+                    new_kwargs = [
+                        new_kwargs,
+                    ]
+                pydantic_kwargs[field] = new_kwargs
+
+            elif self.is_registered(py_model, field):
+                widget_instance = getattr(
+                    container, field_def.name
+                )  # pull from container
+                pydantic_kwargs[field] = self.get_pydantic_attr(
+                    py_model, field, widget_instance
+                )
+            else:
+                # not a pydantic class, just pull the field value from the container
+                if hasattr(container, field_def.name):
+                    value = getattr(container, field_def.name).value
+                    pydantic_kwargs[field] = value
+
 
 # set some functions for handling specific pydantic fields.
 
@@ -178,46 +177,29 @@ def get_filename(file_widget: widgets.FileEdit):
     return str(file_widget.value)
 
 
-def create_vector_widget(
-    *args,
-    length: int = 3,
-    box_type=float,
-    default_values: Optional[Tuple] = None,
-    **kwargs,
-):
-    if box_type is float:
-        BoxType = widgets.FloatSpinBox
-    else:
-        BoxType = widgets.SpinBox
-    if default_values is None:
-        default_values = [
-            0,
-        ] * length
-    widg_list = [
-        BoxType(label=" ", name=f"x_{i}", value=default_values[i])
-        for i in range(length)
-    ]
-    return widgets.Container(*args, layout="horizontal", widgets=widg_list, **kwargs)
-
-
-def get_vector_kwargs(vector_widget_instance):
-    return tuple(i.value for i in vector_widget_instance)
-
-
 def get_magicguidefault(field_def: pydantic.fields.ModelField):
-    # a passthrough function that returns an instance of the default widget
-    # selected by magicgui.
+    # returns an instance of the default widget selected by magicgui
     ftype = field_def.type_
     new_widget_cls, ops = type_map.get_widget_class(
-        None, ftype, dict(name=field_def.name, value=field_def.default)
+        None,
+        ftype,
+        dict(name=field_def.name, value=field_def.default, annotation=ftype),
     )
+    if field_def.default is None:
+        # for some widgets, explicitly passing None as a default will error
+        _ = ops.pop("value", None)
+
     return new_widget_cls(**ops)
 
 
-def embed_in_list(widget_instance):
+def embed_in_list(widget_instance) -> list:
     # for when the widget value should be embedded in a list
     returnval = [widget_instance.value]
     return returnval
+
+
+def _get_pydantic_model_field(py_model, field: str) -> pydantic.fields.ModelField:
+    return py_model.__fields__[field]
 
 
 def _register_yt_data_model(translator: MagicPydanticRegistry):
@@ -229,23 +211,6 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
         magicgui_kwargs={"name": "filename"},
         pydantic_attr_factory=get_filename,
     )
-
-    for edge, box_type in zip(
-        ("left_edge", "right_edge", "resolution"), (float, float, int)
-    ):
-        defs = _data_model.SelectionObject.__fields__[edge].default
-        translator.register(
-            _data_model.SelectionObject,
-            edge,
-            magicgui_factory=create_vector_widget,
-            magicgui_kwargs={
-                "length": 3,
-                "name": edge,
-                "default_values": defs,
-                "box_type": box_type,
-            },
-            pydantic_attr_factory=get_vector_kwargs,
-        )
 
     py_model, field = _data_model.SelectionObject, "fields"
     translator.register(
@@ -269,5 +234,8 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
 translator = MagicPydanticRegistry()
 _register_yt_data_model(translator)
 
-data_container = widgets.Container()
-add_pydantic_to_container(_data_model.DataContainer, data_container)
+
+def get_yt_data_container():
+    data_container = widgets.Container()
+    translator.add_pydantic_to_container(_data_model.DataContainer, data_container)
+    return data_container

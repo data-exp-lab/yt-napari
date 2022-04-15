@@ -15,9 +15,9 @@ class Field(BaseModel):
 
 class SelectionObject(BaseModel):
     fields: List[Field]
-    left_edge: Optional[Tuple[float, float, float]] = [0.0, 0.0, 0.0]
-    right_edge: Optional[Tuple[float, float, float]] = [1.0, 1.0, 1.0]
-    resolution: Optional[Tuple[int, int, int]] = [400, 400, 400]
+    left_edge: Optional[Tuple[float, float, float]] = (0.0, 0.0, 0.0)
+    right_edge: Optional[Tuple[float, float, float]] = (1.0, 1.0, 1.0)
+    resolution: Optional[Tuple[int, int, int]] = (400, 400, 400)
 
 
 class DataContainer(BaseModel):

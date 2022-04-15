@@ -1,3 +1,5 @@
+from typing import Callable, Optional
+
 import napari
 from magicgui import widgets
 from qtpy.QtWidgets import QVBoxLayout, QWidget
@@ -13,7 +15,7 @@ class ReaderWidget(QWidget):
         self.viewer = napari_viewer
 
         self.big_container = widgets.Container()
-        self.data_container = _gui_utilities.data_container
+        self.data_container = _gui_utilities.get_yt_data_container()
         self.big_container.append(self.data_container)
 
         pb = widgets.PushButton(text="Load")
@@ -29,10 +31,10 @@ class ReaderWidget(QWidget):
             self._yt_scene = Scene()
         return self._yt_scene
 
-    def load_data(self):
+    def load_data(self, post_load_function: Optional[Callable] = None):
         # first extract all the pydantic arguments from the container
         py_kwargs = {}
-        _gui_utilities.get_pydantic_kwargs(
+        _gui_utilities.translator.get_pydantic_kwargs(
             self.data_container, _data_model.DataContainer, py_kwargs
         )
         # instantiate the base model
@@ -51,6 +53,9 @@ class ReaderWidget(QWidget):
             self.viewer.layers, default_if_missing=layer_domain
         )
         data, im_kwargs, _ = ref_layer.align_sanitize_layer(layer_list[0])
+
+        if post_load_function is not None:
+            data = post_load_function(data)
 
         # set the metadata
         take_log = model.data[0].selections[0].fields[0].take_log
