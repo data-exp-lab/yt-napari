@@ -17,6 +17,7 @@ class ReaderWidget(QWidget):
         self.big_container = widgets.Container()
         self.data_container = _gui_utilities.get_yt_data_container()
         self.big_container.append(self.data_container)
+        self._post_load_function: Optional[Callable] = None
 
         pb = widgets.PushButton(text="Load")
         pb.clicked.connect(self.load_data)
@@ -31,7 +32,7 @@ class ReaderWidget(QWidget):
             self._yt_scene = Scene()
         return self._yt_scene
 
-    def load_data(self, post_load_function: Optional[Callable] = None):
+    def load_data(self):
         # first extract all the pydantic arguments from the container
         py_kwargs = {}
         _gui_utilities.translator.get_pydantic_kwargs(
@@ -54,8 +55,8 @@ class ReaderWidget(QWidget):
         )
         data, im_kwargs, _ = ref_layer.align_sanitize_layer(layer_list[0])
 
-        if post_load_function is not None:
-            data = post_load_function(data)
+        if self._post_load_function is not None:
+            data = self._post_load_function(data)
 
         # set the metadata
         take_log = model.data[0].selections[0].fields[0].take_log

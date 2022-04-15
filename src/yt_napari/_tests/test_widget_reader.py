@@ -30,13 +30,12 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
         return np.random.random(final_shape) * data.mean()
 
     rebuild = partial(rebuild_data, res)
-
-    r.load_data(post_load_function=rebuild)
+    r._post_load_function = rebuild
+    r.load_data()
 
     r.data_container.selections.fields.field_name.value = "temperature"
     r.data_container.selections.left_edge.value = (0.4, 0.4, 0.4)
     r.data_container.selections.right_edge.value = (0.6, 0.6, 0.6)
-    r.load_data(post_load_function=rebuild)
 
     # the viewer should now have two images
     assert len(viewer.layers) == 2
