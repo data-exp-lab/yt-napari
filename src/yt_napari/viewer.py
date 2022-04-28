@@ -254,7 +254,9 @@ class Scene:
         layer_list
             the active napari LayerList. required if providing layers by name.
 
-        Note that any existing layers that are linked to the provided layers
+        Notes
+        -----
+        Any existing layers that are linked to the provided layers
         will also be updated.
         """
 

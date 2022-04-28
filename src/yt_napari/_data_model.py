@@ -2,28 +2,32 @@ import inspect
 from pathlib import PosixPath
 from typing import List, Optional, Tuple, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from yt_napari.schemas import _manager
 
 
-class Field(BaseModel):
-    field_type: str
-    field_name: str
-    take_log: Optional[bool] = True
+class ytField(BaseModel):
+    field_type: str = Field(None, description="a field type in the yt dataset")
+    field_name: str = Field(None, description="a field in the yt dataset")
+    take_log: Optional[bool] = Field(
+        True, description="if true, will apply log10 to the selected data"
+    )
 
 
 class SelectionObject(BaseModel):
-    fields: List[Field]
+    fields: List[ytField]
     left_edge: Optional[Tuple[float, float, float]] = (0.0, 0.0, 0.0)
     right_edge: Optional[Tuple[float, float, float]] = (1.0, 1.0, 1.0)
     resolution: Optional[Tuple[int, int, int]] = (400, 400, 400)
 
 
 class DataContainer(BaseModel):
-    filename: str
+    filename: str = Field(None, description="the filename for the dataset to load")
     selections: List[SelectionObject]
-    edge_units: Optional[str] = None
+    edge_units: Optional[str] = Field(
+        "code_length", description="the units to use for left_edge and right_edge"
+    )
 
 
 class InputModel(BaseModel):

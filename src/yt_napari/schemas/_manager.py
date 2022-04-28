@@ -115,3 +115,14 @@ class Manager:
         print(f"writing new schema {filename}")
         with open(filename, "w") as f:
             f.write(schema_json)
+
+    def update_docs(self, source: str):
+        """copies all schema to _static, updates latest and updates schema.rst"""
+
+        # copy all json files to docs/_static/
+
+        # copy the latest to docs/_static/yt-napari_latest.json
+
+        # update the table in docs/schema.rst
+
+        raise NotImplementedError("in progress.")
