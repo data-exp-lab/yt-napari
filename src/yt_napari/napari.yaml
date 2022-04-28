@@ -4,8 +4,14 @@ contributions:
   commands:
     - id: yt-napari.get_reader
       python_name: yt_napari._reader:napari_get_reader
-      title: Open data with yt-napari  
+      title: Open data with yt-napari
+    - id: yt-napari.reader_widget
+      title: Read in a selection of data from yt
+      python_name: yt_napari._widget_reader:ReaderWidget
   readers:
     - command: yt-napari.get_reader
       accepts_directories: false
       filename_patterns: ['*.json']
+  widgets:
+    - command: yt-napari.reader_widget
+      display_name: yt Reader
