@@ -70,3 +70,40 @@ def test_schema_generation(tmp_path):
     schema_contents = InputModel.schema_json(indent=2)
     with pytest.raises(ValueError):
         m.write_new_schema(schema_contents, schema_prefix="bad_prefix")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason=skip_win)
+def test_schema_update_docs(tmp_path):
+
+    # directory setup
+    docsdir = tmp_path / "docs"
+    docsdir.mkdir()
+    staticdir = docsdir / "_static"
+    staticdir.mkdir()
+
+    # create a schem.rst with the anchor test
+    schema_rst = docsdir / "schema.rst"
+    content = (
+        "some stuff to put into a file\n" "\n with the special schemalistanchor! \n\n"
+    )
+    schema_rst.write_text(content)
+
+    # store the schema a number of times
+    _store_schema(schema_db=tmp_path)
+    _store_schema(schema_db=tmp_path)
+    _store_schema(schema_db=tmp_path, inc_micro=False, inc_major=True)
+
+    m = Manager(schema_db=tmp_path)
+    m.update_docs(docsdir)
+
+    nfiles = len(list(staticdir.iterdir()))
+    # should contain all the schema plus a copy in latest
+    assert nfiles == 4
+
+    new_content = schema_rst.read_text()
+    assert content in new_content  # make sure the original is in the new
+
+    m = Manager(schema_db=tmp_path)
+    for fi in m.schema_files:
+        # check that every schema file is now in the file
+        assert fi.name in new_content

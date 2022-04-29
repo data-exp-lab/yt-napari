@@ -80,4 +80,13 @@ Note that when live-editing the json in a development environment like vscode, y
 napari widget plugins
 *********************
 
-A napari dockable widget is in progress that will allow you to load data from within the napari GUI without a json file.
+In addition to the reader-plugin mentioned above, yt-napari includes a napari dock widget for loading in data selections from yt. If you have ideas for additional plugins, definitely reach out!
+
+The yt-napari yt Reader:
+########################
+
+The use the yt Reader plugin, from a Napari viewer, select "Plugins -> yt-napari: yt Reader". Enter or select a file to load, fill out the remaining items to select a field and extent of the spatial selection, then hit load. yt-napari will then load the dataset, sample it and return a new napari image layer.
+
+.. image:: _static/readme_ex_003_gui_reader.gif
+
+The reader plugin does its best to align new selections of data with existing yt-napari image layers and should be able to properly align selections from different yt datasets (please submit a bug report if it fails!).

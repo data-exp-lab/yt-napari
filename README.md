@@ -94,9 +94,22 @@ nbscreenshot(viewer)
 
 `yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (!!!NEED LINK!!!) for more examples, including additional helper methods for linking layer appearance.
 
-### loading a json file from the napari gui
+### loading a selection from a yt dataset interactively
 
-`yt-napari` also provides the ability to load json directive files from the napari GUI as you would load any image file (`File->Open`). The json file describes the selection process for a dataset as described by a json-schema. The following json file results in similar layers as the above notebook example
+`yt-napari` provides a two ways to sample a yt dataset and load in an image layer into a Napari viewer: the yt Reader plugin and json file specification.
+
+#### using the yt Reader plugin
+
+To use the yt Reader plugin, click on `Plugins -> yt-napari: yt Reader`. Select a file, specify a field type and field, set the region to sample and then simply click "Load":
+
+![Loading a subset of a yt dataset from the napari viewer](./assets/images/readme_ex_003_gui_reader.gif)
+
+To load a different field or section, adjust the values and click "Load" again.
+
+#### using a json file and schema
+
+`yt-napari` also provides the ability to load json that contain specifications for loading a file. Properly formatted files can be loaded from the napari GUI as you would load any image file (`File->Open`). The json file describes the selection process for a dataset as described by a json-schema. The following json file results in similar layers as the above examples:
+
 
 ```json
 {"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
@@ -113,15 +126,12 @@ nbscreenshot(viewer)
 }
 ```
 
-Note that when live-editing the json in a development environment like vscode, you will get hints and autocomplete:
+To help in filling out a json file, it is recommended that you use an editor capable of parsing a json schema and displaying hints. For example, in vscode, you will see field suggestions after specifying the `yt-napari` schema:
 
 ![interactive json completion for yt-napari](./assets/images/readme_ex_002_json.png)
 
 See the full documentation at [yt-napari.readthedocs.io] for a complete specification.
 
-### napari widget plugins
-
-A napari dockable widget is in progress that will allow you to load data from within the napari GUI without a json file.
 
 ## Contributing
 
@@ -156,15 +166,29 @@ after which, every time you run `git commit`, some automatic style adjustments a
 
 Documentation can be built using `sphinx` in two steps. First, update the api mapping with
 
-```
-sphinx-apidoc -f -o docs/source src/yt_napari/
-```
+    sphinx-apidoc -f -o docs/source src/yt_napari/
 
 This will update the `rst` files in `docs/source/` with the latest docstrings in `yt_napari`. Next, build the html documentation with
 
-```
-make html
-```
+    make html
+
+
+### updating the pydantic models and schema
+
+Updates to the pydantic models should be accompanied by updates to the json schema. There are a number of utilities to help automate the management of schema.
+
+The schema versioning follows a `major.minor.micro` versioning pattern and yt-napari schema are stored in `src/yt_napari/schemas/`. When changing the model, you can store a new schema from a python shell with:
+
+
+    from yt_napari._data_model import _store_schema
+    _store_schema()
+
+And the current version of the primary pydantic model, `yt_napari._data_model.InputModel`, will be exported to a new json schema file. By default, the micro version number will be incremented. To increment the major or minor version number, you can supply any of the keyword arguments described in the `write_new_schema` method of the `yt_napari.schemas._mananager.Manager` class.
+
+After updating or adding a new schema, the docs also need to be updated. To do that, run
+
+    python repo_utilities/update_schema_docs.py`
+    make clean && make html
 
 ## License
 
