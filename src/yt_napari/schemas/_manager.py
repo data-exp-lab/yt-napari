@@ -183,7 +183,7 @@ class Manager:
         new_contents = []
         for lineno, line in enumerate(contents):
             new_contents.append(line)
-            if "the following table is auto-generated" in line:
+            if "schemalistanchor" in line:
                 new_contents.append("")
                 break
 
