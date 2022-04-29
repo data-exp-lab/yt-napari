@@ -181,7 +181,7 @@ class Manager:
             contents = file.read().splitlines()
 
         new_contents = []
-        for lineno, line in enumerate(contents):
+        for line in contents:
             new_contents.append(line)
             if "schemalistanchor" in line:
                 new_contents.append("")
