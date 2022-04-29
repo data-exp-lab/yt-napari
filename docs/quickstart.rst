@@ -85,10 +85,8 @@ In addition to the reader-plugin mentioned above, yt-napari includes a napari do
 The yt-napari yt Reader:
 ########################
 
-The use the yt Reader plugin, from a Napari viewer, select "Plugins -> yt-napari: yt Reader".
+The use the yt Reader plugin, from a Napari viewer, select "Plugins -> yt-napari: yt Reader". Enter or select a file to load, fill out the remaining items to select a field and extent of the spatial selection, then hit load. yt-napari will then load the dataset, sample it and return a new napari image layer.
 
-Insert figure
+.. image:: _static/readme_ex_003_gui_reader.gif
 
-Enter or select a file to load, fill out the remaining items to select a field and extent of the spatial selection, then hit load. yt-napari will then load the dataset, sample it and return a new napari image layer:
-
-Insert figure.
+The reader plugin does its best to align new selections of data with existing yt-napari image layers and should be able to properly align selections from different yt datasets (please submit a bug report if it fails!).
