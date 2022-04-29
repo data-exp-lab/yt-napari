@@ -4,15 +4,13 @@
   "properties": {
     "data": {
       "title": "Data",
+      "description": "list of datasets to load",
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataContainer"
       }
     }
   },
-  "required": [
-    "data"
-  ],
   "definitions": {
     "ytField": {
       "title": "ytField",
@@ -42,6 +40,7 @@
       "properties": {
         "fields": {
           "title": "Fields",
+          "description": "list of fields to load for this selection",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ytField"
@@ -49,6 +48,7 @@
         },
         "left_edge": {
           "title": "Left Edge",
+          "description": "the left edge (min x, min y, min z) in units of edge_units",
           "default": [
             0.0,
             0.0,
@@ -71,6 +71,7 @@
         },
         "right_edge": {
           "title": "Right Edge",
+          "description": "the right edge (max x, max y, max z) in units of edge_units",
           "default": [
             1.0,
             1.0,
@@ -93,6 +94,7 @@
         },
         "resolution": {
           "title": "Resolution",
+          "description": "the resolution at which to sample between the edges.",
           "default": [
             400,
             400,
@@ -113,10 +115,7 @@
             }
           ]
         }
-      },
-      "required": [
-        "fields"
-      ]
+      }
     },
     "DataContainer": {
       "title": "DataContainer",
@@ -124,11 +123,12 @@
       "properties": {
         "filename": {
           "title": "Filename",
-          "description": "the filename for the dataset to load",
+          "description": "the filename for the dataset",
           "type": "string"
         },
         "selections": {
           "title": "Selections",
+          "description": "list of selections to load in this dataset",
           "type": "array",
           "items": {
             "$ref": "#/definitions/SelectionObject"
@@ -136,14 +136,11 @@
         },
         "edge_units": {
           "title": "Edge Units",
-          "description": "the units to use for left_edge and right_edge",
+          "description": "the units to use for left_edge and right_edge in the selections",
           "default": "code_length",
           "type": "string"
         }
-      },
-      "required": [
-        "selections"
-      ]
+      }
     }
   }
 }

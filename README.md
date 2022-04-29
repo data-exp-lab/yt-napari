@@ -170,17 +170,16 @@ make html
 
 Updates to the pydantic models should be accompanied by updates to the json schema. There are a number of utilities to help automate the management of schema.
 
-The schema versioning falls a standard `major.minor.patch` versioning pattern and yt-napari schema are stored in `src/yt_napari/schemas/`. When changing the model, you can store a new schema with:
+The schema versioning falls a standard `major.minor.micro` versioning pattern and yt-napari schema are stored in `src/yt_napari/schemas/`. When changing the model, you can store a new schema with:
 
 ```
 from yt_napari._data_model import _store_schema
 _store_schema()
 ```
 
-After updating or adding new schema, the docs also need to be updated. To do that, run `blah` and it will copy over schema files to the `docs/_static` folder, update which file is the latest, and update the table of available schema in `docs/schema.rst`.
+The default behavior is to increment the micro/patch version number. To increment the major or minor version number, you can supply any of the keyword arguments described in the `write_new_schema` method of the `yt_napari.schemas._mananager.Manager` class.
 
-The default behavior is to increment the minor version of the schema. To
-
+After updating or adding a new schema, the docs also need to be updated. To do that, run `repo_utilities/update_schema_docs.py` and then rebuild the documentation with `make clean && make html`.
 
 ## License
 
