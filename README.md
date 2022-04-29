@@ -166,6 +166,22 @@ This will update the `rst` files in `docs/source/` with the latest docstrings in
 make html
 ```
 
+### updating the pydantic models and schema
+
+Updates to the pydantic models should be accompanied by updates to the json schema. There are a number of utilities to help automate the management of schema.
+
+The schema versioning falls a standard `major.minor.patch` versioning pattern and yt-napari schema are stored in `src/yt_napari/schemas/`. When changing the model, you can store a new schema with:
+
+```
+from yt_napari._data_model import _store_schema
+_store_schema()
+```
+
+After updating or adding new schema, the docs also need to be updated. To do that, run `blah` and it will copy over schema files to the `docs/_static` folder, update which file is the latest, and update the table of available schema in `docs/schema.rst`.
+
+The default behavior is to increment the minor version of the schema. To
+
+
 ## License
 
 Distributed under the terms of the [BSD-3] license,

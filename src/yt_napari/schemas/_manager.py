@@ -1,4 +1,6 @@
+import shutil
 from collections import defaultdict
+from os import PathLike
 from pathlib import PosixPath
 from typing import DefaultDict, Optional, Set, Union
 
@@ -8,7 +10,7 @@ from packaging.version import Version
 class Manager:
     # This is a simple on-disk schema version management class meant for
     # tracking development of new schema files.
-    default_schema_prefix = "napari-schema"
+    default_schema_prefix = "yt-napari"
 
     def __init__(self, schema_db: Union[str, PosixPath]):
         """
@@ -21,6 +23,7 @@ class Manager:
         self.max_versions: DefaultDict[str, Version] = defaultdict(
             lambda: Version("0.0.0")
         )
+        self.schema_files = []
         self._check_versions()
 
     def _check_versions(self):
@@ -33,6 +36,7 @@ class Manager:
                 vers = Version(vstr)
                 if vers > self.max_versions[prefix]:
                     self.max_versions[prefix] = vers
+                self.schema_files.append(path)
 
     def _validate_prefix(self, schema_prefix: Optional[str] = None) -> str:
         if schema_prefix is None:
@@ -116,13 +120,73 @@ class Manager:
         with open(filename, "w") as f:
             f.write(schema_json)
 
-    def update_docs(self, source: str):
-        """copies all schema to _static, updates latest and updates schema.rst"""
+    def update_docs(
+        self, source: Union[str, PathLike], schema_prefix: Optional[str] = None
+    ):
+        """
+        copies all schema to _static, updates latest and updates schema.rst
+
+        Parameters:
+        ----------
+        source: the docs directory path
+        schema_prefix: the schema prefix to include (default yt-napari).
+
+        Examples:
+        ---------
+
+        From the top level of the repository:
+
+        >>> from yt_napari.schemas._manager import Manager
+        >>> m = Manager("./src/yt_napari/schemas")
+        >>> m.schema_files
+        >>> source_dir = './docs'
+        >>> m.update_docs(source_dir)
+
+        """
+
+        schema_prefix = self._validate_prefix(schema_prefix)
+        source_dir = PosixPath(source)
+        source_static = source_dir.joinpath("_static")
 
         # copy all json files to docs/_static/
+        copied_files = []
+        for fi in self.schema_files:
+            if schema_prefix in fi.name:
+                target = source_static.joinpath(fi.name)
+                shutil.copy2(fi, target)
+                copied_files.append(fi)
+
+        copied_files.sort(reverse=True)
 
         # copy the latest to docs/_static/yt-napari_latest.json
+        latest = self._filename(schema_prefix, self.max_versions[schema_prefix])
+        target = source_static.joinpath(f"{schema_prefix}_latest.json")
+        shutil.copy2(latest, target)
 
         # update the table in docs/schema.rst
 
-        raise NotImplementedError("in progress.")
+        # build the new list of schema versions
+        table_entry = []
+        for fi in copied_files:
+            nm = fi.name
+            table_entry.append(
+                f"{nm} : `view <_static/{nm}>`_ , :download:`download <_static/{nm}>`"
+            )
+            table_entry.append("")
+        table_entry.append("")
+
+        sch_docs = source_dir.joinpath("schema.rst")
+
+        with open(sch_docs) as file:
+            contents = file.read().splitlines()
+
+        new_contents = []
+        for lineno, line in enumerate(contents):
+            new_contents.append(line)
+            if "the following table is auto-generated" in line:
+                new_contents.append("")
+                break
+
+        new_contents = new_contents + table_entry
+        with open(sch_docs, "w") as file:
+            file.write("\n".join(new_contents))
