@@ -5,7 +5,7 @@ After installation, there are three modes of using :code:`yt-napari`:
 
 1. :ref:`jupyter notebook interaction<jupyusage>`
 2. :ref:`loading a json file from the napari gui<jsonload>`
-3. :ref:`napari gui plugins (in progress)<naparigui>`
+3. :ref:`napari gui plugins<naparigui>`
 
 
 .. _jupyusage:
@@ -73,7 +73,10 @@ loading a json file from the napari gui
     }
 
 
-Note that when live-editing the json in a development environment like vscode, you will get hints and autocomplete.
+Note that when live-editing the json in a development environment like vscode, you will get hints to help in filling out a json file. For example, in vscode, you will see field suggestions after specifying the `yt-napari` schema:
+
+.. image:: _static/readme_ex_002_json.png
+
 
 .. _naparigui:
 

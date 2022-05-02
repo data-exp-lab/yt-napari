@@ -6,7 +6,7 @@
 Welcome to yt-napari's documentation!
 =====================================
 
-:code:`yt-napari` is a suite of plugins and methods for loading data from :code:`yt` in :code:`napari`.
+:code:`yt-napari` is a suite of plugins and methods for loading data from :code:`yt` in :code:`napari`. For issues and notes on contributing, see the `github repository <https://github.com/data-exp-lab/yt-napari>`_.
 
 .. toctree::
    :maxdepth: 2
