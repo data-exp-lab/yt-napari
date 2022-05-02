@@ -1,7 +1,7 @@
 The yt-napari JSON schema
 =========================
 
-The yt-napari plugins rely on pydantic models for setting variables and properties required to load in data from yt. The primary pydantic model, is exported as a json-schema to facilitate loading in data (see the json schema example) and to semi-automatically build the widget plugin.
+The yt-napari plugins rely on pydantic models for setting variables and properties required to load in data from yt. The primary pydantic model, is exported as a json-schema to facilitate loading in data (see the :ref:`json schema example <jsonload>`) and to semi-automatically build the widget plugin.
 
 The latest json schema is rendered below, but the raw json can be viewed directly `here <_static/yt-napari_latest.json>`_ or downloaded :download:`here <_static/yt-napari_latest.json>`.
 

@@ -5,7 +5,7 @@ After installation, there are three modes of using :code:`yt-napari`:
 
 1. :ref:`jupyter notebook interaction<jupyusage>`
 2. :ref:`loading a json file from the napari gui<jsonload>`
-3. :ref:`napari gui plugins (in progress)<naparigui>`
+3. :ref:`napari gui plugins<naparigui>`
 
 
 .. _jupyusage:
