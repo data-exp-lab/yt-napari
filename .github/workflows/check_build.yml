@@ -13,9 +13,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -U setuptools setuptools_scm wheel twine check-wheel-contents
+        pip install -U setuptools setuptools_scm wheel twine
     - name: Build and check
       run: |
         python setup.py sdist bdist_wheel
-        check-wheel-contents dist/*.whl
         twine check dist/*
