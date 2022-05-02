@@ -14,6 +14,7 @@ This readme provides a brief overview including:
 
 1. [Installation](#Installation)
 2. [Quick Start](#Quick-Start)
+3. [Contributing](#Contributing)
 
 Full documentation is available at [yt-napari.readthedocs.io].
 
@@ -53,7 +54,7 @@ After [installation](#Installation), there are three modes of using `yt-napari`:
 
 1. jupyter notebook interaction ([jump down](#jupyter-notebook-interaction))
 2. loading a json file from the napari gui ([jump down](#loading-a-json-file-from-the-napari-gui))
-3. napari widget plugins (in progress) ([jump down](#napari-widget-plugins))
+3. napari widget plugins ([jump down](#napari-widget-plugins))
 
 ### jupyter notebook interaction
 
@@ -187,7 +188,7 @@ And the current version of the primary pydantic model, `yt_napari._data_model.In
 
 After updating or adding a new schema, the docs also need to be updated. To do that, run
 
-    python repo_utilities/update_schema_docs.py`
+    python repo_utilities/update_schema_docs.py
     make clean && make html
 
 ## License

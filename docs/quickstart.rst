@@ -73,7 +73,10 @@ loading a json file from the napari gui
     }
 
 
-Note that when live-editing the json in a development environment like vscode, you will get hints and autocomplete.
+Note that when live-editing the json in a development environment like vscode, you will get hints to help in filling out a json file. For example, in vscode, you will see field suggestions after specifying the `yt-napari` schema:
+
+.. image:: _static/readme_ex_002_json.png
+
 
 .. _naparigui:
 
