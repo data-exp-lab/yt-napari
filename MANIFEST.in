@@ -4,3 +4,18 @@ include requirements.txt
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
+
+recursive-include src *.json
+
+exclude lint_requirements.txt
+exclude repo_utilities/update_schema_docs.py
+exclude tox.ini
+exclude make.bat
+exclude Makefile
+exclude .readthedocs.yaml
+exclude .pre-commit-config.yaml
+exclude .napari/DESCRIPTION.md
+exclude codecov.yml
+
+recursive-exclude docs *
+recursive-exclude assets *
