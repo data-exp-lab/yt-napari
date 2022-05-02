@@ -93,7 +93,7 @@ nbscreenshot(viewer)
 
  ![Loading a subset of a yt dataset in napari from a Jupyter notebook](./assets/images/readme_ex_001.png)
 
-`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (!!!NEED LINK!!!) for more examples, including additional helper methods for linking layer appearance.
+`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (https://yt-napari.readthedocs.io/) for more examples, including additional helper methods for linking layer appearance.
 
 ### loading a selection from a yt dataset interactively
 
