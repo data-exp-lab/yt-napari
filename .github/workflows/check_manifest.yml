@@ -11,15 +11,10 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: install check-manifest
+    - name: installalation
       run: |
         python -m pip install --upgrade pip
         python -m pip install check-manifest
-    - name: Install analysis_schema
-      shell: bash
-      run: |
         python -m pip install --no-build-isolation .
-    - name: Init submodules
-      uses: snickerbockers/submodules-init@v4
     - name: run check-manifest
       run:  check-manifest -vvv --ignore src/yt_napari/_version.py
