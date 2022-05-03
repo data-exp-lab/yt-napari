@@ -200,6 +200,10 @@ Distributed under the terms of the [BSD-3] license,
 
 If you encounter any problems, please [file an issue] along with a detailed description.
 
+## Funding
+
+The yt-napari plugin project was funded with support from the Chan Zuckerberg Initiative through the napari Plugin Accelerator Grants project, [Enabling Access To Multi-resolution Data](https://chanzuckerberg.com/science/programs-resources/imaging/napari/enabling-access-to-multi-resolution-data/).
+
 ----------------------------------
 
 This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.

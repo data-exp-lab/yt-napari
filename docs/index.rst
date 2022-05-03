@@ -16,6 +16,7 @@ Welcome to yt-napari's documentation!
    quickstart
    notebooks
    schema
+   funding
    source/modules
 
 
