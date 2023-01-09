@@ -184,6 +184,7 @@ def get_magicguidefault(field_def: pydantic.fields.ModelField):
         None,
         ftype,
         dict(name=field_def.name, value=field_def.default, annotation=ftype),
+        raise_on_unknown=False,
     )
     if field_def.default is None:
         # for some widgets, explicitly passing None as a default will error
