@@ -1,15 +1,15 @@
 import numpy as np
 import pytest
-import yt
 from napari.layers import Layer
 from napari.layers.utils._link_layers import get_linked_layers
+from yt import testing as yt_testing
 
 from yt_napari.viewer import Scene
 
 
 @pytest.fixture
 def yt_ds():
-    return yt.testing.fake_amr_ds(fields=("density", "mass"), units=("kg/m**3", "kg"))
+    return yt_testing.fake_amr_ds(fields=("density", "mass"), units=("kg/m**3", "kg"))
 
 
 def test_viewer(make_napari_viewer, yt_ds):

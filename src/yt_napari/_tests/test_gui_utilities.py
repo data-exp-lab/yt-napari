@@ -2,7 +2,7 @@ from typing import List, Tuple, TypeVar
 
 import pydantic
 import pytest
-from magicgui import type_map, widgets
+from magicgui import type_map, use_app, widgets
 
 from yt_napari import _gui_utilities as gu
 
@@ -10,6 +10,16 @@ from yt_napari import _gui_utilities as gu
 def test_set_default():
     assert gu.set_default(1, None) == 1
     assert gu.set_default(None, 1) == 1
+
+
+@pytest.fixture(
+    scope="module",
+    params=[
+        "qt",
+    ],
+)
+def backend(request):
+    return request.param
 
 
 @pytest.fixture
@@ -29,7 +39,8 @@ def Model():
     return TestModel
 
 
-def test_registry(Model):
+def test_registry(Model, backend):
+    app = use_app(backend)  # noqa: F841
     reg = gu.MagicPydanticRegistry()
 
     assert reg.is_registered(Model, "field_1") is False
@@ -67,8 +78,11 @@ def test_registry(Model):
     pyvalue = reg.get_pydantic_attr(Model, "field_1", widget_instance)
     assert pyvalue == "2_testxyz"
 
+    widget_instance.close()
 
-def test_yt_widget():
+
+def test_yt_widget(backend):
+    app = use_app(backend)  # noqa: F841
 
     file_editor = gu.get_file_widget(value="test")
     assert gu.get_filename(file_editor) == "test"
@@ -76,24 +90,33 @@ def test_yt_widget():
     values = gu.embed_in_list(file_editor)
     assert str(values[0]) == "test"
 
+    file_editor.close()
 
-def test_pydantic_magicgui_default(Model):
+
+def test_pydantic_magicgui_default(Model, backend):
+
+    app = use_app(backend)  # noqa: F841
 
     model_field = Model.__fields__["field_1"]
     c = gu.get_magicguidefault(model_field)
     assert c.value == model_field.default
+    c.close()
 
     model_field = Model.__fields__["bad_field"]
     empty = gu.get_magicguidefault(model_field)
     assert isinstance(empty, widgets.EmptyWidget)
+    empty.close()
 
     tr = gu.MagicPydanticRegistry()
     c = widgets.Container()
     with pytest.warns(UserWarning):
         tr.add_pydantic_to_container(Model, c)
+    c.close()
 
 
-def test_pydantic_processing(Model):
+def test_pydantic_processing(Model, backend):
+
+    app = use_app(backend)  # noqa: F841
 
     _ = gu._get_pydantic_model_field(Model, "field_1")
 
@@ -116,9 +139,12 @@ def test_pydantic_processing(Model):
     py_kwargs = {}
     tr.get_pydantic_kwargs(c, Model, py_kwargs)
     assert py_kwargs["bad_field"] == py_kwargs["bad_field"]
+    c.close()
 
 
-def test_yt_data_container():
+def test_yt_data_container(backend):
+    app = use_app(backend)  # noqa: F841
     data_container = gu.get_yt_data_container()
     assert hasattr(data_container, "filename")
     assert hasattr(data_container.selections, "resolution")
+    data_container.close()
