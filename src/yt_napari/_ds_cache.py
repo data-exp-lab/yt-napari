@@ -41,6 +41,8 @@ class DatasetCache:
         if self.exists(filename) is False:
             ds = yt.load(filename)
             self.add_ds(ds, filename)
+        else:
+            ytnapari_log.info(f"loading {filename} from cache.")
         return self.get_ds(filename)
 
 

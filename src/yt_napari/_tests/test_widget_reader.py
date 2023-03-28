@@ -5,7 +5,7 @@ import numpy as np
 from yt_napari._widget_reader import ReaderWidget
 
 
-def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
+def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog):
 
     # make_napari_viewer is a pytest fixture. It takes any keyword arguments
     # that napari.Viewer() takes. The fixture takes care of teardown, do **not**
@@ -37,7 +37,8 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
     r.data_container.selections.left_edge.value = (0.4, 0.4, 0.4)
     r.data_container.selections.right_edge.value = (0.6, 0.6, 0.6)
     r.load_data()
-
+    # should have read from cache, check the log:
+    assert yt_ugrid_ds_fn in caplog.text
     # the viewer should now have two images
     assert len(viewer.layers) == 2
 
