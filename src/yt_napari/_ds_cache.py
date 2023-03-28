@@ -47,6 +47,7 @@ class DatasetCache:
 
     def rm_all(self):
         self.available = {}
+        self._most_recent = None
 
     def check_then_load(self, filename: str):
         if self.reference_exists(filename):

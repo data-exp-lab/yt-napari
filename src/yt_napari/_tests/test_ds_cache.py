@@ -30,3 +30,20 @@ def test_ds_cache(caplog):
     ds_none = dataset_cache.get_ds("doesnotexist")
     assert ds_none is None
     assert "doesnotexist not found in cache" in caplog.text
+
+    dataset_cache.add_ds(ds, ds_name)
+    assert dataset_cache.exists(ds_name)
+    dataset_cache.rm_all()
+    assert len(dataset_cache.available) == 0
+    assert dataset_cache.most_recent is None
+
+
+def _add_to_cache_then_delete():
+    ds = get_new_ds()
+    dataset_cache.add_ds(ds, "hellotest")
+    del ds
+
+
+def test_weakref_destruction():
+    _add_to_cache_then_delete()
+    assert dataset_cache.reference_exists("hellotest") is False
