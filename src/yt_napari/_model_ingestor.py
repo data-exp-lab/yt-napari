@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yt
-from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
+from unyt import dimensions, unit_object, unit_registry, unyt_array, unyt_quantity
 
 from yt_napari import _special_loaders
 from yt_napari._data_model import (
@@ -796,17 +796,25 @@ def _load_with_timeseries_specials_check(file):
     return ds
 
 
-def _process_metadata_model(model: MetadataModel):
+def _process_metadata_model(model: MetadataModel) -> Tuple[dict, dict]:
     fname = model.filename
     if fname is None or fname == "" or fname == ".":
+        # for testing for now
         fname = "IsolatedGalaxy/galaxy0030/galaxy0030"
 
     ds = yt.load(fname)
+    meta_data_dict = {}
+    for attr in model._ds_attrs:
+        attval = getattr(ds, attr)
+        if isinstance(attval, unyt_array) or isinstance(attval, unyt_quantity):
+            if attval.units.dimensions == dimensions.length:
+                attval = attval.to(model.display_length)
+        meta_data_dict[attr] = attval
 
+    fields_by_type = defaultdict(lambda: [])
     if model.include_field_list:
         fields = ds.field_list
-        fields_by_type = defaultdict(lambda: [])
         for field_type, field in fields:
             fields_by_type[field_type].append(field)
 
-    return fields_by_type
+    return meta_data_dict, fields_by_type

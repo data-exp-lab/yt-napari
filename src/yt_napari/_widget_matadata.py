@@ -6,6 +6,7 @@ from qtpy import QtCore
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QAbstractItemView,
+    QLabel,
     QListView,
     QPushButton,
     QVBoxLayout,
@@ -33,13 +34,15 @@ class MetadataWidget(QWidget):
         self.meta_data_display = widgets.Container()
         self.big_container.append(self.meta_data_display)
         self.layout().addWidget(self.big_container.native)
-        self.list_widgets = None
+        self.widgets_to_clear: list = None
 
     def inspect_file(self):
-        if self.list_widgets is not None:
-            for list_widget in self.list_widgets.values():
+        if self.widgets_to_clear is not None:
+            # always clear out the widgets when the button is pushed
+            for list_widget in self.widgets_to_clear:
                 self.layout().removeWidget(list_widget)
                 list_widget.setParent(None)
+        self.widgets_to_clear = []
 
         py_kwargs = {}
         _gui_utilities.translator.get_pydantic_kwargs(
@@ -50,16 +53,21 @@ class MetadataWidget(QWidget):
         model = _data_model.MetadataModel.parse_obj(py_kwargs)
 
         # process it!
-        fields_by_type = _model_ingestor._process_metadata_model(model)
+        meta_data_dict, fields_by_type = _model_ingestor._process_metadata_model(model)
 
-        list_widgets = {}
+        # display the metadata
+        for attr, val in meta_data_dict.items():
+            newwid = QLabel(f"{attr}: {str(val)}")
+            self.widgets_to_clear.append(newwid)
+            self.layout().addWidget(newwid)
+
+        # the collapsible field display
         ilist = 0
         for ftype, fields in fields_by_type.items():
-            list_widgets[ftype] = LayersList(ftype, fields, ilist < 3)
+            new_field_list = LayersList(ftype, fields, ilist < 3)
             ilist += 1
-            self.layout().addWidget(list_widgets[ftype])
-
-        self.list_widgets = list_widgets
+            self.widgets_to_clear.append(new_field_list)
+            self.layout().addWidget(new_field_list)
 
 
 # based on answer here:
