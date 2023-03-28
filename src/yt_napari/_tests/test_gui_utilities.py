@@ -51,7 +51,6 @@ def test_registry(Model, backend):
         c = widgets.Container()
         cls, ops = type_map.get_widget_class(value=nested_value)
         ops.update(kwargs)
-        print(ops)
         c.append(cls(value=nested_value, **ops))
         return c
 
@@ -93,7 +92,7 @@ def test_yt_widget(backend):
     file_editor.close()
 
 
-def test_pydantic_magicgui_default(Model, backend):
+def test_pydantic_magicgui_default(Model, backend, caplog):
 
     app = use_app(backend)  # noqa: F841
 
@@ -109,8 +108,8 @@ def test_pydantic_magicgui_default(Model, backend):
 
     tr = gu.MagicPydanticRegistry()
     c = widgets.Container()
-    with pytest.warns(UserWarning):
-        tr.add_pydantic_to_container(Model, c)
+    tr.add_pydantic_to_container(Model, c)
+    assert "magicgui could not identify" in caplog.text
     c.close()
 
 

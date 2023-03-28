@@ -114,7 +114,7 @@ def create_metadata_dict(
     layer_domain: LayerDomain,
     is_log: bool,
     reference_layer: Optional[ReferenceLayer] = None,
-    **kwargs
+    **kwargs,
 ) -> dict:
     """
     returns a metadata dict with some consistent keys for helping yt-napari

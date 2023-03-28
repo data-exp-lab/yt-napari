@@ -6,4 +6,6 @@ sphinx
 nbsphinx<0.8.8
 sphinx-jsonschema<1.19.0
 Jinja2<3.1.0
+magicgui
+pytest-qt
 -e .

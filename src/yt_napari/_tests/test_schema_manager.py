@@ -42,7 +42,7 @@ def test_schema_version_management(tmp_path):
     assert expected_file.is_file()
 
     # should error without override
-    with pytest.raises(Exception):
+    with pytest.raises(FileExistsError, match="provide overwrite_version"):
         m.write_new_schema("any old string", version="2.0.0")
 
     # provide override, should have new text

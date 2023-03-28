@@ -6,6 +6,8 @@ from typing import DefaultDict, Optional, Set, Union
 
 from packaging.version import Version
 
+from yt_napari.logging import ytnapari_log
+
 
 class Manager:
     # This is a simple on-disk schema version management class meant for
@@ -116,7 +118,7 @@ class Manager:
             )
 
         # write out json to filename
-        print(f"writing new schema {filename}")
+        ytnapari_log.info(f"writing new schema {filename}")
         with open(filename, "w") as f:
             f.write(schema_json)
 

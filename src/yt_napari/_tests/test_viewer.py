@@ -12,7 +12,7 @@ def yt_ds():
     return yt_testing.fake_amr_ds(fields=("density", "mass"), units=("kg/m**3", "kg"))
 
 
-def test_viewer(make_napari_viewer, yt_ds):
+def test_viewer(make_napari_viewer, yt_ds, caplog):
 
     # make_napari_viewer is a pytest fixture. It takes any keyword arguments
     # that napari.Viewer() takes. The fixture takes care of teardown, do **not**
@@ -31,12 +31,11 @@ def test_viewer(make_napari_viewer, yt_ds):
     expected_layers = 1
     assert len(viewer.layers) == expected_layers
 
-    with pytest.warns(RuntimeWarning):
-        sc.add_to_viewer(
-            viewer, yt_ds, ("gas", "density"), translate=10, resolution=res
-        )
-    with pytest.warns(RuntimeWarning):
-        sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), scale=10, resolution=res)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), translate=10, resolution=res)
+    assert "translate is calculated internally" in caplog.text
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), scale=10, resolution=res)
+    assert "scale is calculated internally" in caplog.text
+
     expected_layers += 2  # the above will add layers!
     assert len(viewer.layers) == expected_layers
 
