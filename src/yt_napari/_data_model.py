@@ -158,7 +158,6 @@ def _store_schema(schema_db: Optional[Union[PosixPath, str]] = None, **kwargs):
 class MetadataModel(BaseModel):
     filename: str = Field(None, description="the filename for the dataset")
     include_field_list: bool = Field(True, description="whether to list the fields")
-    display_length: str = "code_length"
     _ds_attrs: Tuple[str] = (
         "domain_left_edge",
         "domain_right_edge",

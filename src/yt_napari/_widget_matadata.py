@@ -6,12 +6,15 @@ from qtpy import QtCore
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QAbstractItemView,
+    QComboBox,
+    QHBoxLayout,
     QLabel,
     QListView,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
+from unyt import unyt_array
 
 from yt_napari import _data_model, _gui_utilities, _model_ingestor
 
@@ -57,9 +60,12 @@ class MetadataWidget(QWidget):
 
         # display the metadata
         for attr, val in meta_data_dict.items():
-            newwid = QLabel(f"{attr}: {str(val)}")
-            self.widgets_to_clear.append(newwid)
-            self.layout().addWidget(newwid)
+            if isinstance(val, unyt_array):
+                newid = UnytArrayQWidget(attr, val)
+            else:
+                newid = QLabel(f"{attr}: {str(val)}")
+            self.widgets_to_clear.append(newid)
+            self.layout().addWidget(newid)
 
         # the collapsible field display
         ilist = 0
@@ -119,3 +125,32 @@ class LayersList(QWidget):
         else:
             self.layer_list.setMaximumHeight(self.resized_size)
             self.currently_expanded = True
+
+
+class UnytArrayQWidget(QWidget):
+    # based of of yt.units.display_ytarray() : simpler to rewrite it than try
+    # to convert the ipywidget to Qt.
+    def __init__(self, arr_name: str, arr: unyt_array):
+        super().__init__()
+
+        unit_registry = arr.units.registry
+        self._unit_options = unit_registry.list_same_dimensions(arr.units)
+        self.arr = arr.copy()
+        self.arr_name = arr_name
+        self.units_box = QComboBox()
+        self.units_box.addItems(self._unit_options)
+        self.units_box.setCurrentText(str(self.arr.units))
+        self.units_box.currentTextChanged.connect(self.update_units)
+        self.arr_display = QLabel(self._get_display_name_text())
+
+        self.main_layout = QHBoxLayout()
+        self.main_layout.addWidget(self.arr_display)
+        self.main_layout.addWidget(self.units_box)
+        self.setLayout(self.main_layout)
+
+    def update_units(self, new_units_str):
+        self.arr = self.arr.to(new_units_str)
+        self.arr_display.setText(self._get_display_name_text())
+
+    def _get_display_name_text(self):
+        return f"{self.arr_name}: {str(self.arr.value)}"

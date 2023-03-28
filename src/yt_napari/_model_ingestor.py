@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yt
-from unyt import dimensions, unit_object, unit_registry, unyt_array, unyt_quantity
+from unyt import unit_object, unit_registry, unyt_array
 
 from yt_napari import _special_loaders
 from yt_napari._data_model import (
@@ -805,11 +805,7 @@ def _process_metadata_model(model: MetadataModel) -> Tuple[dict, dict]:
     ds = yt.load(fname)
     meta_data_dict = {}
     for attr in model._ds_attrs:
-        attval = getattr(ds, attr)
-        if isinstance(attval, unyt_array) or isinstance(attval, unyt_quantity):
-            if attval.units.dimensions == dimensions.length:
-                attval = attval.to(model.display_length)
-        meta_data_dict[attr] = attval
+        meta_data_dict[attr] = getattr(ds, attr)
 
     fields_by_type = defaultdict(lambda: [])
     if model.include_field_list:
