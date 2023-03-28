@@ -31,7 +31,6 @@ def test_viewer(make_napari_viewer, yt_ds, caplog):
     expected_layers = 1
     assert len(viewer.layers) == expected_layers
 
-    # with pytest.warns(RuntimeWarning):
     sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), translate=10, resolution=res)
     assert "translate is calculated internally" in caplog.text
     sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), scale=10, resolution=res)
