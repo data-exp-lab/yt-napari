@@ -1,4 +1,3 @@
-import warnings
 from collections import defaultdict
 from typing import Callable, Optional, Union
 
@@ -6,6 +5,7 @@ import pydantic
 from magicgui import type_map, widgets
 
 from yt_napari import _data_model
+from yt_napari.logging import ytnapari_log
 
 
 def set_default(variable, default):
@@ -125,7 +125,7 @@ class MagicPydanticRegistry:
                 if isinstance(new_widget, widgets.EmptyWidget):
                     msg = "magicgui could not identify a widget for "
                     msg += f" {py_model}.{field}, which has type {ftype}"
-                    warnings.warn(message=msg)
+                    ytnapari_log.warning(msg)
             container.append(new_widget)
 
     def get_pydantic_kwargs(

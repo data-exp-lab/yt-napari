@@ -11,6 +11,7 @@ https://napari.org/docs/dev/plugins/index.html
 import json
 
 from yt_napari._data_model import InputModel
+from yt_napari.logging import ytnapari_log
 
 
 def napari_get_reader(path):
@@ -86,7 +87,7 @@ def reader_function(path):
     if isinstance(path, list):
         path_list = [p for p in path if path_is_valid(p)]
         if len(path) != len(path_list):
-            raise RuntimeWarning(
+            ytnapari_log.warning(
                 "Some of the provided paths are not valid yt-napari json files"
             )
     else:

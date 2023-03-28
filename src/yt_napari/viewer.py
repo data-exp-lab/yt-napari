@@ -1,4 +1,3 @@
-import warnings
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -9,6 +8,7 @@ from napari.layers.utils._link_layers import get_linked_layers
 from unyt import unyt_array
 
 import yt_napari._model_ingestor as _mi
+from yt_napari.logging import ytnapari_log
 
 
 class Scene:
@@ -139,7 +139,7 @@ class Scene:
         for attr in ["translate", "scale"]:
             if attr in kwargs:
                 msg = f"{attr} is calculated internally, ignoring provided value"
-                warnings.warn(msg, RuntimeWarning)
+                ytnapari_log.warning(msg)
                 _ = kwargs.pop(attr)
 
         # set the display name

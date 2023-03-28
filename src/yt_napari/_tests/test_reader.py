@@ -93,7 +93,7 @@ def test_reader_load(json_file_fixture):
     assert np.all(layer_tuple_2[0] == layer_tuple[0])
 
 
-def test_invalid_schema(tmp_path, json_file_fixture):
+def test_invalid_schema(tmp_path, json_file_fixture, caplog):
 
     # test invalid schema
     with open(json_file_fixture) as jhandle:
@@ -110,8 +110,8 @@ def test_invalid_schema(tmp_path, json_file_fixture):
     # test that including one invalid raises a warning
     jpaths = [json_file_fixture, json_file]
     reader = napari_get_reader(jpaths)  # should succeed
-    with pytest.raises(RuntimeWarning):
-        _ = reader(jpaths)
+    _ = reader(jpaths)
+    assert "Some of the provided paths" in caplog.text
 
 
 def test_get_reader_pass():
