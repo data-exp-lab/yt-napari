@@ -28,8 +28,19 @@ class DatasetCache:
         ytnapari_log.warning(f"{name} not found in cache.")
         return None
 
-    def exists(self, name: str):
+    def exists(self, name: str) -> bool:
         return name in self.available
+
+    def reference_exists(self, name: str) -> bool:
+        if self.exists(name):
+            ds = self.get_ds(name)
+            ref_exists = True
+            try:
+                _ = ds.basename
+            except ReferenceError:
+                ref_exists = False
+            return ref_exists
+        return False
 
     def rm_ds(self, name: str):
         self.available.pop(name, None)
@@ -38,12 +49,13 @@ class DatasetCache:
         self.available = {}
 
     def check_then_load(self, filename: str):
-        if self.exists(filename) is False:
+        if self.reference_exists(filename):
+            ytnapari_log.info(f"loading {filename} from cache.")
+            return self.get_ds(filename)
+        else:
             ds = yt.load(filename)
             self.add_ds(ds, filename)
-        else:
-            ytnapari_log.info(f"loading {filename} from cache.")
-        return self.get_ds(filename)
+            return ds
 
 
 dataset_cache = DatasetCache()
