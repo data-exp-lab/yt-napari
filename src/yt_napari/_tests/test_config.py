@@ -1,4 +1,5 @@
 import os
+import sys
 from stat import S_IREAD
 
 import pytest
@@ -26,6 +27,7 @@ def test_config(tmp_path):
         custom_config.get_option("bad_key")
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Test not valid for windows")
 def test_config_in_read_only(tmp_path, caplog):
     config_dir = tmp_path / "configdir"
     config_dir.mkdir()
