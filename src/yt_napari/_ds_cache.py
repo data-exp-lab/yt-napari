@@ -2,6 +2,7 @@ import weakref
 
 import yt
 
+from yt_napari.config import ytnapari_config
 from yt_napari.logging import ytnapari_log
 
 
@@ -55,7 +56,8 @@ class DatasetCache:
             return self.get_ds(filename)
         else:
             ds = yt.load(filename)
-            self.add_ds(ds, filename)
+            if ytnapari_config.get_option("in_memory_cache"):
+                self.add_ds(ds, filename)
             return ds
 
 

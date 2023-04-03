@@ -1,6 +1,7 @@
 from yt import testing as yt_testing
 
 from yt_napari._ds_cache import dataset_cache
+from yt_napari.config import ytnapari_config
 
 
 def get_new_ds():
@@ -47,3 +48,11 @@ def _add_to_cache_then_delete():
 def test_weakref_destruction():
     _add_to_cache_then_delete()
     assert dataset_cache.reference_exists("hellotest") is False
+
+
+def test_config_option(yt_ugrid_ds_fn):
+    dataset_cache.rm_all()
+    ytnapari_config.set_option("in_memory_cache", False)
+    _ = dataset_cache.check_then_load(yt_ugrid_ds_fn)
+    assert yt_ugrid_ds_fn not in dataset_cache.available
+    ytnapari_config.set_option("in_memory_cache", True)
