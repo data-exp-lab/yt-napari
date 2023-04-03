@@ -7,6 +7,7 @@ After installation, there are three modes of using :code:`yt-napari`:
 2. :ref:`loading a json file from the napari gui<jsonload>`
 3. :ref:`napari gui plugins<naparigui>`
 
+Additionally, you can configure some behavior between napari sessions: see  :ref:`Configuring yt-napari<configfile>`.
 
 .. _jupyusage:
 
@@ -93,3 +94,29 @@ The use the yt Reader plugin, from a Napari viewer, select "Plugins -> yt-napari
 .. image:: _static/readme_ex_003_gui_reader.gif
 
 The reader plugin does its best to align new selections of data with existing yt-napari image layers and should be able to properly align selections from different yt datasets (please submit a bug report if it fails!).
+
+
+.. _configfile:
+
+Configuring yt-napari
+*********************
+
+User options are saved between napari sessions using the :code:`yt-napari.toml` configuration file. The location of this file is system-dependent. To find
+where it is, from a python shell, the following will display the expected file path for your system:
+
+
+.. code-block:: python
+
+    from yt_napari.config import ytnapari_config
+    print(ytnapari_config.config_file)
+
+
+you can edit that file directly or use the :code:`ytnapari_config.set_option('name', value)` to change an option and write the option to disk. If the default
+directory is not writeable, a warning will be logged but no errors raised.
+
+Configuration options
+#####################
+
+The following options are available:
+
+* :code:`in_memory_cache`, :code:`bool` (default :code:`True`). When :code:`True`, the widget and json-readers will store references to yt datasets in an in-memory cache. Subsequents loads of the same dataset will then use the available dataset handle. This behavior can also be manually controlled in the widget and json options -- changing it in the configuration will simply change the default value.
