@@ -1,4 +1,5 @@
 import os
+from stat import S_IREAD
 
 import pytest
 
@@ -23,3 +24,22 @@ def test_config(tmp_path):
 
     with pytest.raises(KeyError, match="bad_key is not a valid option"):
         custom_config.get_option("bad_key")
+
+
+def test_config_in_read_only(tmp_path, caplog):
+    config_dir = tmp_path / "configdir"
+    config_dir.mkdir()
+
+    config_dir.chmod(mode=S_IREAD)
+
+    custom_config = _ConfigContainer(config_dir=str(config_dir))
+    custom_config.write_to_disk()
+
+    assert "Could not write" in caplog.text
+
+    custom_config = _ConfigContainer(config_dir=str(config_dir / "another_dir"))
+    custom_config.write_to_disk()
+    assert "Could not create" in caplog.text
+
+    config_dir.chmod(0o0777)
+    config_dir.rmdir()
