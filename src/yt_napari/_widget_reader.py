@@ -5,6 +5,7 @@ from magicgui import widgets
 from qtpy.QtWidgets import QVBoxLayout, QWidget
 
 from yt_napari import _data_model, _gui_utilities, _model_ingestor
+from yt_napari._ds_cache import dataset_cache
 from yt_napari.viewer import Scene
 
 
@@ -22,6 +23,9 @@ class ReaderWidget(QWidget):
         pb = widgets.PushButton(text="Load")
         pb.clicked.connect(self.load_data)
         self.big_container.append(pb)
+        cc = widgets.PushButton(text="Clear cache")
+        cc.clicked.connect(self.clear_cache)
+        self.big_container.append(cc)
         self.layout().addWidget(self.big_container.native)
 
     _yt_scene: Scene = None  # will persist across widget calls
@@ -31,6 +35,9 @@ class ReaderWidget(QWidget):
         if self._yt_scene is None:
             self._yt_scene = Scene()
         return self._yt_scene
+
+    def clear_cache(self):
+        dataset_cache.rm_all()
 
     def load_data(self):
         # first extract all the pydantic arguments from the container

@@ -2,6 +2,7 @@ from functools import partial
 
 import numpy as np
 
+from yt_napari._ds_cache import dataset_cache
 from yt_napari._widget_reader import ReaderWidget
 
 
@@ -44,3 +45,6 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog):
 
     temp_layer = viewer.layers[1]
     assert temp_layer.metadata["_yt_napari_layer"] is True
+
+    r.clear_cache()
+    assert len(dataset_cache.available) == 0
