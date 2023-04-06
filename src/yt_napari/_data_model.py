@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field
 
-from yt_napari.config import ytnapari_config
+from yt_napari.config import ytcfg
 from yt_napari.schemas import _manager
 
 
@@ -44,7 +44,7 @@ class DataContainer(BaseModel):
         description="the units to use for left_edge and right_edge in the selections",
     )
     store_in_cache: Optional[bool] = Field(
-        ytnapari_config.get_option("in_memory_cache"),
+        ytcfg.get("yt_napari", "in_memory_cache"),
         description="if enabled, will store references to yt datasets.",
     )
 
