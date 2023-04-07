@@ -101,22 +101,34 @@ The reader plugin does its best to align new selections of data with existing yt
 Configuring yt-napari
 *********************
 
-User options are saved between napari sessions using the :code:`yt-napari.toml` configuration file. The location of this file is system-dependent. To find
-where it is, from a python shell, the following will display the expected file path for your system:
+User options can be saved between napari sessions by adding to the base :code:`yt` configuration
+file, :code:`yt.toml`. :code:`yt` looks for the configuration file in a number of places (check
+out the :code:`yt` documentation
+on:ref:`configuration <https://yt-project.org/doc/reference/configuration.html>`_ ). To add
+:code:`yt-napari` options, open up (or create) the configuration file and add a
+:code:`[yt_napari]` section. An example configuration file might look like:
 
+.. code-block:: bash
 
-.. code-block:: python
+    [yt]
+    log_level = 1
+    test_data_dir = "/path/to/yt_data"
 
-    from yt_napari.config import ytnapari_config
-    print(ytnapari_config.config_file)
+    [yt_napari]
+    in_memory_cache = true
 
-
-you can edit that file directly or use the :code:`ytnapari_config.set_option('name', value)` to change an option and write the option to disk. If the default
-directory is not writeable, a warning will be logged but no errors raised.
 
 Configuration options
 #####################
 
 The following options are available:
 
-* :code:`in_memory_cache`, :code:`bool` (default :code:`True`). When :code:`True`, the widget and json-readers will store references to yt datasets in an in-memory cache. Subsequents loads of the same dataset will then use the available dataset handle. This behavior can also be manually controlled in the widget and json options -- changing it in the configuration will simply change the default value.
+* :code:`in_memory_cache`, :code:`bool` (default :code:`true`). When :code:`true`,
+the widget and json-readers will store references to yt datasets in an in-memory
+cache. Subsequents loads of the same dataset will then use the available dataset
+handle. This behavior can also be manually controlled in the widget and json
+options -- changing it in the configuration will simply change the default value.
+
+
+Note that boolean values in :code:`toml` files start with lowercase: :code:`true` and
+:code:`false` (instead of :code:`True` and :code:`False`).

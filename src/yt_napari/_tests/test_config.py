@@ -14,5 +14,17 @@ def test_config_update():
     for setting, val in _defaults.items():
         assert val == ytcfg.get("yt_napari", setting)
 
+    # run it through again, make sure existing values are preserved
+    ytcfg.set("yt_napari", "in_memory_cache", False)  # (default is True)
+    ytcfg = _get_updated_config(ytcfg)
+    assert ytcfg.get("yt_napari", "in_memory_cache") is False
+
+    # remove it and add a blank so that the defaults get applied
+    ytcfg.remove_section("yt_napari")
+    ytcfg.add_section("yt_napari")
+    ytcfg = _get_updated_config(ytcfg)
+    for setting, val in _defaults.items():
+        assert val == ytcfg.get("yt_napari", setting)
+
     # make sure our settings get reset to what they were coming in...
     ytcfg.update({"yt_napari": current_vals})
