@@ -45,7 +45,7 @@ def test_viewer(make_napari_viewer, yt_ds, caplog):
 
     # build a new scene so it builds from prior
     sc = Scene()
-    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), resolution=res)
+    sc.add_to_viewer(viewer, yt_ds, ("gas", "density"))
     expected_layers += 1
     assert len(viewer.layers) == expected_layers
 

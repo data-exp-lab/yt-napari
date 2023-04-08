@@ -1,10 +1,10 @@
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-import yt
 from unyt import unit_object, unit_registry, unyt_array
 
 from yt_napari._data_model import InputModel
+from yt_napari._ds_cache import dataset_cache
 
 
 def _le_re_to_cen_wid(
@@ -288,7 +288,7 @@ def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     # dataset and return a plain numpy array
     for m_data in model.data:
 
-        ds = yt.load(m_data.filename)
+        ds = dataset_cache.check_then_load(m_data.filename)
 
         for sel in m_data.selections:
             # get the left, right edge as a unitful array, initialize the layer
