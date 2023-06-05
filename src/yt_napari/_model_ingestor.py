@@ -3,7 +3,6 @@ from collections import defaultdict
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-import yt
 from unyt import unit_object, unit_registry, unyt_array
 
 from yt_napari import _special_loaders
@@ -802,7 +801,7 @@ def _process_metadata_model(model: MetadataModel) -> Tuple[dict, dict]:
         # for testing for now
         fname = "IsolatedGalaxy/galaxy0030/galaxy0030"
 
-    ds = yt.load(fname)
+    ds = dataset_cache.check_then_load(fname)
     meta_data_dict = {}
     for attr in model._ds_attrs:
         meta_data_dict[attr] = getattr(ds, attr)
