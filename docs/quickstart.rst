@@ -104,7 +104,7 @@ Configuring yt-napari
 User options can be saved between napari sessions by adding to the base :code:`yt` configuration
 file, :code:`yt.toml`. :code:`yt` looks for the configuration file in a number of places (check
 out the :code:`yt` documentation
-on:ref:`configuration <https://yt-project.org/doc/reference/configuration.html>`_ ). To add
+on `configuration <https://yt-project.org/doc/reference/configuration.html>`_ ). To add
 :code:`yt-napari` options, open up (or create) the configuration file and add a
 :code:`[yt_napari]` section. An example configuration file might look like:
 

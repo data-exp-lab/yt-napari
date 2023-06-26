@@ -14,7 +14,9 @@ Welcome to yt-napari's documentation!
 
    installation
    quickstart
+   help
    notebooks
+   tutorials
    schema
    funding
    source/modules
