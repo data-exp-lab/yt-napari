@@ -34,11 +34,34 @@ class SelectionObject(BaseModel):
     )
 
 
+class ytWidth(BaseModel):
+    value: float = Field(None, description="The value for the width.")
+    unit: str = Field("code_length", description="The length unit of the width value.")
+
+
+class Slice(BaseModel):
+    fields: List[ytField] = Field(
+        None, description="list of fields to load for this selection"
+    )
+    normal: Union[int, str] = Field(None, description="the normal axis of the slice")
+    center: Optional[Tuple[float, float, float]] = Field(
+        None, description="The center point of the slice"
+    )
+    width: Optional[ytWidth] = Field(
+        None, description="The slice width, defaults to full domain"
+    )
+    resolution: Optional[Tuple[int, int]] = Field(
+        (400, 400),
+        description="the resolution at which to sample the slice",
+    )
+
+
 class DataContainer(BaseModel):
     filename: str = Field(None, description="the filename for the dataset")
     selections: List[SelectionObject] = Field(
-        None, description="list of selections to load in this dataset"
+        None, description="list of 3D selections to load in this dataset"
     )
+    slices: List[Slice] = Field(None, description="list of 2D slices to load.")
     edge_units: Optional[str] = Field(
         "code_length",
         description="the units to use for left_edge and right_edge in the selections",

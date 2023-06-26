@@ -117,6 +117,95 @@
         }
       }
     },
+    "ytWidth": {
+      "title": "ytWidth",
+      "type": "object",
+      "properties": {
+        "value": {
+          "title": "Value",
+          "description": "The value for the width.",
+          "type": "number"
+        },
+        "unit": {
+          "title": "Unit",
+          "description": "The length unit of the width value.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Slice": {
+      "title": "Slice",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "title": "Fields",
+          "description": "list of fields to load for this selection",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ytField"
+          }
+        },
+        "normal": {
+          "title": "Normal",
+          "description": "the normal axis of the slice",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "center": {
+          "title": "Center",
+          "description": "The center point of the slice",
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "width": {
+          "title": "Width",
+          "description": "The slice width, defaults to full domain",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ytWidth"
+            }
+          ]
+        },
+        "resolution": {
+          "title": "Resolution",
+          "description": "the resolution at which to sample the slice",
+          "default": [
+            400,
+            400
+          ],
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        }
+      }
+    },
     "DataContainer": {
       "title": "DataContainer",
       "type": "object",
@@ -128,10 +217,18 @@
         },
         "selections": {
           "title": "Selections",
-          "description": "list of selections to load in this dataset",
+          "description": "list of 3D selections to load in this dataset",
           "type": "array",
           "items": {
             "$ref": "#/definitions/SelectionObject"
+          }
+        },
+        "slices": {
+          "title": "Slices",
+          "description": "list of 2D slices to load.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Slice"
           }
         },
         "edge_units": {
@@ -142,7 +239,7 @@
         },
         "store_in_cache": {
           "title": "Store In Cache",
-          "description": "if enabled, will store references to yt datasets to avoid reloading.",
+          "description": "if enabled, will store references to yt datasets.",
           "default": true,
           "type": "boolean"
         }
