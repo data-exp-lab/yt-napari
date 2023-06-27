@@ -4,7 +4,7 @@
   "properties": {
     "data": {
       "title": "Data",
-      "description": "list of datasets to load",
+      "description": "list of data containers to load",
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataContainer"
@@ -149,18 +149,11 @@
         "normal": {
           "title": "Normal",
           "description": "the normal axis of the slice",
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "type": "string"
         },
         "center": {
           "title": "Center",
-          "description": "The center point of the slice",
+          "description": "The center point of the slice, default domain center",
           "type": "array",
           "minItems": 3,
           "maxItems": 3,
@@ -178,6 +171,15 @@
         },
         "width": {
           "title": "Width",
+          "description": "The slice width, defaults to full domain",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ytWidth"
+            }
+          ]
+        },
+        "height": {
+          "title": "Height",
           "description": "The slice width, defaults to full domain",
           "allOf": [
             {
@@ -203,6 +205,12 @@
               "type": "integer"
             }
           ]
+        },
+        "periodic": {
+          "title": "Periodic",
+          "description": "should the slice be periodic? default False.",
+          "default": false,
+          "type": "boolean"
         }
       }
     },

@@ -43,16 +43,22 @@ class Slice(BaseModel):
     fields: List[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
-    normal: Union[int, str] = Field(None, description="the normal axis of the slice")
+    normal: str = Field(None, description="the normal axis of the slice")
     center: Optional[Tuple[float, float, float]] = Field(
-        None, description="The center point of the slice"
+        None, description="The center point of the slice, default domain center"
     )
     width: Optional[ytWidth] = Field(
+        None, description="The slice width, defaults to full domain"
+    )
+    height: Optional[ytWidth] = Field(
         None, description="The slice width, defaults to full domain"
     )
     resolution: Optional[Tuple[int, int]] = Field(
         (400, 400),
         description="the resolution at which to sample the slice",
+    )
+    periodic: Optional[bool] = Field(
+        False, description="should the slice be periodic? default False."
     )
 
 
@@ -73,7 +79,9 @@ class DataContainer(BaseModel):
 
 
 class InputModel(BaseModel):
-    data: List[DataContainer] = Field(None, description="list of datasets to load")
+    data: List[DataContainer] = Field(
+        None, description="list of data containers to load"
+    )
     _schema_prefix = "yt-napari"
 
 

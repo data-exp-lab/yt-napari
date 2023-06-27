@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from unyt import unit_object, unit_registry, unyt_array
 
-from yt_napari._data_model import InputModel
+from yt_napari._data_model import DataContainer, InputModel
 from yt_napari._ds_cache import dataset_cache
 
 
@@ -19,7 +19,11 @@ def _le_re_to_cen_wid(
 class LayerDomain:
     # container for domain info for a single layer
     def __init__(
-        self, left_edge: unyt_array, right_edge: unyt_array, resolution: tuple
+        self,
+        left_edge: unyt_array,
+        right_edge: unyt_array,
+        resolution: tuple,
+        n_d: int = 3,
     ):
 
         if len(left_edge) != len(right_edge):
@@ -27,7 +31,7 @@ class LayerDomain:
 
         if len(resolution) != len(left_edge):
             if len(resolution) == 1:
-                resolution = resolution * 3  # assume same in every dim
+                resolution = resolution * n_d  # assume same in every dim
             else:
                 raise ValueError("length of resolution does not match edge arrays")
 
@@ -36,6 +40,7 @@ class LayerDomain:
         self.center, self.width = _le_re_to_cen_wid(left_edge, right_edge)
         self.resolution = unyt_array(resolution)
         self.grid_width = self.width / self.resolution
+        self.n_d = n_d
 
 
 # define types for the napari layer tuples
@@ -278,6 +283,101 @@ class PhysicalDomainTracker:
         self.center, self.width = center_wid
 
 
+def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
+
+    for sel in m_data.selections:
+        # get the left, right edge as a unitful array, initialize the layer
+        # domain tracking for this layer and update the global domain extent
+        LE = ds.arr(sel.left_edge, m_data.edge_units)
+        RE = ds.arr(sel.right_edge, m_data.edge_units)
+        res = sel.resolution
+        layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
+
+        # create the fixed resolution buffer
+        frb = ds.r[
+            LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
+            LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
+            LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
+        ]
+
+        for field_container in sel.fields:
+            field = (field_container.field_type, field_container.field_name)
+
+            data = frb[field]  # extract the field (the slow part)
+            if field_container.take_log:
+                data = np.log10(data)
+
+            # create a metadata dict and set a name
+            fieldname = ":".join(field)
+            md = create_metadata_dict(data, layer_domain, field_container.take_log)
+            add_kwargs = {"name": fieldname, "metadata": md}
+            layer_type = "image"
+
+            layer_list.append((data, add_kwargs, layer_type, layer_domain))
+
+    return layer_list
+
+
+def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
+    axis_id = ds.coordinates.axis_id
+    for slice in m_data.slices:
+
+        normal_ax = axis_id[slice.normal]
+
+        if slice.center is None:
+            c = ds.domain_center
+        else:
+            c = ds.arr(slice.center, m_data.edge_units)
+
+        slc = ds.slice(slice.normal, c[normal_ax])
+
+        x_axis = axis_id[ds.coordinates.image_axis_name[slice.normal][0]]
+        y_axis = axis_id[ds.coordinates.image_axis_name[slice.normal][1]]
+        LE = ds.arr([0, 0], "code_length")
+        RE = ds.arr([0, 0], "code_length")
+        if slice.width is None:
+            w = ds.domain_width[x_axis]
+        else:
+            w = ds.quan(slice.width.value, slice.width.unit)
+        LE[0] = c[x_axis] - w / 2.0
+        RE[0] = c[x_axis] + w / 2.0
+
+        if slice.height is None:
+            h = ds.domain_width[y_axis]
+        else:
+            h = ds.quan(slice.height.value, slice.height.unit)
+        LE[1] = c[y_axis] - h / 2.0
+        RE[1] = c[y_axis] + h / 2.0
+
+        res = slice.resolution
+        layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res, n_d=2)
+
+        frb = slc.to_frb(
+            width=w,
+            height=h,
+            center=c,
+            resolution=slice.resolution,
+            periodic=slice.periodic,
+        )
+
+        for field_container in slice.fields:
+            field = (field_container.field_type, field_container.field_name)
+
+            data = frb[field]  # extract the field (the slow part)
+            if field_container.take_log:
+                data = np.log10(data)
+
+            # create a metadata dict and set a name
+            fieldname = ":".join(field)
+            md = create_metadata_dict(data, layer_domain, field_container.take_log)
+            add_kwargs = {"name": fieldname, "metadata": md}
+            layer_type = "image"
+
+            layer_list.append((data, add_kwargs, layer_type, layer_domain))
+
+    return layer_list
+
+
 def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     # return a list of layer tuples with domain information
 
@@ -289,36 +389,10 @@ def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     for m_data in model.data:
 
         ds = dataset_cache.check_then_load(m_data.filename)
-
-        for sel in m_data.selections:
-            # get the left, right edge as a unitful array, initialize the layer
-            # domain tracking for this layer and update the global domain extent
-            LE = ds.arr(sel.left_edge, m_data.edge_units)
-            RE = ds.arr(sel.right_edge, m_data.edge_units)
-            res = sel.resolution
-            layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
-
-            # create the fixed resolution buffer
-            frb = ds.r[
-                LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
-                LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
-                LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
-            ]
-
-            for field_container in sel.fields:
-                field = (field_container.field_type, field_container.field_name)
-
-                data = frb[field]  # extract the field (the slow part)
-                if field_container.take_log:
-                    data = np.log10(data)
-
-                # create a metadata dict and set a name
-                fieldname = ":".join(field)
-                md = create_metadata_dict(data, layer_domain, field_container.take_log)
-                add_kwargs = {"name": fieldname, "metadata": md}
-                layer_type = "image"
-
-                layer_list.append((data, add_kwargs, layer_type, layer_domain))
+        if m_data.selections is not None:
+            layer_list = _load_3D_regions(ds, m_data, layer_list)
+        if m_data.slices is not None:
+            layer_list = _load_2D_slices(ds, m_data, layer_list)
 
     return layer_list
 
