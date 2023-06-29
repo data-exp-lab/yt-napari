@@ -16,11 +16,10 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog):
     r = ReaderWidget(napari_viewer=viewer)
 
     r.data_container.filename.value = yt_ugrid_ds_fn
-    r.data_container.selections.fields.field_type.value = "gas"
-    r.data_container.selections.fields.field_name.value = "density"
+    r.data_container.selections.regions.fields.field_type.value = "gas"
+    r.data_container.selections.regions.fields.field_name.value = "density"
     res = (10, 10, 10)
-    r.data_container.selections.resolution.value = res
-    r.data_container.edge_units.value = "code_length"
+    r.data_container.selections.regions.resolution.value = res
 
     def rebuild_data(final_shape, data):
         # the yt file thats being loaded from the pytest fixture is a saved
@@ -34,9 +33,9 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog):
     r._post_load_function = rebuild
     r.load_data()
 
-    r.data_container.selections.fields.field_name.value = "temperature"
-    r.data_container.selections.left_edge.value = (0.4, 0.4, 0.4)
-    r.data_container.selections.right_edge.value = (0.6, 0.6, 0.6)
+    r.data_container.selections.regions.fields.field_name.value = "temperature"
+    r.data_container.selections.regions.left_edge.value.value = (0.4, 0.4, 0.4)
+    r.data_container.selections.regions.right_edge.value.value = (0.6, 0.6, 0.6)
     r.load_data()
     # should have read from cache, check the log:
     assert yt_ugrid_ds_fn in caplog.text

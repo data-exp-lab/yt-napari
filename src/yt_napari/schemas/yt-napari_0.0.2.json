@@ -34,21 +34,13 @@
         }
       }
     },
-    "SelectionObject": {
-      "title": "SelectionObject",
+    "Left_Edge": {
+      "title": "Left_Edge",
       "type": "object",
       "properties": {
-        "fields": {
-          "title": "Fields",
-          "description": "list of fields to load for this selection",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ytField"
-          }
-        },
-        "left_edge": {
-          "title": "Left Edge",
-          "description": "the left edge (min x, min y, min z) in units of edge_units",
+        "value": {
+          "title": "Value",
+          "description": "3-element unitful tuple.",
           "default": [
             0.0,
             0.0,
@@ -69,9 +61,21 @@
             }
           ]
         },
-        "right_edge": {
-          "title": "Right Edge",
-          "description": "the right edge (max x, max y, max z) in units of edge_units",
+        "unit": {
+          "title": "Unit",
+          "description": "the unit length string.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Right_Edge": {
+      "title": "Right_Edge",
+      "type": "object",
+      "properties": {
+        "value": {
+          "title": "Value",
+          "description": "3-element unitful tuple.",
           "default": [
             1.0,
             1.0,
@@ -89,6 +93,44 @@
             },
             {
               "type": "number"
+            }
+          ]
+        },
+        "unit": {
+          "title": "Unit",
+          "description": "the unit length string.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Region": {
+      "title": "Region",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "title": "Fields",
+          "description": "list of fields to load for this selection",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ytField"
+          }
+        },
+        "left_edge": {
+          "title": "Left Edge",
+          "description": "the left edge (min x, min y, min z)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Left_Edge"
+            }
+          ]
+        },
+        "right_edge": {
+          "title": "Right Edge",
+          "description": "the right edge (max x, max y, max z)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Right_Edge"
             }
           ]
         },
@@ -117,18 +159,48 @@
         }
       }
     },
-    "ytWidth": {
-      "title": "ytWidth",
+    "Length_Tuple": {
+      "title": "Length_Tuple",
       "type": "object",
       "properties": {
         "value": {
           "title": "Value",
-          "description": "The value for the width.",
+          "description": "3-element unitful tuple.",
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "unit": {
+          "title": "Unit",
+          "description": "the unit length string.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Length_Value": {
+      "title": "Length_Value",
+      "type": "object",
+      "properties": {
+        "value": {
+          "title": "Value",
+          "description": "Single unitful value.",
           "type": "number"
         },
         "unit": {
           "title": "Unit",
-          "description": "The length unit of the width value.",
+          "description": "the unit length string.",
           "default": "code_length",
           "type": "string"
         }
@@ -154,18 +226,9 @@
         "center": {
           "title": "Center",
           "description": "The center point of the slice, default domain center",
-          "type": "array",
-          "minItems": 3,
-          "maxItems": 3,
-          "items": [
+          "allOf": [
             {
-              "type": "number"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "number"
+              "$ref": "#/definitions/Length_Tuple"
             }
           ]
         },
@@ -174,7 +237,7 @@
           "description": "The slice width, defaults to full domain",
           "allOf": [
             {
-              "$ref": "#/definitions/ytWidth"
+              "$ref": "#/definitions/Length_Value"
             }
           ]
         },
@@ -183,7 +246,7 @@
           "description": "The slice width, defaults to full domain",
           "allOf": [
             {
-              "$ref": "#/definitions/ytWidth"
+              "$ref": "#/definitions/Length_Value"
             }
           ]
         },
@@ -214,6 +277,28 @@
         }
       }
     },
+    "SelectionObject": {
+      "title": "SelectionObject",
+      "type": "object",
+      "properties": {
+        "regions": {
+          "title": "Regions",
+          "description": "a list of regions to load",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Region"
+          }
+        },
+        "slices": {
+          "title": "Slices",
+          "description": "a list of slices to load",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Slice"
+          }
+        }
+      }
+    },
     "DataContainer": {
       "title": "DataContainer",
       "type": "object",
@@ -225,25 +310,12 @@
         },
         "selections": {
           "title": "Selections",
-          "description": "list of 3D selections to load in this dataset",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SelectionObject"
-          }
-        },
-        "slices": {
-          "title": "Slices",
-          "description": "list of 2D slices to load.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Slice"
-          }
-        },
-        "edge_units": {
-          "title": "Edge Units",
-          "description": "the units to use for left_edge and right_edge in the selections",
-          "default": "code_length",
-          "type": "string"
+          "description": "selections to load in this dataset",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SelectionObject"
+            }
+          ]
         },
         "store_in_cache": {
           "title": "Store In Cache",

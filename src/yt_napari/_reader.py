@@ -10,8 +10,8 @@ https://napari.org/docs/dev/plugins/index.html
 """
 import json
 
-from yt_napari._data_model import InputModel
 from yt_napari.logging import ytnapari_log
+from yt_napari.schemas._version_comparison import schema_version_is_valid
 
 
 def napari_get_reader(path):
@@ -50,13 +50,7 @@ def path_is_valid(path: str) -> bool:
         schema_raw = json.load(jhandle)
         schema_version = schema_raw.get("$schema", None)
 
-    pfx = InputModel._schema_prefix
-    if schema_version is None or pfx not in schema_version:
-        # To Do: check schema against a list of valid schemas rather than a
-        # single schema.
-        # the schema does not match a known schema for this plugin
-        return False
-    return True
+    return schema_version_is_valid(schema_version)
 
 
 def reader_function(path):

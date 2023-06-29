@@ -203,6 +203,16 @@ def _get_pydantic_model_field(py_model, field: str) -> pydantic.fields.ModelFiel
     return py_model.__fields__[field]
 
 
+# the following model-field tuples will be embedded in containers
+_models_to_embed_in_list = (
+    (_data_model.Slice, "fields"),
+    (_data_model.Region, "fields"),
+    (_data_model.DataContainer, "selections"),
+    (_data_model.SelectionObject, "regions"),
+    (_data_model.SelectionObject, "slices"),
+)
+
+
 def _register_yt_data_model(translator: MagicPydanticRegistry):
     # registers some special cases for pydantic fields.
     translator.register(
@@ -213,23 +223,14 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
         pydantic_attr_factory=get_filename,
     )
 
-    py_model, field = _data_model.SelectionObject, "fields"
-    translator.register(
-        py_model,
-        field,
-        magicgui_factory=get_magicguidefault,
-        magicgui_args=(py_model.__fields__[field]),
-        pydantic_attr_factory=embed_in_list,
-    )
-
-    py_model, field = _data_model.DataContainer, "selections"
-    translator.register(
-        py_model,
-        field,
-        magicgui_factory=get_magicguidefault,
-        magicgui_args=(py_model.__fields__[field]),
-        pydantic_attr_factory=embed_in_list,
-    )
+    for py_model, field in _models_to_embed_in_list:
+        translator.register(
+            py_model,
+            field,
+            magicgui_factory=get_magicguidefault,
+            magicgui_args=(py_model.__fields__[field]),
+            pydantic_attr_factory=embed_in_list,
+        )
 
 
 translator = MagicPydanticRegistry()

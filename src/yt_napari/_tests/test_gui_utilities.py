@@ -145,5 +145,7 @@ def test_yt_data_container(backend):
     app = use_app(backend)  # noqa: F841
     data_container = gu.get_yt_data_container()
     assert hasattr(data_container, "filename")
-    assert hasattr(data_container.selections, "resolution")
+    assert hasattr(data_container.selections, "slices")
+    assert hasattr(data_container.selections, "regions")
+    assert hasattr(data_container.selections.regions, "resolution")
     data_container.close()

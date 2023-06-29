@@ -285,11 +285,18 @@ class PhysicalDomainTracker:
 
 def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
 
-    for sel in m_data.selections:
+    for sel in m_data.selections.regions:
         # get the left, right edge as a unitful array, initialize the layer
         # domain tracking for this layer and update the global domain extent
-        LE = ds.arr(sel.left_edge, m_data.edge_units)
-        RE = ds.arr(sel.right_edge, m_data.edge_units)
+        if sel.left_edge is None:
+            LE = ds.domain_left_edge
+        else:
+            LE = ds.arr(sel.left_edge.value, sel.left_edge.unit)
+
+        if sel.right_edge is None:
+            RE = ds.domain_right_edge
+        else:
+            RE = ds.arr(sel.right_edge.value, sel.right_edge.unit)
         res = sel.resolution
         layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
 
@@ -320,14 +327,15 @@ def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
 
 def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
     axis_id = ds.coordinates.axis_id
-    for slice in m_data.slices:
-
+    for slice in m_data.selections.slices:
+        if slice.normal == "":
+            continue
         normal_ax = axis_id[slice.normal]
 
         if slice.center is None:
             c = ds.domain_center
         else:
-            c = ds.arr(slice.center, m_data.edge_units)
+            c = ds.arr(slice.center.value, slice.center.unit)
 
         slc = ds.slice(slice.normal, c[normal_ax])
 
@@ -389,9 +397,9 @@ def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     for m_data in model.data:
 
         ds = dataset_cache.check_then_load(m_data.filename)
-        if m_data.selections is not None:
+        if m_data.selections.regions is not None:
             layer_list = _load_3D_regions(ds, m_data, layer_list)
-        if m_data.slices is not None:
+        if m_data.selections.slices is not None:
             layer_list = _load_2D_slices(ds, m_data, layer_list)
 
     return layer_list

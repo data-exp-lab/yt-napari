@@ -18,6 +18,9 @@ class ReaderWidget(QWidget):
         self.big_container = widgets.Container()
         self.data_container = _gui_utilities.get_yt_data_container()
         self.big_container.append(self.data_container)
+
+        # each selection object gets its own dropdown
+
         self._post_load_function: Optional[Callable] = None
 
         pb = widgets.PushButton(text="Load")
@@ -66,7 +69,7 @@ class ReaderWidget(QWidget):
             data = self._post_load_function(data)
 
         # set the metadata
-        take_log = model.data[0].selections[0].fields[0].take_log
+        take_log = model.data[0].selections.regions[0].fields[0].take_log
         md = _model_ingestor.create_metadata_dict(
             data, layer_domain, take_log, reference_layer=ref_layer
         )
