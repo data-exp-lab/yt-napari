@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import pydantic
 from magicgui import type_map, widgets
@@ -106,10 +106,19 @@ class MagicPydanticRegistry:
         self,
         py_model: Union[pydantic.BaseModel, pydantic.main.ModelMetaclass],
         container: widgets.Container,
+        ignore_attrs: Optional[Union[str, List[str]]] = None,
     ):
         # recursively traverse a pydantic model adding widgets to a container.
         # When a nested pydantic model is encountered, add a new container
+
+        if not isinstance(ignore_attrs, list):
+            ignore_attrs = [
+                ignore_attrs,
+            ]
+
         for field, field_def in py_model.__fields__.items():
+            if field in ignore_attrs:
+                continue
             ftype = field_def.type_
             if isinstance(ftype, pydantic.BaseModel) or isinstance(
                 ftype, pydantic.main.ModelMetaclass
@@ -237,7 +246,32 @@ translator = MagicPydanticRegistry()
 _register_yt_data_model(translator)
 
 
-def get_yt_data_container():
+def get_yt_data_container(
+    ignore_attrs: Optional[Union[str, List[str]]] = None
+) -> widgets.Container:
     data_container = widgets.Container()
-    translator.add_pydantic_to_container(_data_model.DataContainer, data_container)
+    translator.add_pydantic_to_container(
+        _data_model.DataContainer,
+        data_container,
+        ignore_attrs=ignore_attrs,
+    )
     return data_container
+
+
+_valid_selections = ("Region", "Slice")
+
+
+def get_yt_selection_container(selection_type: str, return_native: bool = False):
+    # return a container for a single selection
+    if selection_type not in _valid_selections:
+        raise ValueError(
+            f"selection_type must be one of {_valid_selections}, "
+            f"found {selection_type}"
+        )
+
+    selection_container = widgets.Container()
+    pydantic_model = getattr(_data_model, selection_type)
+    translator.add_pydantic_to_container(pydantic_model, selection_container)
+    if return_native:
+        return selection_container.native
+    return selection_container
