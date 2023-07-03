@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Callable, Optional
 
 import napari
@@ -16,8 +17,10 @@ class ReaderWidget(QWidget):
         self.setLayout(QVBoxLayout())
         self.viewer = napari_viewer
 
-        ds_container = _gui_utilities.get_yt_data_container(ignore_attrs="selections")
-        self.layout().addWidget(ds_container.native)
+        self.ds_container = _gui_utilities.get_yt_data_container(
+            ignore_attrs="selections"
+        )
+        self.layout().addWidget(self.ds_container.native)
 
         # click button to add layer
         addition_group_layout = QHBoxLayout()
@@ -33,6 +36,7 @@ class ReaderWidget(QWidget):
 
         # the active selections, populated by add_a_selection
         self.active_selections = {}
+        self.active_selection_types = {}
         self.active_selection_layout = QVBoxLayout()
         self.layout().addLayout(self.active_selection_layout)
 
@@ -71,6 +75,8 @@ class ReaderWidget(QWidget):
         self.active_selections[widg_key] = new_selection_widget
         self.active_selection_layout.addWidget(self.active_selections[widg_key])
         self.active_sel_list.insertItem(widg_id - 1, widg_key.replace("_", " "))
+        # the active_selection_types mapping lists dont need to be cleared
+        self.active_selection_types[widg_key] = selection_type
 
     def remove_selection(self):
         widget_to_rm = self.active_sel_list.currentText().replace(" ", "_")
@@ -92,12 +98,37 @@ class ReaderWidget(QWidget):
         dataset_cache.rm_all()
 
     def load_data(self):
-        # first extract all the pydantic arguments from the container
+        # this function semi-automatically extracts the arguments needed to
+        # instantiate pydantic objects, which are then handed off to the
+        # same data ingestion function as the json loader.
+
+        # first, get the pydantic args for each selection type, embed in lists
+        selections_by_type = defaultdict(list)
+        for sel_key, selection in self.active_selections.items():
+            sel_type = self.active_selection_types[
+                sel_key
+            ].capitalize()  # Region or Slice
+
+            py_kwargs = {}
+            mgui_sel = selection.selection_container_raw
+            _gui_utilities.translator.get_pydantic_kwargs(
+                mgui_sel, getattr(_data_model, sel_type), py_kwargs
+            )
+            selections_by_type[sel_type.lower() + "s"].append(py_kwargs)
+
+        # next, process remainig arguments (skipping selections):
         py_kwargs = {}
         _gui_utilities.translator.get_pydantic_kwargs(
-            self.data_container, _data_model.DataContainer, py_kwargs
+            self.ds_container,
+            _data_model.DataContainer,
+            py_kwargs,
+            ignore_attrs="selections",
         )
-        # instantiate the base model
+
+        # add selections in
+        py_kwargs["selections"] = selections_by_type
+
+        # now ready to instantiate the base model
         py_kwargs = {
             "data": [
                 py_kwargs,
@@ -107,25 +138,28 @@ class ReaderWidget(QWidget):
         # process it!
         layer_list = _model_ingestor._process_validated_model(model)
 
-        # get the reference layer, align the current new layer
-        layer_domain = layer_list[0][3]
-        ref_layer = self.yt_scene._get_reference_layer(
-            self.viewer.layers, default_if_missing=layer_domain
-        )
-        data, im_kwargs, _ = ref_layer.align_sanitize_layer(layer_list[0])
+        for new_layer in layer_list:
+            # get the reference layer, align the current new layer
+            layer_domain = new_layer[3]
+            ref_layer = self.yt_scene._get_reference_layer(
+                self.viewer.layers, default_if_missing=layer_domain
+            )
+            data, im_kwargs, _ = ref_layer.align_sanitize_layer(new_layer)
 
-        if self._post_load_function is not None:
-            data = self._post_load_function(data)
+            if self._post_load_function is not None:
+                data = self._post_load_function(data)
 
-        # set the metadata
-        take_log = model.data[0].selections.regions[0].fields[0].take_log
-        md = _model_ingestor.create_metadata_dict(
-            data, layer_domain, take_log, reference_layer=ref_layer
-        )
-        im_kwargs["metadata"] = md
+            # set the metadata
 
-        # add the new layer
-        self.viewer.add_image(data, **im_kwargs)
+            # NEED TO FIX THIS LOG
+            take_log = model.data[0].selections.regions[0].fields[0].take_log
+            md = _model_ingestor.create_metadata_dict(
+                data, layer_domain, take_log, reference_layer=ref_layer
+            )
+            im_kwargs["metadata"] = md
+
+            # add the new layer
+            self.viewer.add_image(data, **im_kwargs)
 
 
 class SelectionEntry(QWidget):
@@ -143,9 +177,10 @@ class SelectionEntry(QWidget):
         self.expand_button = QPushButton(f"Selection {name}")
         self.expand_button.setToolTip(f"show/hide {name}")
 
-        self.selection_container = _gui_utilities.get_yt_selection_container(
-            selection_type, return_native=True
+        self.selection_container_raw = _gui_utilities.get_yt_selection_container(
+            selection_type, return_native=False
         )
+        self.selection_container = self.selection_container_raw.native
 
         # self.container_model = QStandardItemModel()
         # self.layer_list.setModel(self.container_model)

@@ -138,13 +138,23 @@ class MagicPydanticRegistry:
             container.append(new_widget)
 
     def get_pydantic_kwargs(
-        self, container: widgets.Container, py_model, pydantic_kwargs: dict
+        self,
+        container: widgets.Container,
+        py_model,
+        pydantic_kwargs: dict,
+        ignore_attrs: Optional[Union[str, List[str]]] = None,
     ):
         # given a container that was instantiated from a pydantic model, get
         # the arguments needed to instantiate that pydantic model
+        if not isinstance(ignore_attrs, list):
+            ignore_attrs = [
+                ignore_attrs,
+            ]
 
         # traverse model fields, pull out values from container
         for field, field_def in py_model.__fields__.items():
+            if field in ignore_attrs:
+                continue
             ftype = field_def.type_
             if isinstance(ftype, pydantic.BaseModel) or isinstance(
                 ftype, pydantic.main.ModelMetaclass
