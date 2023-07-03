@@ -152,7 +152,9 @@ class ReaderWidget(QWidget):
             # set the metadata
 
             # NEED TO FIX THIS LOG
-            take_log = model.data[0].selections.regions[0].fields[0].take_log
+            take_log = new_layer[1]["metadata"]["_is_log"]
+
+            # rebuild the metadata dict with reference layer info
             md = _model_ingestor.create_metadata_dict(
                 data, layer_domain, take_log, reference_layer=ref_layer
             )
