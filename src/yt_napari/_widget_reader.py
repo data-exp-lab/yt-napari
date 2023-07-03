@@ -38,6 +38,7 @@ class ReaderWidget(QWidget):
         self.active_selections = {}
         self.active_selection_types = {}
         self.active_selection_layout = QVBoxLayout()
+        self.widg_id = 0
         self.layout().addLayout(self.active_selection_layout)
 
         # removing selections
@@ -68,13 +69,14 @@ class ReaderWidget(QWidget):
 
     def add_a_selection(self):
         selection_type = self.new_selection_type.currentText()
-        widg_id = len(self.active_selections) + 1
-        widget_name = f"Selection {widg_id}, {selection_type}"
-        widg_key = f"{selection_type}_{widg_id}"
+        new_widg_id = self.widg_id + 1
+        self.widg_id = new_widg_id
+        widget_name = f"Selection {new_widg_id}, {selection_type}"
+        widg_key = f"{selection_type}_{new_widg_id}"
         new_selection_widget = SelectionEntry(widget_name, selection_type)
         self.active_selections[widg_key] = new_selection_widget
         self.active_selection_layout.addWidget(self.active_selections[widg_key])
-        self.active_sel_list.insertItem(widg_id - 1, widg_key.replace("_", " "))
+        self.active_sel_list.insertItem(new_widg_id - 1, widg_key.replace("_", " "))
         # the active_selection_types mapping lists dont need to be cleared
         self.active_selection_types[widg_key] = selection_type
 
@@ -150,10 +152,7 @@ class ReaderWidget(QWidget):
                 data = self._post_load_function(data)
 
             # set the metadata
-
-            # NEED TO FIX THIS LOG
             take_log = new_layer[1]["metadata"]["_is_log"]
-
             # rebuild the metadata dict with reference layer info
             md = _model_ingestor.create_metadata_dict(
                 data, layer_domain, take_log, reference_layer=ref_layer
