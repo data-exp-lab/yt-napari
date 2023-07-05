@@ -140,27 +140,18 @@ class ReaderWidget(QWidget):
         # process it!
         layer_list = _model_ingestor._process_validated_model(model)
 
+        # align it, using first layer
+        layer_0 = layer_list[0][3]
+        ref_layer = _model_ingestor.ReferenceLayer(layer_0)
+        layer_list = ref_layer.align_sanitize_layers(layer_list)
+
         for new_layer in layer_list:
-            # get the reference layer, align the current new layer
-            layer_domain = new_layer[3]
-            ref_layer = self.yt_scene._get_reference_layer(
-                self.viewer.layers, default_if_missing=layer_domain
-            )
-            data, im_kwargs, _ = ref_layer.align_sanitize_layer(new_layer)
-
+            im_arr, im_kwargs, _ = new_layer
             if self._post_load_function is not None:
-                data = self._post_load_function(data)
-
-            # set the metadata
-            take_log = new_layer[1]["metadata"]["_is_log"]
-            # rebuild the metadata dict with reference layer info
-            md = _model_ingestor.create_metadata_dict(
-                data, layer_domain, take_log, reference_layer=ref_layer
-            )
-            im_kwargs["metadata"] = md
+                im_arr = self._post_load_function(im_arr)
 
             # add the new layer
-            self.viewer.add_image(data, **im_kwargs)
+            self.viewer.add_image(im_arr, **im_kwargs)
 
 
 class SelectionEntry(QWidget):
