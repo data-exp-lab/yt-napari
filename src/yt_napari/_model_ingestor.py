@@ -40,6 +40,8 @@ class LayerDomain:
         self.center, self.width = _le_re_to_cen_wid(left_edge, right_edge)
         self.resolution = unyt_array(resolution)
         self.grid_width = self.width / self.resolution
+        self.aspect_ratio = self.width / self.width[0]
+        self.requires_scale = np.any(self.aspect_ratio != unyt_array(1.0, ""))
         self.n_d = n_d
 
 
@@ -61,6 +63,7 @@ class ReferenceLayer:
         self.width = ref_layer_domain.width
         self.resolution = ref_layer_domain.resolution
         self.grid_width = ref_layer_domain.grid_width
+        self.aspect_ratio = ref_layer_domain.aspect_ratio
 
     def calculate_scale(self, other_layer: LayerDomain) -> unyt_array:
         # calculate the pixel scale for a layer relative to the reference
@@ -69,7 +72,11 @@ class ReferenceLayer:
         # relative to the minimum grid resolution in each direction across
         # layers. scale > 1 will take a small number of pixels and stretch them
         # to cover more pixels. scale < 1 will shrink them.
-        return other_layer.grid_width / self.grid_width
+        sc = other_layer.grid_width / self.grid_width
+
+        # we also need to multiply by the initial reference layer aspect ratio
+        # to account for any initial distortion.
+        return sc * self.aspect_ratio
 
     def calculate_translation(self, other_layer: LayerDomain) -> unyt_array:
         # get the translation vector for another layer relative to the left edge
