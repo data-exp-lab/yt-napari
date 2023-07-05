@@ -11,6 +11,17 @@ import yt_napari._model_ingestor as _mi
 from yt_napari.logging import ytnapari_log
 
 
+def _check_for_reference_layer(
+    napari_layer_list: LayerList,
+) -> Optional[_mi.ReferenceLayer]:
+    # check the napari viewer layer list for an existing reference layer
+    for layer in napari_layer_list:
+        if "_yt_napari_layer" in layer.metadata:
+            if layer.metadata["_reference_layer"] is not None:
+                return layer.metadata["_reference_layer"]
+    return None
+
+
 class Scene:
     def __init__(self, reference_layer: Optional[_mi.ReferenceLayer] = None):
         self._reference_layer = reference_layer
@@ -18,12 +29,7 @@ class Scene:
     def _check_for_reference_layer(
         self, current_layers: list
     ) -> Optional[_mi.ReferenceLayer]:
-        # check the napari viewer layer list for an existing reference layer
-        for layer in current_layers:
-            if "_yt_napari_layer" in layer.metadata:
-                if layer.metadata["_reference_layer"] is not None:
-                    return layer.metadata["_reference_layer"]
-        return None
+        return _check_for_reference_layer(current_layers)
 
     def _get_reference_layer(
         self,

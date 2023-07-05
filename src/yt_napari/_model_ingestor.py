@@ -421,8 +421,33 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
     # choose a reference layer -- using the first in the list at present, could
     # make this user configurable and/or use the layer with highest pixel density
     # as the reference so that high density layers do not lose resolution
-    layer_0 = layer_lists[0][3]
-    ref_layer = ReferenceLayer(layer_0)
+    ref_layer = _choose_ref_layer(layer_lists)
     layer_lists = ref_layer.align_sanitize_layers(layer_lists)
 
     return layer_lists
+
+
+def _choose_ref_layer(
+    layer_list: List[SpatialLayer], method: Optional[str] = "first_in_list"
+) -> ReferenceLayer:
+    # decides on which layer to use as the reference
+    if method == "first_in_list":
+        print("using first in list")
+        ref_layer_id = 0
+    elif method == "smallest_volume":
+        print("small vol")
+        min_vol = None
+        for layer_id, layer in enumerate(layer_list):
+            ld = layer[3]  # the layer domain
+            layer_vol = np.prod(ld.width)
+            if min_vol is None:
+                min_vol = layer_vol
+                ref_layer_id = layer_id
+            elif layer_vol < min_vol:
+                min_vol = layer_vol
+                ref_layer_id = layer_id
+    else:
+        vmeths = ("first_in_list", "smallest_volume")
+        raise ValueError(f"method must be one of {vmeths}, found {method}")
+
+    return ReferenceLayer(layer_list[ref_layer_id][3])

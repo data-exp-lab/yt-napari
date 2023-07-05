@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QComboBox, QHBoxLayout, QPushButton, QVBoxLayout, QWi
 
 from yt_napari import _data_model, _gui_utilities, _model_ingestor
 from yt_napari._ds_cache import dataset_cache
-from yt_napari.viewer import Scene
+from yt_napari.viewer import Scene, _check_for_reference_layer
 
 
 class ReaderWidget(QWidget):
@@ -137,12 +137,14 @@ class ReaderWidget(QWidget):
             ]
         }
         model = _data_model.InputModel.parse_obj(py_kwargs)
-        # process it!
+
+        # process each layer
         layer_list = _model_ingestor._process_validated_model(model)
 
-        # align it, using first layer
-        layer_0 = layer_list[0][3]
-        ref_layer = _model_ingestor.ReferenceLayer(layer_0)
+        # align all layers after checking for or setting the reference layer
+        ref_layer = _check_for_reference_layer(self.viewer.layers)
+        if ref_layer is None:
+            ref_layer = _model_ingestor._choose_ref_layer(layer_list)
         layer_list = ref_layer.align_sanitize_layers(layer_list)
 
         for new_layer in layer_list:
