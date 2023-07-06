@@ -68,10 +68,10 @@ class Slice(BaseModel):
     center: Optional[Length_Tuple] = Field(
         None, description="The center point of the slice, default domain center"
     )
-    width: Optional[Length_Value] = Field(
+    slice_width: Optional[Length_Value] = Field(
         None, description="The slice width, defaults to full domain"
     )
-    height: Optional[Length_Value] = Field(
+    slice_height: Optional[Length_Value] = Field(
         None, description="The slice width, defaults to full domain"
     )
     resolution: Optional[Tuple[int, int]] = Field(

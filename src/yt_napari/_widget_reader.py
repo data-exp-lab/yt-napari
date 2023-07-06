@@ -106,19 +106,12 @@ class ReaderWidget(QWidget):
 
         # first, get the pydantic args for each selection type, embed in lists
         selections_by_type = defaultdict(list)
-        for sel_key, selection in self.active_selections.items():
-            sel_type = self.active_selection_types[
-                sel_key
-            ].capitalize()  # Region or Slice
+        for selection in self.active_selections.values():
+            py_kwargs = selection.get_current_pydantic_kwargs()
+            sel_key = selection.selection_type.lower() + "s"
+            selections_by_type[sel_key].append(py_kwargs)
 
-            py_kwargs = {}
-            mgui_sel = selection.selection_container_raw
-            _gui_utilities.translator.get_pydantic_kwargs(
-                mgui_sel, getattr(_data_model, sel_type), py_kwargs
-            )
-            selections_by_type[sel_type.lower() + "s"].append(py_kwargs)
-
-        # next, process remainig arguments (skipping selections):
+        # next, process remaining arguments (skipping selections):
         py_kwargs = {}
         _gui_utilities.translator.get_pydantic_kwargs(
             self.ds_container,
@@ -174,11 +167,8 @@ class SelectionEntry(QWidget):
         self.selection_container_raw = _gui_utilities.get_yt_selection_container(
             selection_type, return_native=False
         )
+        self.selection_type = selection_type
         self.selection_container = self.selection_container_raw.native
-
-        # self.container_model = QStandardItemModel()
-        # self.layer_list.setModel(self.container_model)
-        # self.layer_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.main_layout.addWidget(self.expand_button)
         self.main_layout.addWidget(self.selection_container)
@@ -196,3 +186,13 @@ class SelectionEntry(QWidget):
         else:
             self.selection_container.show()
             self.currently_expanded = True
+
+    def get_current_pydantic_kwargs(self) -> dict:
+        # returns the pydantic instantiation dict for the current widget values
+        py_kwargs = {}
+        mgui_sel = self.selection_container_raw
+        pydantic_model = getattr(_data_model, self.selection_type)
+        _gui_utilities.translator.get_pydantic_kwargs(
+            mgui_sel, pydantic_model, py_kwargs
+        )
+        return py_kwargs

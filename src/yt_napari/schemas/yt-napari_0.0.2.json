@@ -232,8 +232,8 @@
             }
           ]
         },
-        "width": {
-          "title": "Width",
+        "slice_width": {
+          "title": "Slice Width",
           "description": "The slice width, defaults to full domain",
           "allOf": [
             {
@@ -241,8 +241,8 @@
             }
           ]
         },
-        "height": {
-          "title": "Height",
+        "slice_height": {
+          "title": "Slice Height",
           "description": "The slice width, defaults to full domain",
           "allOf": [
             {

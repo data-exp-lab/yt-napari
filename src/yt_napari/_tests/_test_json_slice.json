@@ -1,8 +1,37 @@
 {"$schema": "yt-napari_0.0.2.json",
   "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030/",
-             "slices": [{"fields": [{"field_name": "Density", "field_type": "enzo"}],
-                         "resolution": [400, 400],
-                         "normal": "x"
-                       }]
+             "selections": {
+               "slices": [
+                 {
+                   "fields": [
+                     {
+                       "field_name": "Density",
+                       "field_type": "enzo"
+                     }
+                   ],
+                   "resolution": [
+                     400,
+                     400
+                   ],
+                   "normal": "x",
+                   "slice_width": {
+                     "value": 0.25,
+                     "unit": "code_length"
+                   },
+                   "slice_height": {
+                     "value": 0.25,
+                     "unit": "code_length"
+                   },
+                   "center": {
+                     "value": [
+                       0.5,
+                       0.5,
+                       0.5
+                     ],
+                     "unit": "code_length"
+                   }
+                 }
+               ]
+             }
           }]
 }

@@ -348,19 +348,19 @@ def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
 
         x_axis = axis_id[ds.coordinates.image_axis_name[slice.normal][0]]
         y_axis = axis_id[ds.coordinates.image_axis_name[slice.normal][1]]
-        LE = ds.arr([0, 0], "code_length")
-        RE = ds.arr([0, 0], "code_length")
-        if slice.width is None:
+        LE = ds.arr([0.0, 0.0], "code_length")
+        RE = ds.arr([0.0, 0.0], "code_length")
+        if slice.slice_width is None:
             w = ds.domain_width[x_axis]
         else:
-            w = ds.quan(slice.width.value, slice.width.unit)
+            w = ds.quan(slice.slice_width.value, slice.slice_width.unit)
         LE[0] = c[x_axis] - w / 2.0
         RE[0] = c[x_axis] + w / 2.0
 
-        if slice.height is None:
+        if slice.slice_height is None:
             h = ds.domain_width[y_axis]
         else:
-            h = ds.quan(slice.height.value, slice.height.unit)
+            h = ds.quan(slice.slice_height.value, slice.slice_height.unit)
         LE[1] = c[y_axis] - h / 2.0
         RE[1] = c[y_axis] + h / 2.0
 
