@@ -5,11 +5,11 @@ jdict = {
     "$schema": "yt-napari_0.0.2.json",
     "data": [
         {
-            "filename": "IsolatedGalaxy/galaxy0030/galaxy0030/",
+            "filename": "_ytnapari_load_grid",
             "selections": {
                 "slices": [
                     {
-                        "fields": [{"field_name": "Density", "field_type": "enzo"}],
+                        "fields": [{"field_name": "density", "field_type": "gas"}],
                         "resolution": [400, 400],
                         "normal": "x",
                         "slice_width": {"value": 0.25, "unit": "code_length"},
@@ -27,7 +27,7 @@ def test_basic_slice_validation():
     _ = InputModel.parse_obj(jdict)
 
 
-def test_slice_load():
+def test_slice_load(yt_ugrid_ds_fn):
     im = InputModel.parse_obj(jdict)
     layer_lists = _process_validated_model(im)
     ref_layer = _choose_ref_layer(layer_lists)
