@@ -26,7 +26,8 @@ class ReaderWidget(QWidget):
         addition_group_layout = QHBoxLayout()
         add_new_button = widgets.PushButton(text="Click to add new selection")
         add_new_button.clicked.connect(self.add_a_selection)
-        addition_group_layout.addWidget(add_new_button.native)
+        self.add_new_button = add_new_button.native
+        addition_group_layout.addWidget(self.add_new_button)
 
         new_selection_type = QComboBox()
         new_selection_type.insertItems(0, _gui_utilities._valid_selections)
@@ -46,7 +47,8 @@ class ReaderWidget(QWidget):
 
         rm_sel = widgets.PushButton(text="Delete Selection")
         rm_sel.clicked.connect(self.remove_selection)
-        removal_group_layout.addWidget(rm_sel.native)
+        self.layer_deletion_button = rm_sel.native
+        removal_group_layout.addWidget(self.layer_deletion_button)
 
         active_sel_list = QComboBox()
         active_sel_list.insertItems(0, list(self.active_selections.keys()))
