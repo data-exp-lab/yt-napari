@@ -74,19 +74,19 @@ left_edge = ds.domain_center - ds.arr([40, 40, 40], 'kpc')
 right_edge = ds.domain_center + ds.arr([40, 40, 40], 'kpc')
 res = (600, 600, 600)
 
-yt_scene.add_to_viewer(viewer,
-                       ds,
-                       ("enzo", "Temperature"),
-                       left_edge = left_edge,
-                       right_edge = right_edge,
-                       resolution = res)
+yt_scene.add_region(viewer,
+                    ds,
+                    ("enzo", "Temperature"),
+                    left_edge=left_edge,
+                    right_edge=right_edge,
+                    resolution=res)
 
-yt_scene.add_to_viewer(viewer,
-                       ds,
-                       ("enzo", "Density"),
-                       left_edge = left_edge,
-                       right_edge = right_edge,
-                       resolution = res)
+yt_scene.add_region(viewer,
+                    ds,
+                    ("enzo", "Density"),
+                    left_edge=left_edge,
+                    right_edge=right_edge,
+                    resolution=res)
 
 nbscreenshot(viewer)
 ```

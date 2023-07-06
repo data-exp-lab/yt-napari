@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-from unyt import unit_object, unit_registry, unyt_array
+from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
 from yt_napari._data_model import DataContainer, InputModel
 from yt_napari._ds_cache import dataset_cache
@@ -332,45 +332,78 @@ def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
     return layer_list
 
 
-def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
+def _process_slice(
+    ds,
+    normal: Union[str, int],
+    center: Optional[unyt_array] = None,
+    width: Optional[unyt_quantity] = None,
+    height: Optional[unyt_quantity] = None,
+    resolution: Optional[Tuple[int, int]] = (400, 400),
+    periodic: Optional[bool] = False,
+) -> tuple:
+    # returns a slice frb and a LayerDomain for a slice
     axis_id = ds.coordinates.axis_id
+    normal_ax = axis_id[normal]
+    x_axis = axis_id[ds.coordinates.image_axis_name[normal][0]]
+    y_axis = axis_id[ds.coordinates.image_axis_name[normal][1]]
+
+    if center is None:
+        center = ds.domain_center
+    if width is None:
+        width = ds.domain_width[x_axis]
+    if height is None:
+        height = ds.domain_width[y_axis]
+
+    LE = ds.arr([0.0, 0.0], "code_length")
+    RE = ds.arr([0.0, 0.0], "code_length")
+    LE[0] = center[x_axis] - width / 2.0
+    RE[0] = center[x_axis] + width / 2.0
+    LE[1] = center[y_axis] - height / 2.0
+    RE[1] = center[y_axis] + height / 2.0
+
+    slc = ds.slice(normal_ax, center[normal_ax])
+    frb = slc.to_frb(
+        width=width,
+        height=height,
+        center=center,
+        resolution=resolution,
+        periodic=periodic,
+    )
+
+    layer_domain = LayerDomain(
+        left_edge=LE, right_edge=RE, resolution=resolution, n_d=2
+    )
+
+    return frb, layer_domain
+
+
+def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
+
     for slice in m_data.selections.slices:
         if slice.normal == "":
             continue
-        normal_ax = axis_id[slice.normal]
 
         if slice.center is None:
-            c = ds.domain_center
+            c = None
         else:
             c = ds.arr(slice.center.value, slice.center.unit)
 
-        slc = ds.slice(slice.normal, c[normal_ax])
-
-        x_axis = axis_id[ds.coordinates.image_axis_name[slice.normal][0]]
-        y_axis = axis_id[ds.coordinates.image_axis_name[slice.normal][1]]
-        LE = ds.arr([0.0, 0.0], "code_length")
-        RE = ds.arr([0.0, 0.0], "code_length")
         if slice.slice_width is None:
-            w = ds.domain_width[x_axis]
+            w = None
         else:
             w = ds.quan(slice.slice_width.value, slice.slice_width.unit)
-        LE[0] = c[x_axis] - w / 2.0
-        RE[0] = c[x_axis] + w / 2.0
 
         if slice.slice_height is None:
-            h = ds.domain_width[y_axis]
+            h = None
         else:
             h = ds.quan(slice.slice_height.value, slice.slice_height.unit)
-        LE[1] = c[y_axis] - h / 2.0
-        RE[1] = c[y_axis] + h / 2.0
 
-        res = slice.resolution
-        layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res, n_d=2)
-
-        frb = slc.to_frb(
+        frb, layer_domain = _process_slice(
+            ds,
+            slice.normal,
+            center=c,
             width=w,
             height=h,
-            center=c,
             resolution=slice.resolution,
             periodic=slice.periodic,
         )

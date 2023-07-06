@@ -5,7 +5,7 @@ from napari import Viewer
 from napari.components.layerlist import LayerList
 from napari.layers import Layer
 from napari.layers.utils._link_layers import get_linked_layers
-from unyt import unyt_array
+from unyt import unyt_array, unyt_quantity
 
 import yt_napari._model_ingestor as _mi
 from yt_napari.logging import ytnapari_log
@@ -50,7 +50,63 @@ class Scene:
             self._reference_layer = ref_layer
         return self._reference_layer
 
-    def add_to_viewer(
+    def _add_to_scene(
+        self,
+        viewer: Viewer,
+        data,
+        layer_domain,
+        field,
+        take_log,
+        colormap=None,
+        link_to=None,
+        **kwargs,
+    ):
+        # adds any new data to the viewer
+
+        if colormap is None:
+            colormap = "viridis"
+
+        # initialize the spatial layer then sanitize it
+        splayer = (data, {}, "image", layer_domain)
+        ref_layer = self._get_reference_layer(
+            viewer.layers, default_if_missing=layer_domain
+        )
+        _, im_kwargs, _ = ref_layer.align_sanitize_layer(splayer)
+
+        # extract the translate and scale values
+        tr = im_kwargs.get("translate", None)
+        sc = im_kwargs.get("scale", None)
+        # check that the user has not supplied translate or scale separately
+        for attr in ["translate", "scale"]:
+            if attr in kwargs:
+                msg = f"{attr} is calculated internally, ignoring provided value"
+                ytnapari_log.warning(msg)
+                _ = kwargs.pop(attr)
+
+        # set the display name
+        if "name" in kwargs:
+            fname = kwargs.pop("name")
+        else:
+            fname = f"{field[0]}_{field[1]}"
+
+        md = _mi.create_metadata_dict(
+            data, layer_domain, take_log, reference_layer=ref_layer
+        )
+        viewer.add_image(
+            data,
+            name=fname,
+            translate=tr,
+            scale=sc,
+            metadata=md,
+            colormap=colormap,
+            **kwargs,
+        )
+
+        if link_to is not None:
+            # link the one we just added with the provided layer
+            viewer.layers.link_layers([link_to, viewer.layers[-1]])
+
+    def add_region(
         self,
         viewer: Viewer,
         ds,
@@ -99,7 +155,7 @@ class Scene:
         >>> viewer = napari.Viewer()
         >>> ds = yt.load_sample("IsolatedGalaxy")
         >>> yt_scene = Scene()
-        >>> yt_scene.add_to_viewer(viewer, ds, ("enzo", "Temperature"))
+        >>> yt_scene.add_region(viewer, ds, ("enzo", "Temperature"))
 
         """
 
@@ -112,17 +168,9 @@ class Scene:
             resolution = (400, 400, 400)
         if take_log is None:
             take_log = ds._get_field_info(field).take_log
-        if colormap is None:
-            # TO DO: make this a per-field default based on yt info?
-            # or use ytcfg.get("yt", "default_colormap") ?
-            # would need to check against available cmaps in napari
-            colormap = "viridis"
 
         # add the bounds of this new layer
         layer_domain = _mi.LayerDomain(left_edge, right_edge, resolution)
-        ref_layer = self._get_reference_layer(
-            viewer.layers, default_if_missing=layer_domain
-        )
 
         # create the fixed resolution buffer
         frb = ds.r[
@@ -134,42 +182,61 @@ class Scene:
         if take_log:
             data = np.log10(data)
 
-        # initialize the spatial layer then sanitize it
-        splayer = (data, {}, "image", layer_domain)
-        _, im_kwargs, _ = ref_layer.align_sanitize_layer(splayer)
-
-        # extract the translate and scale values
-        tr = im_kwargs.get("translate", None)
-        sc = im_kwargs.get("scale", None)
-        # check that the user has not supplied translate or scale separately
-        for attr in ["translate", "scale"]:
-            if attr in kwargs:
-                msg = f"{attr} is calculated internally, ignoring provided value"
-                ytnapari_log.warning(msg)
-                _ = kwargs.pop(attr)
-
-        # set the display name
-        if "name" in kwargs:
-            fname = kwargs.pop("name")
-        else:
-            fname = f"{field[0]}_{field[1]}"
-
-        md = _mi.create_metadata_dict(
-            data, layer_domain, take_log, reference_layer=ref_layer
-        )
-        viewer.add_image(
+        self._add_to_scene(
+            viewer,
             data,
-            name=fname,
-            translate=tr,
-            scale=sc,
-            metadata=md,
+            layer_domain,
+            field,
+            take_log,
             colormap=colormap,
+            link_to=link_to,
             **kwargs,
         )
 
-        if link_to is not None:
-            # link the one we just added with the provided layer
-            viewer.layers.link_layers([link_to, viewer.layers[-1]])
+    def add_slice(
+        self,
+        viewer: Viewer,
+        ds,
+        normal: Union[str, int],
+        field: Tuple[str, str],
+        center: Optional[unyt_array] = None,
+        resolution: Optional[Tuple[int, int]] = (400, 400),
+        width: Optional[unyt_quantity] = None,
+        height: Optional[unyt_quantity] = None,
+        take_log: Optional[bool] = None,
+        periodic: Optional[bool] = False,
+        colormap: Optional[str] = None,
+        link_to: Optional[Union[str, Layer]] = None,
+        **kwargs,
+    ):
+
+        if take_log is None:
+            take_log = ds._get_field_info(field).take_log
+
+        frb, layer_domain = _mi._process_slice(
+            ds,
+            normal,
+            center=center,
+            width=width,
+            height=height,
+            resolution=resolution,
+            periodic=periodic,
+        )
+
+        data = frb[field]
+        if take_log:
+            data = np.log10(data)
+
+        self._add_to_scene(
+            viewer,
+            data,
+            layer_domain,
+            field,
+            take_log,
+            colormap=colormap,
+            link_to=link_to,
+            **kwargs,
+        )
 
     def normalize_color_limits(
         self,
@@ -209,7 +276,7 @@ class Scene:
         >>> yt_scene = Scene()
         >>> le = ds.domain_center - ds.arr([10, 10, 10], 'kpc')
         >>> re = ds.domain_center + ds.arr([10, 10, 10], 'kpc')
-        >>> yt_scene.add_to_viewer(viewer,
+        >>> yt_scene.add_region(viewer,
         >>>                        ds,
         >>>                        ("enzo", "Density"),
         >>>                        left_edge = le,
@@ -218,7 +285,7 @@ class Scene:
         >>>                        name="Density_1")
         >>> le = ds.domain_center + ds.arr([10, 10, 10], 'kpc')
         >>> re = le + ds.arr([20, 20, 20], 'kpc')
-        >>> yt_scene.add_to_viewer(viewer,
+        >>> yt_scene.add_region(viewer,
         >>>                        ds,
         >>>                        ("enzo", "Density"),
         >>>                        left_edge = le,
@@ -355,7 +422,7 @@ class Scene:
         >>> viewer = napari.Viewer()
         >>> ds = yt.load_sample("IsolatedGalaxy")
         >>> yt_scene = Scene()
-        >>> yt_scene.add_to_viewer(viewer, ds, ("enzo", "Temperature"))
+        >>> yt_scene.add_region(viewer, ds, ("enzo", "Temperature"))
         >>> yt_scene.get_data_range(viewer.layers)
         (3.2446250040130398, 5.003147905498429)
 
