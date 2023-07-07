@@ -3,8 +3,10 @@ from typing import List, Tuple, TypeVar
 import pydantic
 import pytest
 from magicgui import type_map, use_app, widgets
+from qtpy.QtWidgets import QWidget
 
 from yt_napari import _gui_utilities as gu
+from yt_napari._gui_utilities import get_yt_selection_container
 
 
 def test_set_default():
@@ -149,3 +151,15 @@ def test_yt_data_container(backend):
     assert hasattr(data_container.selections, "regions")
     assert hasattr(data_container.selections.regions, "resolution")
     data_container.close()
+
+
+def test_yt_selection_container(backend):
+    app = use_app(backend)  # noqa: F841
+    with pytest.raises(ValueError, match="selection_type"):
+        _ = get_yt_selection_container("BADSELECTION")
+
+    _ = get_yt_selection_container("Region")
+    _ = get_yt_selection_container("Slice")
+
+    qt_native = get_yt_selection_container("Region", return_native=True)
+    assert isinstance(qt_native, QWidget)
