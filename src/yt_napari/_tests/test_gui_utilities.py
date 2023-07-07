@@ -7,6 +7,7 @@ from qtpy.QtWidgets import QWidget
 
 from yt_napari import _gui_utilities as gu
 from yt_napari._gui_utilities import get_yt_selection_container
+from yt_napari._widget_reader import SelectionEntry
 
 
 def test_set_default():
@@ -163,3 +164,8 @@ def test_yt_selection_container(backend):
 
     qt_native = get_yt_selection_container("Region", return_native=True)
     assert isinstance(qt_native, QWidget)
+
+
+def test_yt_selection_widget(backend):
+    app = use_app(backend)  # noqa: F841
+    _ = SelectionEntry("this_is_a_name", "Region", expand=False)
