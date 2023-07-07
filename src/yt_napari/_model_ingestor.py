@@ -380,8 +380,6 @@ def _process_slice(
 def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
 
     for slice in m_data.selections.slices:
-        if slice.normal == "":
-            continue
 
         if slice.center is None:
             c = None
@@ -472,10 +470,8 @@ def _choose_ref_layer(
 ) -> ReferenceLayer:
     # decides on which layer to use as the reference
     if method == "first_in_list":
-        print("using first in list")
         ref_layer_id = 0
     elif method == "smallest_volume":
-        print("small vol")
         min_vol = None
         for layer_id, layer in enumerate(layer_list):
             ld = layer[3]  # the layer domain

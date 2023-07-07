@@ -14,6 +14,8 @@ def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
     sel = list(r.active_selections.values())[0]
     assert isinstance(sel, SelectionEntry)
     assert sel.selection_type == "Region"
+    sel.expand()
+    sel.expand()
     r.layer_deletion_button.click()
     assert len(r.active_selections) == 0
 
