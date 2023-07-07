@@ -121,7 +121,7 @@ class Scene:
         **kwargs,
     ):
         """
-        create a uniform sampling of ds and add it to the napari viewer
+        uniformly sample a region from a yt dataset and add it to a viewer
 
         Parameters
         ----------
@@ -242,6 +242,51 @@ class Scene:
         link_to: Optional[Union[str, Layer]] = None,
         **kwargs,
     ):
+        """
+        sample an orthogonal slice from a yt dataset and add it to a viewer
+
+        Parameters
+        ----------
+        viewer: napari.Viewer
+            the active napari viewer
+        ds
+            the yt dataset to sample
+        normal: str, int
+            the normal axis of the slice, either an axis name or number
+        field: Tuple[str, str]
+            the field tuple to sample  e.g., ('enzo', 'Density')
+        center: unyt_array
+            the center of the slice (3D)
+        width: unyt_quantity
+            the width of the slice
+        height: unyt_quantity
+            the height of the slice
+        resolution: Tuple[int, int]
+            the sampling resolution in each dimension, e.g., (400, 400)
+        take_log : Optional[bool]
+            if True, will take the log of the extracted data. Defaults to the
+            default behavior for the field set by ds.
+        periodic: Optional[bool]
+            use periodic bounds for the slice, default False
+        colormap : Optional[str]
+            the color map to use, default is "viridis"
+        link_to : Optional[Union[str, Layer]]
+            specify a layer to which the new layer should link
+        **kwargs :
+            any keyword argument accepted by Viewer.add_image()
+
+        Examples
+        --------
+
+        >>> import napari
+        >>> import yt
+        >>> from yt_napari.viewer import Scene
+        >>> viewer = napari.Viewer()
+        >>> ds = yt.load_sample("IsolatedGalaxy")
+        >>> yt_scene = Scene()
+        >>> yt_scene.add_slice(viewer, ds, "x", ("enzo", "Temperature"))
+
+        """
 
         if take_log is None:
             take_log = ds._get_field_info(field).take_log

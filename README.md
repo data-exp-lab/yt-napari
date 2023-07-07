@@ -115,13 +115,13 @@ To load a different field or section, adjust the values and click "Load" again.
 ```json
 {"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
  "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
-           "selections": [{
+           "selections": {"regions": [{
                             "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
                                        {"field_name": "Density", "field_type": "enzo", "take_log": true}],
                             "left_edge": [460.0, 460.0, 460.0],
                             "right_edge": [560.0, 560.0, 560.0],
                             "resolution": [600, 600, 600]
-                          }],
+                          }]},
            "edge_units": "kpc"
          }]
 }
