@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import pydantic
 from magicgui import type_map, widgets
@@ -106,10 +106,19 @@ class MagicPydanticRegistry:
         self,
         py_model: Union[pydantic.BaseModel, pydantic.main.ModelMetaclass],
         container: widgets.Container,
+        ignore_attrs: Optional[Union[str, List[str]]] = None,
     ):
         # recursively traverse a pydantic model adding widgets to a container.
         # When a nested pydantic model is encountered, add a new container
+
+        if not isinstance(ignore_attrs, list):
+            ignore_attrs = [
+                ignore_attrs,
+            ]
+
         for field, field_def in py_model.__fields__.items():
+            if field in ignore_attrs:
+                continue
             ftype = field_def.type_
             if isinstance(ftype, pydantic.BaseModel) or isinstance(
                 ftype, pydantic.main.ModelMetaclass
@@ -129,13 +138,23 @@ class MagicPydanticRegistry:
             container.append(new_widget)
 
     def get_pydantic_kwargs(
-        self, container: widgets.Container, py_model, pydantic_kwargs: dict
+        self,
+        container: widgets.Container,
+        py_model,
+        pydantic_kwargs: dict,
+        ignore_attrs: Optional[Union[str, List[str]]] = None,
     ):
         # given a container that was instantiated from a pydantic model, get
         # the arguments needed to instantiate that pydantic model
+        if not isinstance(ignore_attrs, list):
+            ignore_attrs = [
+                ignore_attrs,
+            ]
 
         # traverse model fields, pull out values from container
         for field, field_def in py_model.__fields__.items():
+            if field in ignore_attrs:
+                continue
             ftype = field_def.type_
             if isinstance(ftype, pydantic.BaseModel) or isinstance(
                 ftype, pydantic.main.ModelMetaclass
@@ -203,6 +222,16 @@ def _get_pydantic_model_field(py_model, field: str) -> pydantic.fields.ModelFiel
     return py_model.__fields__[field]
 
 
+# the following model-field tuples will be embedded in containers
+_models_to_embed_in_list = (
+    (_data_model.Slice, "fields"),
+    (_data_model.Region, "fields"),
+    (_data_model.DataContainer, "selections"),
+    (_data_model.SelectionObject, "regions"),
+    (_data_model.SelectionObject, "slices"),
+)
+
+
 def _register_yt_data_model(translator: MagicPydanticRegistry):
     # registers some special cases for pydantic fields.
     translator.register(
@@ -213,30 +242,46 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
         pydantic_attr_factory=get_filename,
     )
 
-    py_model, field = _data_model.SelectionObject, "fields"
-    translator.register(
-        py_model,
-        field,
-        magicgui_factory=get_magicguidefault,
-        magicgui_args=(py_model.__fields__[field]),
-        pydantic_attr_factory=embed_in_list,
-    )
-
-    py_model, field = _data_model.DataContainer, "selections"
-    translator.register(
-        py_model,
-        field,
-        magicgui_factory=get_magicguidefault,
-        magicgui_args=(py_model.__fields__[field]),
-        pydantic_attr_factory=embed_in_list,
-    )
+    for py_model, field in _models_to_embed_in_list:
+        translator.register(
+            py_model,
+            field,
+            magicgui_factory=get_magicguidefault,
+            magicgui_args=(py_model.__fields__[field]),
+            pydantic_attr_factory=embed_in_list,
+        )
 
 
 translator = MagicPydanticRegistry()
 _register_yt_data_model(translator)
 
 
-def get_yt_data_container():
+def get_yt_data_container(
+    ignore_attrs: Optional[Union[str, List[str]]] = None
+) -> widgets.Container:
     data_container = widgets.Container()
-    translator.add_pydantic_to_container(_data_model.DataContainer, data_container)
+    translator.add_pydantic_to_container(
+        _data_model.DataContainer,
+        data_container,
+        ignore_attrs=ignore_attrs,
+    )
     return data_container
+
+
+_valid_selections = ("Region", "Slice")
+
+
+def get_yt_selection_container(selection_type: str, return_native: bool = False):
+    # return a container for a single selection
+    if selection_type not in _valid_selections:
+        raise ValueError(
+            f"selection_type must be one of {_valid_selections}, "
+            f"found {selection_type}"
+        )
+
+    selection_container = widgets.Container()
+    pydantic_model = getattr(_data_model, selection_type)
+    translator.add_pydantic_to_container(pydantic_model, selection_container)
+    if return_native:
+        return selection_container.native
+    return selection_container

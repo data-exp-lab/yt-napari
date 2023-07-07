@@ -208,3 +208,34 @@ def test_metadata():
     fake_data = np.ones((10, 10))
     md = _mi.create_metadata_dict(fake_data, layer_domain, True, a="a")
     assert isinstance(md, dict)
+
+
+def test_ref_layer_selection(domains_to_test):
+    # assemble some fake layer tuples
+    im_type = "image"
+
+    spatial_layer_list = []
+    for d in domains_to_test.domain_sets:
+        layer_domain = _mi.LayerDomain(d.left_edge, d.right_edge, d.resolution)
+        im = np.random.random(d.resolution)
+        spatial_layer_list.append((im, {}, im_type, layer_domain))
+
+    # add another small volume layer
+    le = unyt.unyt_array([0.1, 0.1, 0.1], "m")
+    re = unyt.unyt_array([0.2, 0.2, 0.2], "m")
+    res = (3, 4, 5)
+    small_vol_domain = _mi.LayerDomain(le, re, resolution=res)
+    im = np.random.random(res)
+    spatial_layer_list.append((im, {}, im_type, small_vol_domain))
+
+    first_ref = _mi._choose_ref_layer(spatial_layer_list, method="first_in_list")
+    expected_ref = spatial_layer_list[0][3]
+    assert np.all(first_ref.left_edge == expected_ref.left_edge)
+    assert np.all(first_ref.right_edge == expected_ref.right_edge)
+
+    smal_ref = _mi._choose_ref_layer(spatial_layer_list, method="smallest_volume")
+    assert np.all(small_vol_domain.left_edge == smal_ref.left_edge)
+    assert np.all(small_vol_domain.right_edge == smal_ref.right_edge)
+
+    with pytest.raises(ValueError, match="method must be one of"):
+        _ = _mi._choose_ref_layer(spatial_layer_list, method="not_a_method")

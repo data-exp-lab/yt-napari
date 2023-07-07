@@ -74,30 +74,30 @@ left_edge = ds.domain_center - ds.arr([40, 40, 40], 'kpc')
 right_edge = ds.domain_center + ds.arr([40, 40, 40], 'kpc')
 res = (600, 600, 600)
 
-yt_scene.add_to_viewer(viewer,
-                       ds,
-                       ("enzo", "Temperature"),
-                       left_edge = left_edge,
-                       right_edge = right_edge,
-                       resolution = res)
+yt_scene.add_region(viewer,
+                    ds,
+                    ("enzo", "Temperature"),
+                    left_edge=left_edge,
+                    right_edge=right_edge,
+                    resolution=res)
 
-yt_scene.add_to_viewer(viewer,
-                       ds,
-                       ("enzo", "Density"),
-                       left_edge = left_edge,
-                       right_edge = right_edge,
-                       resolution = res)
+yt_scene.add_region(viewer,
+                    ds,
+                    ("enzo", "Density"),
+                    left_edge=left_edge,
+                    right_edge=right_edge,
+                    resolution=res)
 
 nbscreenshot(viewer)
 ```
 
  ![Loading a subset of a yt dataset in napari from a Jupyter notebook](./assets/images/readme_ex_001.png)
 
-`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (https://yt-napari.readthedocs.io/) for more examples, including additional helper methods for linking layer appearance.
+`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (https://yt-napari.readthedocs.io/en/stable/) for more examples, including additional helper methods for linking layer appearance.
 
 ### loading a selection from a yt dataset interactively
 
-`yt-napari` provides a two ways to sample a yt dataset and load in an image layer into a Napari viewer: the yt Reader plugin and json file specification.
+`yt-napari` provides two ways to sample a yt dataset and load in an image layer into a Napari viewer: the yt Reader plugin and json file specification.
 
 #### using the yt Reader plugin
 
@@ -115,13 +115,13 @@ To load a different field or section, adjust the values and click "Load" again.
 ```json
 {"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
  "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
-           "selections": [{
+           "selections": {"regions": [{
                             "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
                                        {"field_name": "Density", "field_type": "enzo", "take_log": true}],
                             "left_edge": [460.0, 460.0, 460.0],
                             "right_edge": [560.0, 560.0, 560.0],
                             "resolution": [600, 600, 600]
-                          }],
+                          }]},
            "edge_units": "kpc"
          }]
 }

@@ -32,22 +32,22 @@ jupyter notebook interaction
     right_edge = ds.domain_center + ds.arr([40, 40, 40], 'kpc')
     res = (600, 600, 600)
 
-    yt_scene.add_to_viewer(viewer,
-                           ds,
-                           ("enzo", "Temperature"),
-                           left_edge = left_edge,
-                           right_edge = right_edge,
-                           resolution = res)
+    yt_scene.add_region(viewer,
+                        ds,
+                        ("enzo", "Temperature"),
+                        left_edge = left_edge,
+                        right_edge = right_edge,
+                        resolution = res)
 
-    yt_scene.add_to_viewer(viewer,
-                           ds,
-                           ("enzo", "Density"),
-                           left_edge = left_edge,
-                           right_edge = right_edge,
-                           resolution = res)
+    yt_scene.add_region(viewer,
+                        ds,
+                        ("enzo", "Density"),
+                        left_edge = left_edge,
+                        right_edge = right_edge,
+                        resolution = res)
 
 
-:code:`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by :code:`viewer.add_image`.
+:code:`yt_scene.add_region` accepts any of the keyword arguments allowed by :code:`viewer.add_image`.
 
 See :meth:`yt_napari.viewer.Scene` for all available methods and the :doc:`example notebooks <notebooks>` for further examples.
 
@@ -60,16 +60,15 @@ loading a json file from the napari gui
 
 .. code-block:: json
 
-    {"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
+    {"$schema": "https://yt-napari.readthedocs.io/en/latest/_static/yt-napari_latest.json",
      "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
-               "selections": [{
+               "selections": {"regions": [{
                                 "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
                                            {"field_name": "Density", "field_type": "enzo", "take_log": true}],
-                                "left_edge": [460.0, 460.0, 460.0],
-                                "right_edge": [560.0, 560.0, 560.0],
+                                "left_edge": {"value": [460.0, 460.0, 460.0], "unit": "kpc"},
+                                "right_edge": {"value": [560.0, 560.0, 560.0], "unit": "kpc"},
                                 "resolution": [600, 600, 600]
-                              }],
-               "edge_units": "kpc"
+                              }]}
              }]
     }
 

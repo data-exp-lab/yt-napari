@@ -6,31 +6,30 @@ import yt
 
 from yt_napari import napari_get_reader
 
-# the following should be a valid json, need to add some functionality to
-# test infrastructure for loading an actual dataset... as is, this requires
-# the IsolatedGalaxy file so will only pass locally.
 valid_jdict = {
-    "$schema": "yt-napari_0.0.1.json",
+    "$schema": "yt-napari_0.0.2.json",
     "data": [
         {
             "filename": None,
-            "selections": [
-                {
-                    "fields": [
-                        {
-                            "field_type": "gas",
-                            "field_name": "density",
-                            "take_log": False,
-                        },
-                        {
-                            "field_type": "gas",
-                            "field_name": "temperature",
-                            "take_log": True,
-                        },
-                    ],
-                    "resolution": [50, 50, 50],
-                }
-            ],
+            "selections": {
+                "regions": [
+                    {
+                        "fields": [
+                            {
+                                "field_type": "gas",
+                                "field_name": "density",
+                                "take_log": False,
+                            },
+                            {
+                                "field_type": "gas",
+                                "field_name": "temperature",
+                                "take_log": True,
+                            },
+                        ],
+                        "resolution": [50, 50, 50],
+                    }
+                ]
+            },
             "edge_units": "Mpc",
         }
     ],

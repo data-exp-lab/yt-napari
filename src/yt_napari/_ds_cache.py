@@ -1,5 +1,6 @@
 import yt
 
+from yt_napari import _special_loaders
 from yt_napari.config import ytcfg
 from yt_napari.logging import ytnapari_log
 
@@ -41,11 +42,18 @@ class DatasetCache:
         if self.exists(filename):
             ytnapari_log.info(f"loading {filename} from cache.")
             return self.get_ds(filename)
+        elif filename.startswith("_ytnapari") and hasattr(_special_loaders, filename):
+            # the filename is actually a function handle! get it, call it
+            # this allows yt-napari to to use all the yt fake datasets in
+            # testing without saving them to disk.
+            ds_callable = getattr(_special_loaders, filename)
+            ds = ds_callable()
         else:
             ds = yt.load(filename)
-            if ytcfg.get("yt_napari", "in_memory_cache"):
-                self.add_ds(ds, filename)
-            return ds
+
+        if ytcfg.get("yt_napari", "in_memory_cache"):
+            self.add_ds(ds, filename)
+        return ds
 
 
 dataset_cache = DatasetCache()

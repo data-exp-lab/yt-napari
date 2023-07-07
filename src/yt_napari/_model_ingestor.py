@@ -1,9 +1,9 @@
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-from unyt import unit_object, unit_registry, unyt_array
+from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
-from yt_napari._data_model import InputModel
+from yt_napari._data_model import DataContainer, InputModel
 from yt_napari._ds_cache import dataset_cache
 
 
@@ -19,7 +19,11 @@ def _le_re_to_cen_wid(
 class LayerDomain:
     # container for domain info for a single layer
     def __init__(
-        self, left_edge: unyt_array, right_edge: unyt_array, resolution: tuple
+        self,
+        left_edge: unyt_array,
+        right_edge: unyt_array,
+        resolution: tuple,
+        n_d: int = 3,
     ):
 
         if len(left_edge) != len(right_edge):
@@ -27,7 +31,7 @@ class LayerDomain:
 
         if len(resolution) != len(left_edge):
             if len(resolution) == 1:
-                resolution = resolution * 3  # assume same in every dim
+                resolution = resolution * n_d  # assume same in every dim
             else:
                 raise ValueError("length of resolution does not match edge arrays")
 
@@ -36,6 +40,9 @@ class LayerDomain:
         self.center, self.width = _le_re_to_cen_wid(left_edge, right_edge)
         self.resolution = unyt_array(resolution)
         self.grid_width = self.width / self.resolution
+        self.aspect_ratio = self.width / self.width[0]
+        self.requires_scale = np.any(self.aspect_ratio != unyt_array(1.0, ""))
+        self.n_d = n_d
 
 
 # define types for the napari layer tuples
@@ -56,6 +63,7 @@ class ReferenceLayer:
         self.width = ref_layer_domain.width
         self.resolution = ref_layer_domain.resolution
         self.grid_width = ref_layer_domain.grid_width
+        self.aspect_ratio = ref_layer_domain.aspect_ratio
 
     def calculate_scale(self, other_layer: LayerDomain) -> unyt_array:
         # calculate the pixel scale for a layer relative to the reference
@@ -64,7 +72,11 @@ class ReferenceLayer:
         # relative to the minimum grid resolution in each direction across
         # layers. scale > 1 will take a small number of pixels and stretch them
         # to cover more pixels. scale < 1 will shrink them.
-        return other_layer.grid_width / self.grid_width
+        sc = other_layer.grid_width / self.grid_width
+
+        # we also need to multiply by the initial reference layer aspect ratio
+        # to account for any initial distortion.
+        return sc * self.aspect_ratio
 
     def calculate_translation(self, other_layer: LayerDomain) -> unyt_array:
         # get the translation vector for another layer relative to the left edge
@@ -278,6 +290,140 @@ class PhysicalDomainTracker:
         self.center, self.width = center_wid
 
 
+def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
+
+    for sel in m_data.selections.regions:
+        # get the left, right edge as a unitful array, initialize the layer
+        # domain tracking for this layer and update the global domain extent
+        if sel.left_edge is None:
+            LE = ds.domain_left_edge
+        else:
+            LE = ds.arr(sel.left_edge.value, sel.left_edge.unit)
+
+        if sel.right_edge is None:
+            RE = ds.domain_right_edge
+        else:
+            RE = ds.arr(sel.right_edge.value, sel.right_edge.unit)
+        res = sel.resolution
+        layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
+
+        # create the fixed resolution buffer
+        frb = ds.r[
+            LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
+            LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
+            LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
+        ]
+
+        for field_container in sel.fields:
+            field = (field_container.field_type, field_container.field_name)
+
+            data = frb[field]  # extract the field (the slow part)
+            if field_container.take_log:
+                data = np.log10(data)
+
+            # create a metadata dict and set a name
+            fieldname = ":".join(field)
+            md = create_metadata_dict(data, layer_domain, field_container.take_log)
+            add_kwargs = {"name": fieldname, "metadata": md}
+            layer_type = "image"
+
+            layer_list.append((data, add_kwargs, layer_type, layer_domain))
+
+    return layer_list
+
+
+def _process_slice(
+    ds,
+    normal: Union[str, int],
+    center: Optional[unyt_array] = None,
+    width: Optional[unyt_quantity] = None,
+    height: Optional[unyt_quantity] = None,
+    resolution: Optional[Tuple[int, int]] = (400, 400),
+    periodic: Optional[bool] = False,
+) -> tuple:
+    # returns a slice frb and a LayerDomain for a slice
+    axis_id = ds.coordinates.axis_id
+    normal_ax = axis_id[normal]
+    x_axis = axis_id[ds.coordinates.image_axis_name[normal][0]]
+    y_axis = axis_id[ds.coordinates.image_axis_name[normal][1]]
+
+    if center is None:
+        center = ds.domain_center
+    if width is None:
+        width = ds.domain_width[x_axis]
+    if height is None:
+        height = ds.domain_width[y_axis]
+
+    LE = ds.arr([0.0, 0.0], "code_length")
+    RE = ds.arr([0.0, 0.0], "code_length")
+    LE[0] = center[x_axis] - width / 2.0
+    RE[0] = center[x_axis] + width / 2.0
+    LE[1] = center[y_axis] - height / 2.0
+    RE[1] = center[y_axis] + height / 2.0
+
+    slc = ds.slice(normal_ax, center[normal_ax])
+    frb = slc.to_frb(
+        width=width,
+        height=height,
+        center=center,
+        resolution=resolution,
+        periodic=periodic,
+    )
+
+    layer_domain = LayerDomain(
+        left_edge=LE, right_edge=RE, resolution=resolution, n_d=2
+    )
+
+    return frb, layer_domain
+
+
+def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
+
+    for slice in m_data.selections.slices:
+
+        if slice.center is None:
+            c = None
+        else:
+            c = ds.arr(slice.center.value, slice.center.unit)
+
+        if slice.slice_width is None:
+            w = None
+        else:
+            w = ds.quan(slice.slice_width.value, slice.slice_width.unit)
+
+        if slice.slice_height is None:
+            h = None
+        else:
+            h = ds.quan(slice.slice_height.value, slice.slice_height.unit)
+
+        frb, layer_domain = _process_slice(
+            ds,
+            slice.normal,
+            center=c,
+            width=w,
+            height=h,
+            resolution=slice.resolution,
+            periodic=slice.periodic,
+        )
+
+        for field_container in slice.fields:
+            field = (field_container.field_type, field_container.field_name)
+
+            data = frb[field]  # extract the field (the slow part)
+            if field_container.take_log:
+                data = np.log10(data)
+
+            # create a metadata dict and set a name
+            fieldname = ":".join(field)
+            md = create_metadata_dict(data, layer_domain, field_container.take_log)
+            add_kwargs = {"name": fieldname, "metadata": md}
+            layer_type = "image"
+
+            layer_list.append((data, add_kwargs, layer_type, layer_domain))
+
+    return layer_list
+
+
 def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     # return a list of layer tuples with domain information
 
@@ -289,36 +435,10 @@ def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     for m_data in model.data:
 
         ds = dataset_cache.check_then_load(m_data.filename)
-
-        for sel in m_data.selections:
-            # get the left, right edge as a unitful array, initialize the layer
-            # domain tracking for this layer and update the global domain extent
-            LE = ds.arr(sel.left_edge, m_data.edge_units)
-            RE = ds.arr(sel.right_edge, m_data.edge_units)
-            res = sel.resolution
-            layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
-
-            # create the fixed resolution buffer
-            frb = ds.r[
-                LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
-                LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
-                LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
-            ]
-
-            for field_container in sel.fields:
-                field = (field_container.field_type, field_container.field_name)
-
-                data = frb[field]  # extract the field (the slow part)
-                if field_container.take_log:
-                    data = np.log10(data)
-
-                # create a metadata dict and set a name
-                fieldname = ":".join(field)
-                md = create_metadata_dict(data, layer_domain, field_container.take_log)
-                add_kwargs = {"name": fieldname, "metadata": md}
-                layer_type = "image"
-
-                layer_list.append((data, add_kwargs, layer_type, layer_domain))
+        if m_data.selections.regions is not None:
+            layer_list = _load_3D_regions(ds, m_data, layer_list)
+        if m_data.selections.slices is not None:
+            layer_list = _load_2D_slices(ds, m_data, layer_list)
 
     return layer_list
 
@@ -339,8 +459,31 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
     # choose a reference layer -- using the first in the list at present, could
     # make this user configurable and/or use the layer with highest pixel density
     # as the reference so that high density layers do not lose resolution
-    layer_0 = layer_lists[0][3]
-    ref_layer = ReferenceLayer(layer_0)
+    ref_layer = _choose_ref_layer(layer_lists)
     layer_lists = ref_layer.align_sanitize_layers(layer_lists)
 
     return layer_lists
+
+
+def _choose_ref_layer(
+    layer_list: List[SpatialLayer], method: Optional[str] = "first_in_list"
+) -> ReferenceLayer:
+    # decides on which layer to use as the reference
+    if method == "first_in_list":
+        ref_layer_id = 0
+    elif method == "smallest_volume":
+        min_vol = None
+        for layer_id, layer in enumerate(layer_list):
+            ld = layer[3]  # the layer domain
+            layer_vol = np.prod(ld.width)
+            if min_vol is None:
+                min_vol = layer_vol
+                ref_layer_id = layer_id
+            elif layer_vol < min_vol:
+                min_vol = layer_vol
+                ref_layer_id = layer_id
+    else:
+        vmeths = ("first_in_list", "smallest_volume")
+        raise ValueError(f"method must be one of {vmeths}, found {method}")
+
+    return ReferenceLayer(layer_list[ref_layer_id][3])

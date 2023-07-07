@@ -16,17 +16,43 @@ class ytField(BaseModel):
     )
 
 
-class SelectionObject(BaseModel):
+class Length_Value(BaseModel):
+    value: float = Field(None, description="Single unitful value.")
+    unit: str = Field("code_length", description="the unit length string.")
+
+
+class Left_Edge(BaseModel):
+    value: Tuple[float, float, float] = Field(
+        (0.0, 0.0, 0.0), description="3-element unitful tuple."
+    )
+    unit: str = Field("code_length", description="the unit length string.")
+
+
+class Right_Edge(BaseModel):
+    value: Tuple[float, float, float] = Field(
+        (1.0, 1.0, 1.0), description="3-element unitful tuple."
+    )
+    unit: str = Field("code_length", description="the unit length string.")
+
+
+class Length_Tuple(BaseModel):
+    value: Tuple[float, float, float] = Field(
+        None, description="3-element unitful tuple."
+    )
+    unit: str = Field("code_length", description="the unit length string.")
+
+
+class Region(BaseModel):
     fields: List[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
-    left_edge: Optional[Tuple[float, float, float]] = Field(
-        (0.0, 0.0, 0.0),
-        description="the left edge (min x, min y, min z) in units of edge_units",
+    left_edge: Optional[Left_Edge] = Field(
+        None,
+        description="the left edge (min x, min y, min z)",
     )
-    right_edge: Optional[Tuple[float, float, float]] = Field(
-        (1.0, 1.0, 1.0),
-        description="the right edge (max x, max y, max z) in units of edge_units",
+    right_edge: Optional[Right_Edge] = Field(
+        None,
+        description="the right edge (max x, max y, max z)",
     )
     resolution: Optional[Tuple[int, int, int]] = Field(
         (400, 400, 400),
@@ -34,14 +60,40 @@ class SelectionObject(BaseModel):
     )
 
 
+class Slice(BaseModel):
+    fields: List[ytField] = Field(
+        None, description="list of fields to load for this selection"
+    )
+    normal: str = Field(None, description="the normal axis of the slice")
+    center: Optional[Length_Tuple] = Field(
+        None, description="The center point of the slice, default domain center"
+    )
+    slice_width: Optional[Length_Value] = Field(
+        None, description="The slice width, defaults to full domain"
+    )
+    slice_height: Optional[Length_Value] = Field(
+        None, description="The slice width, defaults to full domain"
+    )
+    resolution: Optional[Tuple[int, int]] = Field(
+        (400, 400),
+        description="the resolution at which to sample the slice",
+    )
+    periodic: Optional[bool] = Field(
+        False, description="should the slice be periodic? default False."
+    )
+
+
+class SelectionObject(BaseModel):
+    regions: Optional[List[Region]] = Field(
+        None, description="a list of regions to load"
+    )
+    slices: Optional[List[Slice]] = Field(None, description="a list of slices to load")
+
+
 class DataContainer(BaseModel):
     filename: str = Field(None, description="the filename for the dataset")
-    selections: List[SelectionObject] = Field(
-        None, description="list of selections to load in this dataset"
-    )
-    edge_units: Optional[str] = Field(
-        "code_length",
-        description="the units to use for left_edge and right_edge in the selections",
+    selections: SelectionObject = Field(
+        None, description="selections to load in this dataset"
     )
     store_in_cache: Optional[bool] = Field(
         ytcfg.get("yt_napari", "in_memory_cache"),
@@ -50,7 +102,9 @@ class DataContainer(BaseModel):
 
 
 class InputModel(BaseModel):
-    data: List[DataContainer] = Field(None, description="list of datasets to load")
+    data: List[DataContainer] = Field(
+        None, description="list of data containers to load"
+    )
     _schema_prefix = "yt-napari"
 
 
