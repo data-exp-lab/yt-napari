@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -188,6 +189,38 @@ class Scene:
             layer_domain,
             field,
             take_log,
+            colormap=colormap,
+            link_to=link_to,
+            **kwargs,
+        )
+
+    def add_to_viewer(
+        self,
+        viewer: Viewer,
+        ds,
+        field: Tuple[str, str],
+        resolution: Optional[Tuple[int, int, int]] = None,
+        left_edge: Optional[unyt_array] = None,
+        right_edge: Optional[unyt_array] = None,
+        take_log: Optional[bool] = None,
+        colormap: Optional[str] = None,
+        link_to: Optional[Union[str, Layer]] = None,
+        **kwargs,
+    ):
+        """deprecated, will be removed in v>0.1.0. use add_region"""
+        msg = (
+            "add_to_viewer has been deprecated, use add_region "
+            "instead. add_to_viewer will be removed in v>0.1.0"
+        )
+        warnings.warn(msg, DeprecationWarning)
+        self.add_region(
+            viewer,
+            ds,
+            field,
+            resolution=resolution,
+            left_edge=left_edge,
+            right_edge=right_edge,
+            take_log=take_log,
             colormap=colormap,
             link_to=link_to,
             **kwargs,

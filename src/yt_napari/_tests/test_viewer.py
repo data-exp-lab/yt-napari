@@ -132,6 +132,17 @@ def test_cross_layer_features(make_napari_viewer, yt_ds):
     assert viewer.layers["layer1"] in linked
 
 
+def test_viewer_deprecations(make_napari_viewer, yt_ds):
+    viewer = make_napari_viewer()
+
+    sc = Scene()
+    res = (10, 10, 10)
+
+    # remove in v0.2.0 or higher
+    with pytest.deprecated_call():
+        sc.add_to_viewer(viewer, yt_ds, ("gas", "density"), resolution=res)
+
+
 def test_viewer_slices(make_napari_viewer, yt_ds):
     viewer = make_napari_viewer()
     sc = Scene()
