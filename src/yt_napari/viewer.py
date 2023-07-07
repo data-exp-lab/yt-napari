@@ -212,7 +212,7 @@ class Scene:
             "add_to_viewer has been deprecated, use add_region "
             "instead. add_to_viewer will be removed in v>0.1.0"
         )
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
         self.add_region(
             viewer,
             ds,
