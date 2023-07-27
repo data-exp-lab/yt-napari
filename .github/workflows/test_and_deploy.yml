@@ -54,9 +54,9 @@ jobs:
           python -m pip install setuptools tox tox-gh-actions
 
       - name: Limit pip for windows
-        if: runner.os == "Windows"
+        if: runner.os == 'Windows'
         run: |
-          pip install --ugrade "pip<23.2.0"
+          pip install --upgrade "pip<23.2.0"
 
       # this runs the platform-specific tests declared in tox.ini
       - name: Test with tox
