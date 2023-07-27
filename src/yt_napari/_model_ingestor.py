@@ -63,11 +63,10 @@ class LayerDomain:
 
     def upgrade_to_3D(self):
         if self.n_d == 3:
-            # already 3D, nothing to do
-            return
+            return  # already 3D, nothing to do
 
         if self.n_d == 2:
-            new_l_r = getattr(self, "new_dim_value")
+            new_l_r = self.new_dim_value
             axid = self.new_dim_axis
             self.left_edge = _insert_to_unyt_array(self.left_edge, new_l_r, axid)
             self.right_edge = _insert_to_unyt_array(self.right_edge, new_l_r, axid)
