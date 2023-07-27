@@ -94,6 +94,8 @@ def test_layer_domain(domains_to_test):
 
 
 def test_layer_domain_dimensionality():
+    # note: the code being tested here could be used to help orient the slices
+    # in 3D but is not currently used.
     # sets of left_edge, right_edge, center, width, res
     le = unyt.unyt_array([1.0, 1.0], "km")
     re = unyt.unyt_array([2000.0, 2000.0], "m")
