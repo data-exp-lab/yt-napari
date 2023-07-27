@@ -53,6 +53,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install setuptools tox tox-gh-actions
 
+      - name: Limit pip for windows
+        if: runner.os == "Windows"
+        run: |
+          pip install --ugrade "pip<23.2.0"
+
       # this runs the platform-specific tests declared in tox.ini
       - name: Test with tox
         uses: GabrielBB/xvfb-action@v1
