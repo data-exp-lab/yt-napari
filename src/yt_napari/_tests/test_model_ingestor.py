@@ -83,14 +83,70 @@ def test_layer_domain(domains_to_test):
         assert np.all(layer_domain.width == d.width)
 
     # check some instantiation things
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="length of edge arrays must match"):
         _ = _mi.LayerDomain(d.left_edge, unyt.unyt_array([1, 2], "m"), d.resolution)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="length of resolution does not"):
         _ = _mi.LayerDomain(d.left_edge, d.right_edge, (10, 12))
 
     ld = _mi.LayerDomain(d.left_edge, d.right_edge, (10,))
     assert len(ld.resolution) == 3
+
+
+def test_layer_domain_dimensionality():
+    # note: the code being tested here could be used to help orient the slices
+    # in 3D but is not currently used.
+    # sets of left_edge, right_edge, center, width, res
+    le = unyt.unyt_array([1.0, 1.0], "km")
+    re = unyt.unyt_array([2000.0, 2000.0], "m")
+    res = (10, 20)
+    ld = _mi.LayerDomain(le, re, res, n_d=2)
+    assert ld.n_d == 2
+
+    ld.upgrade_to_3D()
+    assert ld.n_d == 3
+    assert len(ld.left_edge) == 3
+    assert ld.left_edge[-1] == 0.0
+    ld.upgrade_to_3D()  # nothing should happen
+
+    ld = _mi.LayerDomain(le, re, res, n_d=2, new_dim_value=0.5)
+    ld.upgrade_to_3D()
+    assert ld.left_edge[2] == unyt.unyt_quantity(0.5, le.units)
+
+    new_val = unyt.unyt_quantity(0.5, "km")
+    ld = _mi.LayerDomain(le, re, res, n_d=2, new_dim_value=new_val)
+    ld.upgrade_to_3D()
+    assert ld.left_edge[2].to("km") == new_val
+
+    ld = _mi.LayerDomain(le, re, res, n_d=2, new_dim_value=new_val, new_dim_axis=0)
+    ld.upgrade_to_3D()
+    assert ld.left_edge[0].to("km") == new_val
+
+
+_test_cases_insert = [
+    (
+        unyt.unyt_array([1.0, 1.0], "km"),
+        unyt.unyt_array(
+            [
+                1000.0,
+            ],
+            "m",
+        ),
+        unyt.unyt_array([1.0, 1.0, 1.0], "km"),
+    ),
+    (
+        unyt.unyt_array([1.0, 1.0], "km"),
+        unyt.unyt_quantity(1000.0, "m"),
+        unyt.unyt_array([1.0, 1.0, 1.0], "km"),
+    ),
+    (unyt.unyt_array([1.0, 1.0], "km"), 0.5, unyt.unyt_array([1.0, 1.0, 0.5], "km")),
+]
+
+
+@pytest.mark.parametrize("x,x2,expected", _test_cases_insert)
+def test_insert_to_unyt_array(x, x2, expected):
+    result = _mi._insert_to_unyt_array(x, x2, 2)
+    assert np.all(result == expected)
 
 
 def test_domain_tracking(domains_to_test):
@@ -239,3 +295,23 @@ def test_ref_layer_selection(domains_to_test):
 
     with pytest.raises(ValueError, match="method must be one of"):
         _ = _mi._choose_ref_layer(spatial_layer_list, method="not_a_method")
+
+
+def test_2d_3d_mix():
+
+    le = unyt.unyt_array([1.0, 1.0, 1.0], "km")
+    re = unyt.unyt_array([2000.0, 2000.0, 2000.0], "m")
+    res = (10, 20, 15)
+    layer_3d = _mi.LayerDomain(le, re, res)
+    ref = _mi.ReferenceLayer(layer_3d)
+
+    le = unyt.unyt_array([1, 1], "km")
+    re = unyt.unyt_array([2000.0, 2000.0], "m")
+    res = (10, 20)
+    layer_2d = _mi.LayerDomain(
+        le, re, res, n_d=2, new_dim_value=unyt.unyt_quantity(1, "km")
+    )
+
+    sp_layer = (np.random.random(res), {}, "testname", layer_2d)
+    new_layer_2d = ref.align_sanitize_layer(sp_layer)
+    assert "scale" not in new_layer_2d[1]  # no scale when it is all 1
