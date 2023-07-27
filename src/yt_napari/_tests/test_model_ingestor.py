@@ -105,6 +105,7 @@ def test_layer_domain_dimensionality():
     assert ld.n_d == 3
     assert len(ld.left_edge) == 3
     assert ld.left_edge[-1] == 0.0
+    ld.upgrade_to_3D()  # nothing should happen
 
     ld = _mi.LayerDomain(le, re, res, n_d=2, new_dim_value=0.5)
     ld.upgrade_to_3D()
@@ -292,3 +293,23 @@ def test_ref_layer_selection(domains_to_test):
 
     with pytest.raises(ValueError, match="method must be one of"):
         _ = _mi._choose_ref_layer(spatial_layer_list, method="not_a_method")
+
+
+def test_2d_3d_mix():
+
+    le = unyt.unyt_array([1.0, 1.0, 1.0], "km")
+    re = unyt.unyt_array([2000.0, 2000.0, 2000.0], "m")
+    res = (10, 20, 15)
+    layer_3d = _mi.LayerDomain(le, re, res)
+    ref = _mi.ReferenceLayer(layer_3d)
+
+    le = unyt.unyt_array([1, 1], "km")
+    re = unyt.unyt_array([2000.0, 2000.0], "m")
+    res = (10, 20)
+    layer_2d = _mi.LayerDomain(
+        le, re, res, n_d=2, new_dim_value=unyt.unyt_quantity(1, "km")
+    )
+
+    sp_layer = (np.random.random(res), {}, "testname", layer_2d)
+    new_layer_2d = ref.align_sanitize_layer(sp_layer)
+    assert "scale" not in new_layer_2d[1]  # no scale when it is all 1

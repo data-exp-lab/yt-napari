@@ -62,6 +62,7 @@ class LayerDomain:
         self.new_dim_axis = new_dim_axis
 
     def upgrade_to_3D(self):
+        # note: this is not (yet) used when loading planes in 3d scenes.
         if self.n_d == 3:
             return  # already 3D, nothing to do
 
@@ -118,6 +119,7 @@ class ReferenceLayer:
         # layers. scale > 1 will take a small number of pixels and stretch them
         # to cover more pixels. scale < 1 will shrink them.
         sc = other_layer.grid_width / self.grid_width
+        sc[sc == 0] = 1.0
 
         # we also need to multiply by the initial reference layer aspect ratio
         # to account for any initial distortion.
@@ -141,8 +143,11 @@ class ReferenceLayer:
         # pull out the elements of the SpatialLayer tuple
         im_arr, im_kwargs, layer_type, domain = layer
 
-        # upgrade to 3D if necessary
-        domain = self.handle_dimensionality(domain)
+        # bypass if adding a 2d layer
+        if domain.n_d == 2 and self.layer_domain.n_d == 3:
+            # when mixing 2d and 3d selections, cannot guarantee alignment
+            # or scaling, simply return with no adjustment
+            return (im_arr, im_kwargs, layer_type)
 
         # calculate scale and translation
         scale = self.calculate_scale(domain)
@@ -167,22 +172,6 @@ class ReferenceLayer:
         # (the default), otherwise the domain extent will be updated with the
         # layer_list
         return [self.align_sanitize_layer(layer) for layer in layer_list]
-
-    def handle_dimensionality(self, domain: LayerDomain) -> LayerDomain:
-        # upgrade from 2d to 3d if required: correct orientation is NOT
-        # guaranteed.
-
-        if domain.n_d > self.layer_domain.n_d:
-            raise RuntimeError(
-                f"cannot add a {domain.n_d}D layer to a lower"
-                f"dimensionality scene. Layers must be added from"
-                f"high to low dimensionality."
-            )
-
-        if domain.n_d == 2 and self.layer_domain.n_d == 3:
-            domain.upgrade_to_3d(new_left_right=self.center[-1])
-
-        return domain
 
 
 def create_metadata_dict(
@@ -435,7 +424,12 @@ def _process_slice(
     )
 
     layer_domain = LayerDomain(
-        left_edge=LE, right_edge=RE, resolution=resolution, n_d=2
+        left_edge=LE,
+        right_edge=RE,
+        resolution=resolution,
+        n_d=2,
+        new_dim_axis=2,
+        new_dim_value=0.0,
     )
 
     return frb, layer_domain
@@ -492,7 +486,6 @@ def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     # return a list of layer tuples with domain information
 
     layer_list = []
-
     # our model is already validated, so we can assume the field exist with
     # their correct types. This is all the yt-specific code required to load a
     # dataset and return a plain numpy array
