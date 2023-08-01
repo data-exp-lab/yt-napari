@@ -101,11 +101,11 @@ nbscreenshot(viewer)
 
 #### using the yt Reader plugin
 
-To use the yt Reader plugin, click on `Plugins -> yt-napari: yt Reader`. Select a file, specify a field type and field, set the region to sample and then simply click "Load":
+To use the yt Reader plugin, click on `Plugins -> yt-napari: yt Reader`. From there, add a region or slice selector then specify a field type and field and bounds to sample  between and then simply click "Load":
 
 ![Loading a subset of a yt dataset from the napari viewer](./assets/images/readme_ex_003_gui_reader.gif)
 
-To load a different field or section, adjust the values and click "Load" again.
+You can add multiple selections and load them all at once or adjust values and click "Load" again.
 
 #### using a json file and schema
 
