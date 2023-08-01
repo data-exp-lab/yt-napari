@@ -1,6 +1,8 @@
+import sys
 from functools import partial
 
 import numpy as np
+import pytest
 
 from yt_napari._ds_cache import dataset_cache
 from yt_napari._widget_reader import ReaderWidget, SelectionEntry
@@ -28,6 +30,7 @@ def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
     assert sel.selection_type == "Slice"
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
 def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog, qtbot):
 
     # make_napari_viewer is a pytest fixture. It takes any keyword arguments
