@@ -149,6 +149,7 @@ class Manager:
         schema_prefix = self._validate_prefix(schema_prefix)
         source_dir = PosixPath(source)
         source_static = source_dir.joinpath("_static")
+        ytnapari_log.info(f"Updating the schema files in {source_static}")
 
         # copy all json files to docs/_static/
         copied_files = []

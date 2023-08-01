@@ -4,7 +4,7 @@
   "properties": {
     "data": {
       "title": "Data",
-      "description": "list of datasets to load",
+      "description": "list of data containers to load",
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataContainer"
@@ -34,21 +34,13 @@
         }
       }
     },
-    "SelectionObject": {
-      "title": "SelectionObject",
+    "Left_Edge": {
+      "title": "Left_Edge",
       "type": "object",
       "properties": {
-        "fields": {
-          "title": "Fields",
-          "description": "list of fields to load for this selection",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ytField"
-          }
-        },
-        "left_edge": {
-          "title": "Left Edge",
-          "description": "the left edge (min x, min y, min z) in units of edge_units",
+        "value": {
+          "title": "Value",
+          "description": "3-element unitful tuple.",
           "default": [
             0.0,
             0.0,
@@ -69,9 +61,21 @@
             }
           ]
         },
-        "right_edge": {
-          "title": "Right Edge",
-          "description": "the right edge (max x, max y, max z) in units of edge_units",
+        "unit": {
+          "title": "Unit",
+          "description": "the unit length string.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Right_Edge": {
+      "title": "Right_Edge",
+      "type": "object",
+      "properties": {
+        "value": {
+          "title": "Value",
+          "description": "3-element unitful tuple.",
           "default": [
             1.0,
             1.0,
@@ -89,6 +93,44 @@
             },
             {
               "type": "number"
+            }
+          ]
+        },
+        "unit": {
+          "title": "Unit",
+          "description": "the unit length string.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Region": {
+      "title": "Region",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "title": "Fields",
+          "description": "list of fields to load for this selection",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ytField"
+          }
+        },
+        "left_edge": {
+          "title": "Left Edge",
+          "description": "the left edge (min x, min y, min z)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Left_Edge"
+            }
+          ]
+        },
+        "right_edge": {
+          "title": "Right Edge",
+          "description": "the right edge (max x, max y, max z)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Right_Edge"
             }
           ]
         },
@@ -117,6 +159,146 @@
         }
       }
     },
+    "Length_Tuple": {
+      "title": "Length_Tuple",
+      "type": "object",
+      "properties": {
+        "value": {
+          "title": "Value",
+          "description": "3-element unitful tuple.",
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "unit": {
+          "title": "Unit",
+          "description": "the unit length string.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Length_Value": {
+      "title": "Length_Value",
+      "type": "object",
+      "properties": {
+        "value": {
+          "title": "Value",
+          "description": "Single unitful value.",
+          "type": "number"
+        },
+        "unit": {
+          "title": "Unit",
+          "description": "the unit length string.",
+          "default": "code_length",
+          "type": "string"
+        }
+      }
+    },
+    "Slice": {
+      "title": "Slice",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "title": "Fields",
+          "description": "list of fields to load for this selection",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ytField"
+          }
+        },
+        "normal": {
+          "title": "Normal",
+          "description": "the normal axis of the slice",
+          "type": "string"
+        },
+        "center": {
+          "title": "Center",
+          "description": "The center point of the slice, default domain center",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Length_Tuple"
+            }
+          ]
+        },
+        "slice_width": {
+          "title": "Slice Width",
+          "description": "The slice width, defaults to full domain",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Length_Value"
+            }
+          ]
+        },
+        "slice_height": {
+          "title": "Slice Height",
+          "description": "The slice width, defaults to full domain",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Length_Value"
+            }
+          ]
+        },
+        "resolution": {
+          "title": "Resolution",
+          "description": "the resolution at which to sample the slice",
+          "default": [
+            400,
+            400
+          ],
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "periodic": {
+          "title": "Periodic",
+          "description": "should the slice be periodic? default False.",
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    },
+    "SelectionObject": {
+      "title": "SelectionObject",
+      "type": "object",
+      "properties": {
+        "regions": {
+          "title": "Regions",
+          "description": "a list of regions to load",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Region"
+          }
+        },
+        "slices": {
+          "title": "Slices",
+          "description": "a list of slices to load",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Slice"
+          }
+        }
+      }
+    },
     "DataContainer": {
       "title": "DataContainer",
       "type": "object",
@@ -128,21 +310,16 @@
         },
         "selections": {
           "title": "Selections",
-          "description": "list of selections to load in this dataset",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SelectionObject"
-          }
-        },
-        "edge_units": {
-          "title": "Edge Units",
-          "description": "the units to use for left_edge and right_edge in the selections",
-          "default": "code_length",
-          "type": "string"
+          "description": "selections to load in this dataset",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SelectionObject"
+            }
+          ]
         },
         "store_in_cache": {
           "title": "Store In Cache",
-          "description": "if enabled, will store references to yt datasets to avoid reloading.",
+          "description": "if enabled, will store references to yt datasets.",
           "default": true,
           "type": "boolean"
         }

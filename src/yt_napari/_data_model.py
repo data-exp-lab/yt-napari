@@ -108,11 +108,16 @@ class InputModel(BaseModel):
     _schema_prefix = "yt-napari"
 
 
+def _get_standard_schema_contents() -> Tuple[str, str]:
+    prefix = InputModel._schema_prefix
+    schema_contents = InputModel.schema_json(indent=2)
+    return prefix, schema_contents
+
+
 def _store_schema(schema_db: Optional[Union[PosixPath, str]] = None, **kwargs):
     # save the current data model as a new schema
     if schema_db is None:
         schema_db = PosixPath(inspect.getfile(_manager)).parent
     m = _manager.Manager(schema_db)
-    prefix = InputModel._schema_prefix
-    schema_contents = InputModel.schema_json(indent=2)
+    prefix, schema_contents = _get_standard_schema_contents()
     m.write_new_schema(schema_contents, schema_prefix=prefix, **kwargs)

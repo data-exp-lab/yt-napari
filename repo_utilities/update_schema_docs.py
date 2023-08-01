@@ -13,11 +13,17 @@ def run_update(source_dir, schema_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-v", "--version", type=str, default=None, help="the schema version to write"
+    msg = (
+        "the schema version to write (form X.X.X). If not provided, "
+        "will only copy over the current schema without writing a new one."
     )
+    parser.add_argument("-v", "--version", type=str, default=None, help=msg)
 
     args = parser.parse_args()
     if args.version is not None:
-        _store_schema(version=args.version, overwrite_version=True)
+
+        v = str(args.version)
+        if v.startswith("v"):
+            v = v.replace("v", "")
+        _store_schema(version=v, overwrite_version=True)
     run_update("./docs", "./src/yt_napari/schemas")
