@@ -4,6 +4,8 @@ from yt_napari._data_model import InputModel
 from yt_napari._version import version, version_tuple
 from yt_napari.logging import ytnapari_log
 
+_version_tuple = tuple([int(i) for i in version_tuple[:3]])
+
 
 def schema_version_is_valid(
     schema_version: str, dev_version_check: bool = True
@@ -16,7 +18,7 @@ def schema_version_is_valid(
     # now we check the actual version. since the schema prefix (yt-napari) is
     # in the supplied schema_version, we can assume a form of yt-napari_x.x.x.json
     sc_version = _schema_version_tuple_from_str(schema_version)
-    if sc_version < version_tuple[:3]:
+    if sc_version < _version_tuple:
         # using an old schema. lets try anyway, but pass along a warning.
         msg = (
             f"The version of the supplied schema:\n    {schema_version} \n"
@@ -26,7 +28,7 @@ def schema_version_is_valid(
             f"    yt-napari version that matches your specified schema."
         )
         ytnapari_log.warning(msg)
-    elif sc_version > version_tuple[:3]:
+    elif sc_version > _version_tuple:
         if dev_version_check and "dev" in version:
             msg = (
                 "You are running a development version of yt-napari, so your "
@@ -50,7 +52,7 @@ def _schema_version_tuple_from_str(schema_version_raw: str) -> Tuple[int, int, i
     # schema_version_raw may be a single string or a file-like address
 
     if "yt-napari_latest" in schema_version_raw:
-        return version_tuple[:3]
+        return _version_tuple
 
     schema_end = schema_version_raw.split("/")[-1]
     v_schema = schema_end.replace(InputModel._schema_prefix, "")
