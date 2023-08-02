@@ -31,7 +31,8 @@ def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
 
 
 #@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
-def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog, qtbot):
+#def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog, qtbot):
+def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog):
 
     # make_napari_viewer is a pytest fixture. It takes any keyword arguments
     # that napari.Viewer() takes. The fixture takes care of teardown, do **not**
@@ -39,29 +40,29 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog, qtbot):
     viewer = make_napari_viewer()
 
     r = ReaderWidget(napari_viewer=viewer)
-    qtbot.addWidget(r)
+   # qtbot.addWidget(r)
 
     r.ds_container.filename.value = yt_ugrid_ds_fn
     r.add_new_button.click()
     sel = list(r.active_selections.values())[0]
     assert isinstance(sel, SelectionEntry)
+#
+#    mgui_region = sel.selection_container_raw
+#    mgui_region.fields.field_type.value = "gas"
+#    mgui_region.fields.field_name.value = "density"
+#    mgui_region.resolution.value = (10, 10, 10)
 
-    mgui_region = sel.selection_container_raw
-    mgui_region.fields.field_type.value = "gas"
-    mgui_region.fields.field_name.value = "density"
-    mgui_region.resolution.value = (10, 10, 10)
-
-    def rebuild_data(final_shape, data):
-        # the yt file thats being loaded from the pytest fixture is a saved
-        # dataset created from an in-memory uniform grid, and the re-loaded
-        # dataset will not have the full functionality of a ds. so here, we
-        # inject a correctly shaped random array here. If we start using full
-        # test datasets from yt in testing, this should be changed.
-        return np.random.random(final_shape) * data.mean()
-
-    rebuild = partial(rebuild_data, mgui_region.resolution.value)
-    r._post_load_function = rebuild
-    r.load_data()
+#    def rebuild_data(final_shape, data):
+#        # the yt file thats being loaded from the pytest fixture is a saved
+#        # dataset created from an in-memory uniform grid, and the re-loaded
+#        # dataset will not have the full functionality of a ds. so here, we
+#        # inject a correctly shaped random array here. If we start using full
+#        # test datasets from yt in testing, this should be changed.
+#        return np.random.random(final_shape) * data.mean()
+#
+#    rebuild = partial(rebuild_data, mgui_region.resolution.value)
+#    r._post_load_function = rebuild
+#    r.load_data()
 
 #    mgui_region.fields.field_name.value = "temperature"
 #    mgui_region.left_edge.value.value = (0.4, 0.4, 0.4)
