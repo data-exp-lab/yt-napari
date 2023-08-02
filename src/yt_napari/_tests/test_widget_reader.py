@@ -28,7 +28,7 @@ def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
     assert sel.selection_type == "Slice"
 
 
-def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog, qtbot):
+def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog):
 
     # make_napari_viewer is a pytest fixture. It takes any keyword arguments
     # that napari.Viewer() takes. The fixture takes care of teardown, do **not**
@@ -36,7 +36,6 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, caplog, qtbot):
     viewer = make_napari_viewer()
 
     r = ReaderWidget(napari_viewer=viewer)
-    qtbot.addWidget(r)
 
     r.ds_container.filename.value = yt_ugrid_ds_fn
     r.add_new_button.click()
