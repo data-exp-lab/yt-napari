@@ -52,11 +52,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
 
-#      - name: Limit pip for windows
-#        if: runner.os == 'Windows'
-#        run: |
-#          python -m pip install --upgrade "pip<22"
-
       - name: Install dependencies
         run: |
           python -m pip install setuptools tox tox-gh-actions
