@@ -65,6 +65,9 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="cache issues on windows in CI")
 def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn, caplog):
+    # this is disable for windows because it is very flaky. It passes about
+    # 25% of the time... probably cache related but have not been able to
+    # figure that out.
     viewer = make_napari_viewer()
 
     r = ReaderWidget(napari_viewer=viewer)
