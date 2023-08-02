@@ -5,6 +5,14 @@ from yt_napari._version import version, version_tuple
 from yt_napari.logging import ytnapari_log
 
 
+def _get_version_tuple():
+    vt = tuple([int(i) for i in version_tuple[:3] if str(i).isnumeric()])
+    if len(vt) < 3:
+        # tox install can end up with 0.1.dev1, etc.
+        vt = vt + (0,) * (3 - len(vt))
+    return vt
+
+
 def schema_version_is_valid(
     schema_version: str, dev_version_check: bool = True
 ) -> bool:
@@ -16,7 +24,7 @@ def schema_version_is_valid(
     # now we check the actual version. since the schema prefix (yt-napari) is
     # in the supplied schema_version, we can assume a form of yt-napari_x.x.x.json
     sc_version = _schema_version_tuple_from_str(schema_version)
-    _version_tuple = tuple([int(i) for i in version_tuple[:3]])
+    _version_tuple = _get_version_tuple()
     if sc_version < _version_tuple:
         # using an old schema. lets try anyway, but pass along a warning.
         msg = (
@@ -51,7 +59,7 @@ def _schema_version_tuple_from_str(schema_version_raw: str) -> Tuple[int, int, i
     # schema_version_raw may be a single string or a file-like address
 
     if "yt-napari_latest" in schema_version_raw:
-        return tuple([int(i) for i in version_tuple[:3]])
+        return _get_version_tuple()
 
     schema_end = schema_version_raw.split("/")[-1]
     v_schema = schema_end.replace(InputModel._schema_prefix, "")
