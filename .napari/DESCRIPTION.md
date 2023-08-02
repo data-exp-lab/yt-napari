@@ -89,4 +89,8 @@ Many plugins may be used in the course of published (or publishable) research, a
 during conference talks and other public facing events. If you'd like to be cited in
 a particular format, or have a DOI you'd like used, you should provide that information here. -->
 
-yt-napari provides plugins to help load data from [yt](https://yt-project.org/) into napari. It includes a graphical data loader, json-based file loading and helper-functions for jupyter notebook interaction. See the [full documentation](https://yt-napari.readthedocs.io) for more details.
+yt-napari provides plugins to help load data from [yt](https://yt-project.org/) into napari. It includes a graphical data loader, json-based file loading and helper-functions for jupyter notebook interaction.
+
+![](https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/docs/_static/nb_iso_galaxy_T_rho.png)
+
+See the [full documentation](https://yt-napari.readthedocs.io) for more details.
