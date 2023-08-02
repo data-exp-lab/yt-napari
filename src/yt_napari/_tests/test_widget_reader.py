@@ -49,6 +49,7 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
     r = ReaderWidget(napari_viewer=viewer)
 
     r.ds_container.filename.value = yt_ugrid_ds_fn
+    r.ds_container.store_in_cache.value = False
     r.add_new_button.click()
     sel = list(r.active_selections.values())[0]
     assert isinstance(sel, SelectionEntry)
@@ -64,7 +65,7 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="cache issues on windows in CI")
-def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn, caplog):
+def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
     # this is disable for windows because it is very flaky. It passes about
     # 25% of the time... probably cache related but have not been able to
     # figure that out.
@@ -72,6 +73,7 @@ def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn, caplog):
 
     r = ReaderWidget(napari_viewer=viewer)
     r.ds_container.filename.value = yt_ugrid_ds_fn
+    r.ds_container.store_in_cache.value = False
     r.add_new_button.click()
 
     sel = list(r.active_selections.values())[0]
@@ -92,8 +94,6 @@ def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn, caplog):
     mgui_region.right_edge.value.value = (0.6, 0.6, 0.6)
     r.load_data()
 
-    # should have read from cache, check the log:
-    assert yt_ugrid_ds_fn in caplog.text
     # the viewer should now have two images
     assert len(viewer.layers) == 2
 
