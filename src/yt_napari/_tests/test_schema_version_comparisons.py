@@ -27,4 +27,6 @@ def test_version_tupling(string_to_test, expected):
     ],
 )
 def test_schema_str_validation(string_to_test, expected):
-    assert vc.schema_version_is_valid(string_to_test) is expected
+    assert (
+        vc.schema_version_is_valid(string_to_test, dev_version_check=False) is expected
+    )

@@ -5,7 +5,9 @@ from yt_napari._version import version, version_tuple
 from yt_napari.logging import ytnapari_log
 
 
-def schema_version_is_valid(schema_version: str) -> bool:
+def schema_version_is_valid(
+    schema_version: str, dev_version_check: bool = True
+) -> bool:
     pfx = InputModel._schema_prefix
     if schema_version is None or pfx not in schema_version:
         # the schema does not match a known schema for this plugin
@@ -25,6 +27,14 @@ def schema_version_is_valid(schema_version: str) -> bool:
         )
         ytnapari_log.warning(msg)
     elif sc_version > version_tuple[:3]:
+        if dev_version_check and "dev" in version:
+            msg = (
+                "You are running a development version of yt-napari, so your "
+                "specified schema may be valid if it corresponds to an upcoming"
+                "release."
+            )
+            ytnapari_log.info(msg)
+            return True
         # using a new schema with old yt-napari. always fail.
         msg = (
             f"The version of the supplied schema:\n    {schema_version} \n"
