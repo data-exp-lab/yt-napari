@@ -6,6 +6,10 @@ from yt_napari._ds_cache import dataset_cache
 from yt_napari._widget_reader import ReaderWidget, SelectionEntry
 from yt_napari.viewer import Scene
 
+# note: the cache is disabled for all the tests in this file due to flakiness
+# in github CI. It may be that loading from a true file, rather than the
+# yt_ugrid_ds_fn fixture would fix that...
+
 
 def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
     viewer = make_napari_viewer()
@@ -39,13 +43,8 @@ def _rebuild_data(final_shape, data):
 
 def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
 
-    # make_napari_viewer is a pytest fixture. It takes any keyword arguments
-    # that napari.Viewer() takes. The fixture takes care of teardown, do **not**
-    # explicitly close it!
     viewer = make_napari_viewer()
-
     r = ReaderWidget(napari_viewer=viewer)
-
     r.ds_container.filename.value = yt_ugrid_ds_fn
     r.ds_container.store_in_cache.value = False
     r.add_new_button.click()
