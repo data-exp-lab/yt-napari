@@ -1,5 +1,6 @@
 import pytest
 
+from yt_napari._version import version
 from yt_napari.schemas import _version_comparison as vc
 
 
@@ -29,3 +30,11 @@ def test_schema_str_validation(string_to_test, expected):
     assert (
         vc.schema_version_is_valid(string_to_test, dev_version_check=False) is expected
     )
+
+
+def test_schema_str_dev_validation():
+    expected = "dev" in version  # in test env, this should always be true
+    _is_valid = vc.schema_version_is_valid(
+        "yt-napari_1000.1.0.json", dev_version_check=True
+    )
+    assert _is_valid is expected
