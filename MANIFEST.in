@@ -9,7 +9,7 @@ recursive-exclude * *.py[co]
 recursive-include src *.json
 
 exclude lint_requirements.txt
-exclude repo_utilities/update_schema_docs.py
+exclude repo_utilities/*.py
 exclude tox.ini
 exclude make.bat
 exclude Makefile

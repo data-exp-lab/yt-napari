@@ -6,7 +6,7 @@ from yt_napari._model_ingestor import _choose_ref_layer, _process_validated_mode
 jdicts = []
 jdicts.append(
     {
-        "$schema": "yt-napari_0.0.2.json",
+        "$schema": "yt-napari_0.1.0.json",
         "data": [
             {
                 "filename": "_ytnapari_load_grid",
@@ -28,7 +28,7 @@ jdicts.append(
 )
 jdicts.append(
     {
-        "$schema": "yt-napari_0.0.2.json",
+        "$schema": "yt-napari_0.1.0.json",
         "data": [
             {
                 "filename": "_ytnapari_load_grid",
