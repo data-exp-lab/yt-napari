@@ -5,6 +5,7 @@ json files will need to be updated.
 
 ### New Features
 * load 2D slices and 3D regions
+* reorganized widget reader: add multiple selections!
 * yt dataset cacheing to speed up subsequent loads
 * improved logging
 * test infrastructure updates
