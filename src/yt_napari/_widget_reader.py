@@ -12,13 +12,16 @@ from yt_napari.viewer import Scene, _check_for_reference_layer
 
 
 class ReaderWidget(QWidget):
+
+    _pydantic_model = _data_model.DataContainer
+
     def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
         self.viewer = napari_viewer
 
         self.ds_container = _gui_utilities.get_yt_data_container(
-            ignore_attrs="selections"
+            ignore_attrs="selections", pydantic_model_class=self._pydantic_model
         )
         self.layout().addWidget(self.ds_container.native)
 
@@ -117,7 +120,7 @@ class ReaderWidget(QWidget):
         py_kwargs = {}
         _gui_utilities.translator.get_pydantic_kwargs(
             self.ds_container,
-            _data_model.DataContainer,
+            self._pydantic_model,
             py_kwargs,
             ignore_attrs="selections",
         )
@@ -127,7 +130,7 @@ class ReaderWidget(QWidget):
 
         # now ready to instantiate the base model
         py_kwargs = {
-            "data": [
+            "datasets": [
                 py_kwargs,
             ]
         }
@@ -198,3 +201,50 @@ class SelectionEntry(QWidget):
             mgui_sel, pydantic_model, py_kwargs
         )
         return py_kwargs
+
+
+class TimeSeriesReader(QWidget):
+    _pydantic_model = _data_model.Timeseries
+
+    def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
+        super().__init__(parent)
+        self.setLayout(QVBoxLayout())
+        self.viewer = napari_viewer
+
+        self.ds_container = _gui_utilities.get_yt_data_container(
+            pydantic_model_class=self._pydantic_model,
+        )
+        self.layout().addWidget(self.ds_container.native)
+
+        # the load and clear buttons
+        load_group = QHBoxLayout()
+        self._post_load_function: Optional[Callable] = None
+        pb = widgets.PushButton(text="Load Selections")
+        pb.clicked.connect(self.load_data)
+        load_group.addWidget(pb.native)
+        self.layout().addLayout(load_group)
+
+    def load_data(self):
+        print("loaddinggg")
+        py_kwargs = {}
+        _gui_utilities.translator.get_pydantic_kwargs(
+            self.ds_container,
+            self._pydantic_model,
+            py_kwargs,
+        )
+
+        py_kwargs = {
+            "timeseries": [
+                py_kwargs,
+            ]
+        }
+        model = _data_model.InputModel.parse_obj(py_kwargs)
+
+        layer_list = _model_ingestor._process_validated_model(model)
+        print(layer_list)
+        # for new_layer in layer_list:
+        #     im_arr, im_kwargs, _ = new_layer
+        #     if self._post_load_function is not None:
+        #         im_arr = self._post_load_function(im_arr)
+        #     # add the new layer
+        #     self.viewer.add_image(im_arr, **im_kwargs)

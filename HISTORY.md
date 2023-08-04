@@ -1,3 +1,8 @@
+## v0.2.0
+
+### New Features
+* new widget: yt-napari timeseries slicer
+
 ## v0.1.0
 
 This release includes some non-backwards compatible changes to the schema. Old

@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
-from yt_napari._data_model import DataContainer, InputModel
+from yt_napari._data_model import DataContainer, InputModel, Timeseries
 from yt_napari._ds_cache import dataset_cache
 
 
@@ -482,14 +482,25 @@ def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
     return layer_list
 
 
+def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
+
+    return layer_list
+
+
 def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     # return a list of layer tuples with domain information
+
+    if model.datasets is None:
+        model.datasets = []
+
+    if model.timeseries is None:
+        model.timeseries = []
 
     layer_list = []
     # our model is already validated, so we can assume the field exist with
     # their correct types. This is all the yt-specific code required to load a
     # dataset and return a plain numpy array
-    for m_data in model.data:
+    for m_data in model.datasets:
 
         ds = dataset_cache.check_then_load(m_data.filename)
         if m_data.selections.regions is not None:
@@ -497,20 +508,26 @@ def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
         if m_data.selections.slices is not None:
             layer_list = _load_2D_slices(ds, m_data, layer_list)
 
-    return layer_list
+    timeseries_layers = []
+    for m_data in model.timeseries:
+        timeseries_layers = _load_timeseries(m_data, timeseries_layers)
+
+    return layer_list, timeseries_layers
 
 
 def load_from_json(json_paths: List[str]) -> List[Layer]:
 
     layer_lists = []  # we will concatenate layers across json paths
-
+    timeseries_layers = []  # timeseries layers handled separately
     for json_path in json_paths:
         # InputModel is a pydantic class, the following will validate the json
         model = InputModel.parse_file(json_path)
 
         # now that we have a validated model, we can use the model attributes
         # to execute the code that will return our array for the image
-        layer_lists += _process_validated_model(model)
+        layer_lists_j, timeseries_layers_j = _process_validated_model(model)
+        timeseries_layers += timeseries_layers_j
+        layer_lists += layer_lists_j
 
     # now we need to align all our layers!
     # choose a reference layer -- using the first in the list at present, could
@@ -519,7 +536,8 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
     ref_layer = _choose_ref_layer(layer_lists)
     layer_lists = ref_layer.align_sanitize_layers(layer_lists)
 
-    return layer_lists
+    # timeseries layers are internally aligned
+    return layer_lists + timeseries_layers
 
 
 def _choose_ref_layer(

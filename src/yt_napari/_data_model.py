@@ -101,10 +101,24 @@ class DataContainer(BaseModel):
     )
 
 
-class InputModel(BaseModel):
-    data: List[DataContainer] = Field(
-        None, description="list of data containers to load"
+class Timeseries(BaseModel):
+    directory: str = Field(None, description="The directory of the timseries")
+    file_pattern: Optional[str] = Field(None, description="The file pattern to match")
+    file_list: Optional[List[str]] = Field(None, description="List of files to load.")
+    selection: Slice = Field(None, description="The slice to load for each timestep")
+    load_as_stack: Optional[bool] = Field(
+        False, description="If True, will load slices as 3D image stack."
     )
+    process_in_parallel: Optional[bool] = Field(
+        False, description="If True, will attempt to load slices in parallel."
+    )
+
+
+class InputModel(BaseModel):
+    datasets: List[DataContainer] = Field(
+        None, description="list of dataset containers to load"
+    )
+    timeseries: List[Timeseries] = Field(None, description="List of timeseries to load")
     _schema_prefix = "yt-napari"
 
 

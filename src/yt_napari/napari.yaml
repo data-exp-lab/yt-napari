@@ -8,6 +8,9 @@ contributions:
     - id: yt-napari.reader_widget
       title: Read in a selection of data from yt
       python_name: yt_napari._widget_reader:ReaderWidget
+    - id: yt-napari.timeseries_widget
+      title: Read 2D selections from yt timeseries
+      python_name: yt_napari._widget_reader:TimeSeriesReader
   readers:
     - command: yt-napari.get_reader
       accepts_directories: false
@@ -15,3 +18,5 @@ contributions:
   widgets:
     - command: yt-napari.reader_widget
       display_name: yt Reader
+    - command: yt-napari.timeseries_widget
+      display_name: yt Time Series Reader
