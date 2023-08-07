@@ -137,7 +137,7 @@ class ReaderWidget(QWidget):
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
         # process each layer
-        layer_list = _model_ingestor._process_validated_model(model)
+        layer_list, _ = _model_ingestor._process_validated_model(model)
 
         # align all layers after checking for or setting the reference layer
         ref_layer = _check_for_reference_layer(self.viewer.layers)
@@ -240,7 +240,7 @@ class TimeSeriesReader(QWidget):
         }
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
-        layer_list = _model_ingestor._process_validated_model(model)
+        _, layer_list = _model_ingestor._process_validated_model(model)
         print(layer_list)
         # for new_layer in layer_list:
         #     im_arr, im_kwargs, _ = new_layer

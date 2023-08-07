@@ -8,7 +8,7 @@ from yt_napari import napari_get_reader
 
 valid_jdict = {
     "$schema": "yt-napari_0.1.0.json",
-    "data": [
+    "datasets": [
         {
             "filename": None,
             "selections": {
@@ -40,7 +40,7 @@ valid_jdict = {
 def json_file_fixture(tmp_path, yt_ugrid_ds_fn):
     # this fixture is the json file for napari to load, with
     # reference to the session-wide yt dataset
-    valid_jdict["data"][0]["filename"] = yt_ugrid_ds_fn
+    valid_jdict["datasets"][0]["filename"] = yt_ugrid_ds_fn
 
     json_file = str(tmp_path / "valid_json.json")
     with open(json_file, "w") as fp:
