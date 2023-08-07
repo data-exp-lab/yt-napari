@@ -11,20 +11,27 @@ from yt_napari._ds_cache import dataset_cache
 from yt_napari.viewer import Scene, _check_for_reference_layer
 
 
-class ReaderWidget(QWidget):
+class YTReader(QWidget):
 
-    _pydantic_model = _data_model.DataContainer
+    _pydantic_model = None
 
     def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
         self.viewer = napari_viewer
+        self._post_load_function: Optional[Callable] = None
 
+        self.add_dataset_selection_widget()
+        self.add_spatial_selection_widgets()
+        self.add_load_group_widgets()
+
+    def add_dataset_selection_widget(self):
         self.ds_container = _gui_utilities.get_yt_data_container(
             ignore_attrs="selections", pydantic_model_class=self._pydantic_model
         )
         self.layout().addWidget(self.ds_container.native)
 
+    def add_spatial_selection_widgets(self):
         # click button to add layer
         addition_group_layout = QHBoxLayout()
         add_new_button = widgets.PushButton(text="Click to add new selection")
@@ -60,17 +67,8 @@ class ReaderWidget(QWidget):
 
         self.layout().addLayout(removal_group_layout)
 
-        # the load and clear buttons
-        load_group = QHBoxLayout()
-        self._post_load_function: Optional[Callable] = None
-        pb = widgets.PushButton(text="Load Selections")
-        pb.clicked.connect(self.load_data)
-        load_group.addWidget(pb.native)
-
-        cc = widgets.PushButton(text="Clear cache")
-        cc.clicked.connect(self.clear_cache)
-        load_group.addWidget(cc.native)
-        self.layout().addLayout(load_group)
+    def add_load_group_widgets(self):
+        pass
 
     def add_a_selection(self):
         selection_type = self.new_selection_type.currentText()
@@ -92,6 +90,22 @@ class ReaderWidget(QWidget):
             self.active_selections.pop(widget_to_rm)
             self.active_sel_list.clear()
             self.active_sel_list.insertItems(0, list(self.active_selections.keys()))
+
+
+class ReaderWidget(YTReader):
+
+    _pydantic_model = _data_model.DataContainer
+
+    def add_load_group_widgets(self):
+        load_group = QHBoxLayout()
+        pb = widgets.PushButton(text="Load Selections")
+        pb.clicked.connect(self.load_data)
+        load_group.addWidget(pb.native)
+
+        cc = widgets.PushButton(text="Clear cache")
+        cc.clicked.connect(self.clear_cache)
+        load_group.addWidget(cc.native)
+        self.layout().addLayout(load_group)
 
     _yt_scene: Scene = None  # will persist across widget calls
 
@@ -203,22 +217,14 @@ class SelectionEntry(QWidget):
         return py_kwargs
 
 
-class TimeSeriesReader(QWidget):
+class TimeSeriesReader(YTReader):
     _pydantic_model = _data_model.Timeseries
 
-    def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
-        super().__init__(parent)
-        self.setLayout(QVBoxLayout())
-        self.viewer = napari_viewer
-
-        self.ds_container = _gui_utilities.get_yt_data_container(
-            pydantic_model_class=self._pydantic_model,
-        )
-        self.layout().addWidget(self.ds_container.native)
+    def add_load_group_widgets(self):
 
         # the load and clear buttons
         load_group = QHBoxLayout()
-        self._post_load_function: Optional[Callable] = None
+
         pb = widgets.PushButton(text="Load Selections")
         pb.clicked.connect(self.load_data)
         load_group.addWidget(pb.native)

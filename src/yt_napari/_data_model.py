@@ -101,11 +101,24 @@ class DataContainer(BaseModel):
     )
 
 
-class Timeseries(BaseModel):
+class TimeSeriesFileSelection(BaseModel):
     directory: str = Field(None, description="The directory of the timseries")
     file_pattern: Optional[str] = Field(None, description="The file pattern to match")
     file_list: Optional[List[str]] = Field(None, description="List of files to load.")
-    selection: Slice = Field(None, description="The slice to load for each timestep")
+    file_range: Optional[Tuple[int, int, int]] = Field(
+        None,
+        description="Given files matched by file_pattern, "
+        "this option will select a range. Argument order"
+        "is taken as start:stop:step.",
+    )
+
+
+class Timeseries(BaseModel):
+
+    file_selection: TimeSeriesFileSelection
+    selections: SelectionObject = Field(
+        None, description="selections to load in this dataset"
+    )
     load_as_stack: Optional[bool] = Field(
         False, description="If True, will load slices as 3D image stack."
     )

@@ -259,10 +259,10 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
         )
 
     translator.register(
-        _data_model.Timeseries,
+        _data_model.TimeSeriesFileSelection,
         "file_list",
         magicgui_factory=get_magicguidefault,
-        magicgui_args=(_data_model.Timeseries.__fields__["file_list"],),
+        magicgui_args=(_data_model.TimeSeriesFileSelection.__fields__["file_list"],),
         pydantic_attr_factory=split_comma_sep_string,
     )
 
