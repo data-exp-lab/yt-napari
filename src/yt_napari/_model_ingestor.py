@@ -1,9 +1,11 @@
+import os
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
+import yt
 from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
-from yt_napari._data_model import DataContainer, InputModel, Timeseries
+from yt_napari._data_model import DataContainer, InputModel, SelectionObject, Timeseries
 from yt_napari._ds_cache import dataset_cache
 
 
@@ -343,9 +345,9 @@ class PhysicalDomainTracker:
         self.center, self.width = center_wid
 
 
-def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
+def _load_3D_regions(ds, selections: SelectionObject, layer_list: list) -> list:
 
-    for sel in m_data.selections.regions:
+    for sel in selections.regions:
         # get the left, right edge as a unitful array, initialize the layer
         # domain tracking for this layer and update the global domain extent
         if sel.left_edge is None:
@@ -435,9 +437,9 @@ def _process_slice(
     return frb, layer_domain
 
 
-def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
+def _load_2D_slices(ds, selections: SelectionObject, layer_list: list) -> list:
 
-    for slice in m_data.selections.slices:
+    for slice in selections.slices:
 
         if slice.center is None:
             c = None
@@ -482,9 +484,51 @@ def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
     return layer_list
 
 
+def _load_selections_from_ds(
+    ds, selections: SelectionObject, layer_list: List[SpatialLayer]
+) -> List[SpatialLayer]:
+    if selections.regions is not None:
+        layer_list = _load_3D_regions(ds, selections, layer_list)
+    if selections.slices is not None:
+        layer_list = _load_2D_slices(ds, selections, layer_list)
+    return layer_list
+
+
+def _load_dataset_selections(
+    m_data: DataContainer, layer_list: List[SpatialLayer]
+) -> List[SpatialLayer]:
+    ds = dataset_cache.check_then_load(m_data.filename)
+    return _load_selections_from_ds(ds, m_data.selections, layer_list)
+
+
 def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
 
-    return layer_list
+    fdir = m_data.file_selection.directory
+    fpat = m_data.file_selection.file_pattern
+    frange = m_data.file_selection.file_range
+
+    if m_data.file_selection.file_list is not None:
+        # we have a list of files, load them explicitly as dataseires
+        files = [os.path.join(fdir, fi) for fi in m_data.file_selection.file_list]
+        ts = yt.DatasetSeries(files)
+    elif fpat is not None and frange is not None:
+        # match the pattern, order, then select with file_range
+        raise NotImplementedError("nope. not yet.")
+    elif fpat is not None:
+        # just pass the pattern to yt directly
+        files = os.path.join(fdir, fpat)
+        ts = yt.load(files)
+    else:
+        raise RuntimeError("Unexpected combination of file_selection options.")
+
+    for ds in ts:
+        sels = m_data.selections
+        layer_list = _load_selections_from_ds(ds, sels, layer_list)
+
+    if m_data.load_as_stack is False:
+        return layer_list
+
+    # concatenate into a new dim.
 
 
 def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
@@ -501,12 +545,7 @@ def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
     # their correct types. This is all the yt-specific code required to load a
     # dataset and return a plain numpy array
     for m_data in model.datasets:
-
-        ds = dataset_cache.check_then_load(m_data.filename)
-        if m_data.selections.regions is not None:
-            layer_list = _load_3D_regions(ds, m_data, layer_list)
-        if m_data.selections.slices is not None:
-            layer_list = _load_2D_slices(ds, m_data, layer_list)
+        layer_list = _load_dataset_selections(m_data, layer_list)
 
     timeseries_layers = []
     for m_data in model.timeseries:
