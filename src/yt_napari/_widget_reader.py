@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QComboBox, QHBoxLayout, QPushButton, QVBoxLayout, QWi
 
 from yt_napari import _data_model, _gui_utilities, _model_ingestor
 from yt_napari._ds_cache import dataset_cache
-from yt_napari.viewer import Scene, _check_for_reference_layer
+from yt_napari.viewer import _check_for_reference_layer
 
 
 class YTReader(QWidget):
@@ -106,14 +106,6 @@ class ReaderWidget(YTReader):
         cc.clicked.connect(self.clear_cache)
         load_group.addWidget(cc.native)
         self.layout().addLayout(load_group)
-
-    _yt_scene: Scene = None  # will persist across widget calls
-
-    @property
-    def yt_scene(self):
-        if self._yt_scene is None:
-            self._yt_scene = Scene()
-        return self._yt_scene
 
     def clear_cache(self):
         dataset_cache.rm_all()

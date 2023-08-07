@@ -4,7 +4,6 @@ import numpy as np
 
 from yt_napari._ds_cache import dataset_cache
 from yt_napari._widget_reader import ReaderWidget, SelectionEntry
-from yt_napari.viewer import Scene
 
 # note: the cache is disabled for all the tests in this file due to flakiness
 # in github CI. It may be that loading from a true file, rather than the
@@ -95,7 +94,3 @@ def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
 
     r.clear_cache()
     assert len(dataset_cache.available) == 0
-
-    _ = r.yt_scene
-    yt_scene = r.yt_scene
-    assert isinstance(yt_scene, Scene)
