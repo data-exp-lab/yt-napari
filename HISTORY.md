@@ -3,6 +3,11 @@
 ### New Features
 * new widget: yt-napari timeseries slicer
 
+### Breaking changes
+
+Breaking schema updates:
+* the top level `data` attribute has been renamed `datasets` to distinguish between loading selections from a single timestep and the new `timeseries` selection
+
 ## v0.1.0
 
 This release includes some non-backwards compatible changes to the schema. Old

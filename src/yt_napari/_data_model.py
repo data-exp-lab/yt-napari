@@ -120,10 +120,10 @@ class Timeseries(BaseModel):
         None, description="selections to load in this dataset"
     )
     load_as_stack: Optional[bool] = Field(
-        False, description="If True, will load slices as 3D image stack."
+        False, description="If True, will stack images along a new dimension."
     )
     process_in_parallel: Optional[bool] = Field(
-        False, description="If True, will attempt to load slices in parallel."
+        False, description="If True, will attempt to load selections in parallel."
     )
 
 

@@ -7,7 +7,7 @@ import yt
 from yt_napari import napari_get_reader
 
 valid_jdict = {
-    "$schema": "yt-napari_0.1.0.json",
+    "$schema": "yt-napari_0.2.0.json",
     "datasets": [
         {
             "filename": None,
