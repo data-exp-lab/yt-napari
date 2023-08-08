@@ -223,26 +223,50 @@ class TimeSeriesReader(YTReader):
         self.layout().addLayout(load_group)
 
     def load_data(self):
-        print("loaddinggg")
+
+        # first, get the pydantic args for each selection type, embed in lists
+        selections_by_type = defaultdict(list)
+        for selection in self.active_selections.values():
+            py_kwargs = selection.get_current_pydantic_kwargs()
+            sel_key = selection.selection_type.lower() + "s"
+            selections_by_type[sel_key].append(py_kwargs)
+
+        # next, process remaining arguments (skipping selections):
         py_kwargs = {}
         _gui_utilities.translator.get_pydantic_kwargs(
             self.ds_container,
             self._pydantic_model,
             py_kwargs,
+            ignore_attrs="selections",
         )
 
+        if py_kwargs["file_selection"]["file_pattern"] == "":
+            py_kwargs["file_selection"]["file_pattern"] = None
+
+        if py_kwargs["file_selection"]["file_list"] == [""]:
+            py_kwargs["file_selection"]["file_list"] = None
+
+        if py_kwargs["file_selection"]["file_range"] == (0, 0, 0):
+            py_kwargs["file_selection"]["file_range"] = None
+
+        # add selections in
+        py_kwargs["selections"] = selections_by_type
+
+        # now ready to instantiate the base model
         py_kwargs = {
             "timeseries": [
                 py_kwargs,
             ]
         }
+
+        print(py_kwargs)
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
         _, layer_list = _model_ingestor._process_validated_model(model)
-        print(layer_list)
-        # for new_layer in layer_list:
-        #     im_arr, im_kwargs, _ = new_layer
-        #     if self._post_load_function is not None:
-        #         im_arr = self._post_load_function(im_arr)
-        #     # add the new layer
-        #     self.viewer.add_image(im_arr, **im_kwargs)
+
+        for new_layer in layer_list:
+            im_arr, im_kwargs, _ = new_layer
+            if self._post_load_function is not None:
+                im_arr = self._post_load_function(im_arr)
+            # add the new layer
+            self.viewer.add_image(im_arr, **im_kwargs)
