@@ -607,7 +607,7 @@ def _validate_files(files):
 
     valid_files = [f for f in files if os.path.isfile(f)]
 
-    if len(valid_files) == 2:
+    if len(valid_files) == 0:
         # try the yt directory
         yt_data_dir = yt.config.ytcfg.get("yt", "test_data_dir")
         test_files = [os.path.join(yt_data_dir, f) for f in files]
