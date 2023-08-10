@@ -3,7 +3,6 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yt
-from dask import array as da, delayed
 from napari import Viewer
 from unyt import unyt_array, unyt_quantity
 
@@ -154,6 +153,14 @@ def add_to_viewer(
         for file in files:
             im_data.append(_load_and_sample(file, selection, use_dask))
     else:
+        try:
+            from dask import array as da, delayed
+        except ImportError:
+            msg = (
+                "This functionality requires dask: "
+                'pip install "dask[distributed, array]"'
+            )
+            raise ImportError(msg)
         for file in files:
             data = delayed(_load_and_sample)(file, selection, use_dask)
             im_data.append(da.from_delayed(data, selection.resolution, dtype=float))
