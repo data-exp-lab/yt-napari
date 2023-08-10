@@ -665,10 +665,17 @@ def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
 
     files = _find_timeseries_files(m_data.file_selection)
 
-    if m_data.process_in_parallel is False:
+    process_in_parallel = False  # future model attribute
+
+    if process_in_parallel is False:
         tc = TimeseriesContainer()
         temp_list = []
         for file in files:
+            # note: managing the files independently makes parallel approaches
+            # without MPI feasible. in some limited testing, this actually
+            # was thread safe with logging disabled, so it is possible to
+            # build dask arrays pretty easily for single regions and single
+            # fields.
             ds = yt.load(file)
             sels = m_data.selections
             temp_list = _load_selections_from_ds(

@@ -122,9 +122,9 @@ class Timeseries(BaseModel):
     load_as_stack: Optional[bool] = Field(
         False, description="If True, will stack images along a new dimension."
     )
-    process_in_parallel: Optional[bool] = Field(
-        False, description="If True, will attempt to load selections in parallel."
-    )
+    # process_in_parallel: Optional[bool] = Field(
+    #     False, description="If True, will attempt to load selections in parallel."
+    # )
 
 
 class InputModel(BaseModel):
