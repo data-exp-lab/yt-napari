@@ -3,6 +3,7 @@ from typing import Callable, Optional
 
 import napari
 from magicgui import widgets
+from napari.qt.threading import thread_worker
 from qtpy import QtCore
 from qtpy.QtWidgets import QComboBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
@@ -259,14 +260,23 @@ class TimeSeriesReader(YTReader):
             ]
         }
 
-        print(py_kwargs)
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
-        _, layer_list = _model_ingestor._process_validated_model(model)
+        worker = time_series_load(model)
+        worker.returned.connect(self.process_timeseries_layers)
+        worker.start()
+        # _, layer_list = _model_ingestor._process_validated_model(model)
 
+    def process_timeseries_layers(self, layer_list):
         for new_layer in layer_list:
             im_arr, im_kwargs, _ = new_layer
             if self._post_load_function is not None:
                 im_arr = self._post_load_function(im_arr)
             # add the new layer
             self.viewer.add_image(im_arr, **im_kwargs)
+
+
+@thread_worker(progress=True)
+def time_series_load(model):
+    _, layer_list = _model_ingestor._process_validated_model(model)
+    return layer_list

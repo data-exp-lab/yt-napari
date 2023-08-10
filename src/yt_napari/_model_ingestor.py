@@ -13,6 +13,7 @@ from yt_napari._data_model import (
     SelectionObject,
     Slice,
     Timeseries,
+    TimeSeriesFileSelection,
 )
 from yt_napari._ds_cache import dataset_cache
 
@@ -240,7 +241,7 @@ class TimeseriesContainer:
         _, im_kwargs, layer_type, domain = the_layers[0]
 
         im_arrays = [im[0] for im in the_layers]
-        im = np.stack(im_arrays, axis=0)
+        im = np.stack(im_arrays, axis=0)  # this operation will preserve dask arrays
         return im, im_kwargs, layer_type
 
     def concat_by_selection(self):
@@ -602,44 +603,88 @@ def _load_dataset_selections(
     return _load_selections_from_ds(ds, m_data.selections, layer_list)
 
 
+def _validate_files(files):
+
+    valid_files = [f for f in files if os.path.isfile(f)]
+
+    if len(valid_files) == 2:
+        # try the yt directory
+        yt_data_dir = yt.config.ytcfg.get("yt", "test_data_dir")
+        test_files = [os.path.join(yt_data_dir, f) for f in files]
+        valid_files = [f for f in test_files if os.path.isfile(f)]
+
+    return valid_files
+
+
+def _generate_file_list(fpat, fdir=None):
+    import glob
+
+    # try with
+    match_this = fpat
+    if fdir is not None:
+        match_this = os.path.join(fdir, match_this)
+
+    files = glob.glob(match_this)
+    if len(files) == 0:
+        yt_data_dir = yt.config.ytcfg.get("yt", "test_data_dir")
+        files = glob.glob(os.path.join(yt_data_dir, match_this))
+
+    files.sort()
+    return files
+
+
+def _find_timeseries_files(file_selection: TimeSeriesFileSelection):
+
+    fdir = file_selection.directory
+    fpat = file_selection.file_pattern
+    frange = file_selection.file_range
+
+    if file_selection.file_list is not None:
+        # we have a list of files, load them explicitly as dataseries
+        files = file_selection.file_list
+        if fdir is not None:
+            files = [os.path.join(fdir, fi) for fi in files]
+        return _validate_files(files)
+
+    if fpat is None:
+        fpat = "*"
+
+    files = _generate_file_list(fpat, fdir)
+    if frange is not None:
+        # limit the selected files
+        f1, f2, f3 = frange
+        if f2 > len(files):
+            f2 = len(files)
+        picked_files = [files[fileid] for fileid in range(f1, f2, f3)]
+        return picked_files
+
+    return files
+
+
 def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
 
-    fdir = m_data.file_selection.directory
-    fpat = m_data.file_selection.file_pattern
-    frange = m_data.file_selection.file_range
+    files = _find_timeseries_files(m_data.file_selection)
 
-    if m_data.file_selection.file_list is not None:
-        # we have a list of files, load them explicitly as dataseries
-        files = [os.path.join(fdir, fi) for fi in m_data.file_selection.file_list]
-        ts = yt.DatasetSeries(files)
-    elif fpat is not None and frange is not None:
-        # match the pattern, order, then select with file_range
-        raise NotImplementedError("nope. not yet.")
-    elif fpat is not None:
-        # just pass the pattern to yt directly
-        files = os.path.join(fdir, fpat)
-        ts = yt.load(files)
-        if isinstance(ts, yt.DatasetSeries) is False:
-            raise RuntimeError(f"Expected a yt DataSeries object, found {type(ts)}.")
-    else:
-        raise RuntimeError("Unexpected combination of file_selection options.")
+    if m_data.process_in_parallel is False:
+        tc = TimeseriesContainer()
+        temp_list = []
+        for file in files:
+            ds = yt.load(file)
+            sels = m_data.selections
+            temp_list = _load_selections_from_ds(
+                ds, sels, temp_list, timeseries_container=tc
+            )
 
-    tc = TimeseriesContainer()
-    temp_list = []
-    for ds in ts:
-        sels = m_data.selections
-        temp_list = _load_selections_from_ds(
-            ds, sels, temp_list, timeseries_container=tc
-        )
+        if m_data.load_as_stack is False:
+            new_layers = tc.layer_list
+        else:
+            new_layers = tc.concat_by_selection()
 
-    if m_data.load_as_stack is False:
-        new_layers = tc.layer_list
-    else:
-        new_layers = tc.concat_by_selection()
+        for layer in new_layers:
+            layer_list.append(layer)
+        return layer_list
 
-    for layer in new_layers:
-        layer_list.append(layer)
-    return layer_list
+    raise NotImplementedError("parallel load is not implemented yet")
 
 
 def _process_validated_model(
@@ -691,7 +736,7 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
 
     # timeseries layers are internally aligned
     out_layers = layer_lists + timeseries_layers
-    return out_layers  # this is getting nested... why...
+    return out_layers
 
 
 def _choose_ref_layer(
