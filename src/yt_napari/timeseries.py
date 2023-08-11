@@ -20,6 +20,18 @@ class _Selection(abc.ABC):
     def sample_ds(self, ds):
         pass
 
+    @abc.abstractmethod
+    def _aspect_ratio(self):
+        pass
+
+    @property
+    def _requires_scale(self):
+        return any(self._aspect_ratio() != 1.0)
+
+    @property
+    def _scale(self):
+        return 1.0 / self._aspect_ratio()
+
     def take_log(self, ds):
         if self._take_log is None:
             self._take_log = ds._get_field_info(self.field).take_log
@@ -87,6 +99,11 @@ class Region(_Selection):
 
         data = frb[self.field]
         return self._finalize_array(ds, data)
+
+    @property
+    def _aspect_ratio(self):
+        wid = self.right_edge - self.left_edge
+        return wid / wid[0]
 
 
 class Slice(_Selection):
@@ -166,6 +183,10 @@ class Slice(_Selection):
 
         data = frb[self.field]  # extract the field (the slow part)
         return self._finalize_array(ds, data)
+
+    @property
+    def _aspect_ratio(self):
+        return np.array([1.0, self.height / self.width])
 
 
 def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
@@ -256,6 +277,12 @@ def add_to_viewer(
         for file in files:
             data = delayed(_load_and_sample)(file, selection, use_dask)
             im_data.append(da.from_delayed(data, selection.resolution, dtype=float))
+
+    if selection._requires_scale:
+        scale = selection._scale
+        if "scale" in kwargs:
+            _ = kwargs.pop("scale")
+        kwargs["scale"] = scale
 
     if load_as_stack:
         im_data = np.stack(im_data)

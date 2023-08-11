@@ -7,7 +7,7 @@
         "directory": "",
         "file_pattern": "enzo_tiny_cosmology/DD????/DD????",
         "file_list": null,
-        "file_range": null
+        "file_range": [0, 50, 10]
       },
       "selections": {
         "regions": null,
@@ -34,7 +34,7 @@
               "unit": "code_length"
             },
             "slice_height": {
-              "value": 1.0,
+              "value": 0.5,
               "unit": "code_length"
             },
             "resolution": [

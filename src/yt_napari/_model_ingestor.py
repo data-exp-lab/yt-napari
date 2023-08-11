@@ -228,6 +228,12 @@ class TimeseriesContainer:
         new_layer: SpatialLayer,
     ):
         sel_id = self.check_for_selection(selection, current_field)
+
+        (im, im_kwargs, im_label, layer_domain) = new_layer
+        if layer_domain.requires_scale:
+            im_kwargs["scale"] = 1.0 / layer_domain.aspect_ratio
+            new_layer = (im, im_kwargs, im_label, layer_domain)
+
         self.layers_in_selections[sel_id].append(new_layer)
 
     def concat_by_selection_id(self, id: int) -> Layer:
@@ -239,7 +245,6 @@ class TimeseriesContainer:
 
         # assuming that im_kwargs, layer_type do not change. also dr
         _, im_kwargs, layer_type, domain = the_layers[0]
-
         im_arrays = [im[0] for im in the_layers]
         im = np.stack(im_arrays, axis=0)  # this operation will preserve dask arrays
         return im, im_kwargs, layer_type
@@ -251,7 +256,7 @@ class TimeseriesContainer:
     def layer_list(self) -> List[Layer]:
         layer_list = []
         for layers in self.layers_in_selections.values():
-            for im_data, im_kwargs, layer_type, _ in layers:
+            for im_data, im_kwargs, layer_type, layer_domain in layers:
                 layer_list.append((im_data, im_kwargs, layer_type))
         return layer_list
 
