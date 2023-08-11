@@ -32,6 +32,27 @@ class _Selection(abc.ABC):
 
 
 class Region(_Selection):
+    """
+    A 3D rectangular selection through a domain.
+
+    Parameters
+    ----------
+    field: (str, str)
+        a yt field present in all timeseries to load.
+    left_edge: unyt_array
+        (optional) a 3-element unyt_array defining the left edge of the region,
+        defaults to the domain left_edge of the first loaded timestep.
+    right_edge: unyt_array
+        (optional) a 3-element unyt_array defining the right edge of the region,
+        defaults to the domain right_edge of the first loaded timestep.
+    resolution: (int, int, int)
+        (optional) 3-element tuple defining the resolution to sample at. Default
+        is (400, 400, 400).
+    take_log: bool
+        (optional) If True, take the log10 of the sampled field. Defaults to the
+        default behavior for the field in the dataset.
+    """
+
     def __init__(
         self,
         field: Tuple[str, str],
@@ -69,6 +90,34 @@ class Region(_Selection):
 
 
 class Slice(_Selection):
+    """
+    A 2D axis-normal slice through a domain.
+
+    Parameters
+    ----------
+    field: (str, str)
+        a yt field present in all timeseries to load.
+    normal: int or str
+        the normal axis for slicing
+    center: unyt_array
+        (optional) a 3-element unyt_array defining the slice center, defaults
+        to the domain center of the first loaded timestep.
+    width: unyt_quantity
+        (optional) a unyt_quantity defining the slice width, defaults to the
+        domain width of the first loaded timestep
+    height: unyt_quantity
+        (optional) a unyt_quantity defining the slice height, defaults to the
+        domain width of the first loaded timestep
+    resolution: (int, int)
+        (optional) 2-element tuple defining the resolution to sample at. Default
+        is (400, 400).
+    periodic: bool
+        (optional, default is False) If True, treat domain as periodic
+    take_log: bool
+        (optional) If True, take the log10 of the sampled field. Defaults to the
+        default behavior for the field in the dataset.
+    """
+
     def __init__(
         self,
         field: Tuple[str, str],
@@ -80,7 +129,6 @@ class Slice(_Selection):
         periodic: Optional[bool] = False,
         take_log: Optional[bool] = None,
     ):
-
         super().__init__(field, take_log=take_log)
 
         self.normal = normal
@@ -121,7 +169,6 @@ class Slice(_Selection):
 
 
 def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
-
     if is_dask:
         yt.set_log_level(40)  # errors and critical only
     ds = yt.load(file)
@@ -140,7 +187,51 @@ def add_to_viewer(
     return_delayed: Optional[bool] = True,
     **kwargs,
 ):
+    """
+    Sample a timeseries and add to a napari viewer
 
+    Parameters
+    ----------
+    viewer: napari.Viewer
+        a napari Viewer instance
+    selection: Slice or Region
+        the selection to apply to each matched dataset
+    file_dir: str
+        (optional) a file directory to prepend to either the file_pattern or
+        file_list argument.
+    file_pattern: str
+        (optional) a file pattern to match, not used if file_list is set. One of
+        file_pattern or file_list must be set.
+    file_list: str
+        (optional) a list of files to use. One of file_list or file_pattern must
+        be set.
+    file_range: (int, int, int)
+        (optional) A range to limit matched files in the form (start, stop, step).
+    load_as_stack: bool
+        (optional, default False) If True, the timeseries will be stacked to a
+        single image array
+    use_dask: bool
+        (optional, default False) If True, use dask to assemble the image array
+    return_delayed: bool
+        (optional, default True) If True and if use_dask=True, then the image
+        array will be a delayed array, resulting in lazy loading in napari. If
+        False and if use_dask=True, then dask will distribute sampling tasks
+        and assemble a final in-memory array.
+
+    **kwargs
+        any additional keyword arguments are passed to napari.Viewer().add_image()
+
+    Examples
+    --------
+
+    >>> import napari
+    >>> from yt_napari.timeseries import Slice, add_to_viewer
+    >>> viewer = napari.Viewer()
+    >>> slc = Slice(("enzo", "Density"), "x")
+    >>> enzo_files = "enzo_tiny_cosmology/DD????/DD????"
+    >>> add_to_viewer(viewer, slc, file_pattern=enzo_files, file_range=(0,47, 5),
+    >>>                load_as_stack=True)
+    """
     tfs = _dm.TimeSeriesFileSelection(
         file_pattern=file_pattern,
         directory=file_dir,

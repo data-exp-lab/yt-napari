@@ -1,16 +1,8 @@
 yt\_napari package
 ==================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   yt_napari.schemas
-
 Submodules
-----------
+**********
 
 yt\_napari.viewer module
 ------------------------
@@ -20,10 +12,10 @@ yt\_napari.viewer module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+yt\_napari.timeseries module
+------------------------
 
-.. automodule:: yt_napari
+.. automodule:: yt_napari.timeseries
    :members:
    :undoc-members:
    :show-inheritance:
