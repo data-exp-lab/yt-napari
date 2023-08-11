@@ -48,6 +48,9 @@ To install the latest development version of the plugin instead, use:
 
     pip install git+https://github.com/data-exp-lab/yt-napari.git
 
+Note that if you are working off the development version, be sure to use the latest documentation
+for reference: https://yt-napari.readthedocs.io/en/latest/
+
 ## Quick Start
 
 After [installation](#Installation), there are three modes of using `yt-napari`:
@@ -93,7 +96,7 @@ nbscreenshot(viewer)
 
  ![Loading a subset of a yt dataset in napari from a Jupyter notebook](./assets/images/readme_ex_001.png)
 
-`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (https://yt-napari.readthedocs.io/en/stable/) for more examples, including additional helper methods for linking layer appearance.
+`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation ([yt-napari.readthedocs.io]) for more examples, including additional helper methods for linking layer appearance.
 
 ### loading a selection from a yt dataset interactively
 
@@ -244,7 +247,7 @@ https://napari.org/plugins/stable/index.html
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
-[yt-napari.readthedocs.io]: https://yt-napari.readthedocs.io/
+[yt-napari.readthedocs.io]: https://yt-napari.readthedocs.io/en/stable/
 
 [file an issue]: https://github.com/data-exp-lab/yt-napari/issues
 

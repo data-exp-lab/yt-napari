@@ -1,4 +1,5 @@
 import abc
+import os.path
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -171,4 +172,17 @@ def add_to_viewer(
     if use_dask and return_delayed is False:
         im_data = im_data.compute()
 
-    viewer.add_image(im_data, **kwargs)
+    if load_as_stack:
+        viewer.add_image(im_data, **kwargs)
+    else:
+        basename = None
+        if "name" in kwargs:
+            basename = kwargs.pop("name")
+
+        for im_id, im in enumerate(im_data):
+            if basename is not None:
+                name = f"{basename}_{im_id}"
+            else:
+                name = os.path.basename(files[im_id])
+                name = f"{name}_{selection.field}"
+            viewer.add_image(im, name=name, **kwargs)
