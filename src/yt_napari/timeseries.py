@@ -26,11 +26,11 @@ class _Selection(abc.ABC):
 
     @property
     def _requires_scale(self):
-        return any(self._aspect_ratio() != 1.0)
+        return any(self._aspect_ratio != 1.0)
 
     @property
     def _scale(self):
-        return 1.0 / self._aspect_ratio()
+        return 1.0 / self._aspect_ratio
 
     def take_log(self, ds):
         if self._take_log is None:
@@ -155,9 +155,21 @@ class Slice(_Selection):
         self.resolution = resolution
         self.periodic = periodic
 
+        for attr in ("width", "height"):
+            if (attval := getattr(self, attr)) is not None:
+                if isinstance(attval, unyt_quantity) is False:
+                    att_type = type(attval)
+                    msg = (
+                        f"{attr} must be single valued unyt_quantity but {attval}"
+                        f"has a type {att_type}"
+                    )
+                    raise TypeError(msg)
+
     def sample_ds(self, ds):
         if self.center is None:
-            self.center = ds.domain_center
+            center = ds.domain_center
+        else:
+            center = self.center
 
         axid = ds.coordinates.axis_id
         if self.width is None:
@@ -171,7 +183,7 @@ class Slice(_Selection):
         frb, _ = _process_slice(
             ds,
             self.normal,
-            center=self.center,
+            center=center,
             width=self.width,
             height=self.height,
             resolution=self.resolution,
@@ -194,6 +206,58 @@ def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
         yt.set_log_level(40)  # errors and critical only
     ds = yt.load(file)
     return selection.sample_ds(ds)
+
+
+def _get_im_data(
+    selection: Union[Slice, Region],
+    file_dir: Optional[str] = None,
+    file_pattern: Optional[str] = None,
+    file_list: Optional[List[str]] = None,
+    file_range: Optional[Tuple[int, int, int]] = None,
+    load_as_stack: Optional[bool] = False,
+    use_dask: Optional[bool] = False,
+    return_delayed: Optional[bool] = True,
+    **kwargs,
+):
+
+    tfs = _dm.TimeSeriesFileSelection(
+        file_pattern=file_pattern,
+        directory=file_dir,
+        file_list=file_list,
+        file_range=file_range,
+    )
+    files = _find_timeseries_files(tfs)
+
+    im_data = []
+    if use_dask is False:
+        for file in files:
+            im_data.append(_load_and_sample(file, selection, use_dask))
+    else:
+        try:
+            from dask import array as da, delayed
+        except ImportError:
+            msg = (
+                "This functionality requires dask: "
+                'pip install "dask[distributed, array]"'
+            )
+            raise ImportError(msg)
+        for file in files:
+            data = delayed(_load_and_sample)(file, selection, use_dask)
+            im_data.append(da.from_delayed(data, selection.resolution, dtype=float))
+
+    if selection._requires_scale:
+        scale = selection._scale
+        if "scale" in kwargs:
+            _ = kwargs.pop("scale")
+        kwargs["scale"] = scale
+
+    if load_as_stack:
+        im_data = np.stack(im_data)
+
+    if use_dask and return_delayed is False:
+        im_data = im_data.compute()
+
+    return im_data, kwargs, files
 
 
 def add_to_viewer(
@@ -253,49 +317,23 @@ def add_to_viewer(
     >>> add_to_viewer(viewer, slc, file_pattern=enzo_files, file_range=(0,47, 5),
     >>>                load_as_stack=True)
     """
-    tfs = _dm.TimeSeriesFileSelection(
+
+    im_data, im_kwargs, files = _get_im_data(
+        selection,
+        file_dir=file_dir,
         file_pattern=file_pattern,
-        directory=file_dir,
         file_list=file_list,
         file_range=file_range,
+        load_as_stack=load_as_stack,
+        use_dask=use_dask,
+        return_delayed=return_delayed,
     )
-    files = _find_timeseries_files(tfs)
-
-    im_data = []
-    if use_dask is False:
-        for file in files:
-            im_data.append(_load_and_sample(file, selection, use_dask))
-    else:
-        try:
-            from dask import array as da, delayed
-        except ImportError:
-            msg = (
-                "This functionality requires dask: "
-                'pip install "dask[distributed, array]"'
-            )
-            raise ImportError(msg)
-        for file in files:
-            data = delayed(_load_and_sample)(file, selection, use_dask)
-            im_data.append(da.from_delayed(data, selection.resolution, dtype=float))
-
-    if selection._requires_scale:
-        scale = selection._scale
-        if "scale" in kwargs:
-            _ = kwargs.pop("scale")
-        kwargs["scale"] = scale
-
     if load_as_stack:
-        im_data = np.stack(im_data)
-
-    if use_dask and return_delayed is False:
-        im_data = im_data.compute()
-
-    if load_as_stack:
-        viewer.add_image(im_data, **kwargs)
+        viewer.add_image(im_data, **im_kwargs)
     else:
         basename = None
-        if "name" in kwargs:
-            basename = kwargs.pop("name")
+        if "name" in im_kwargs:
+            basename = im_kwargs.pop("name")
 
         for im_id, im in enumerate(im_data):
             if basename is not None:
@@ -303,4 +341,4 @@ def add_to_viewer(
             else:
                 name = os.path.basename(files[im_id])
                 name = f"{name}_{selection.field}"
-            viewer.add_image(im, name=name, **kwargs)
+            viewer.add_image(im, name=name, **im_kwargs)
