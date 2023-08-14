@@ -7,7 +7,7 @@ import yt
 from napari import Viewer
 from unyt import unyt_array, unyt_quantity
 
-from yt_napari import _data_model as _dm
+from yt_napari import _data_model as _dm, _special_loaders
 from yt_napari._model_ingestor import _find_timeseries_files, _process_slice
 
 
@@ -217,7 +217,15 @@ class Slice(_Selection):
 def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
     if is_dask:
         yt.set_log_level(40)  # errors and critical only
-    ds = yt.load(file)
+
+    fname = os.path.basename(file)
+    if fname.startswith("_ytnapari") and "-" in fname:
+        # check form of, e.g., _ytnapari_load_grid-001
+        loader, _ = str(fname).split("-")
+        if hasattr(_special_loaders, loader):
+            ds = getattr(_special_loaders, loader)()
+    else:
+        ds = yt.load(file)
     return selection.sample_ds(ds)
 
 
