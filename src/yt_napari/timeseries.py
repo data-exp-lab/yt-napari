@@ -15,13 +15,10 @@ class _Selection(abc.ABC):
     def __init__(self, field: Tuple[str, str], take_log: Optional[bool] = None):
         self.field = field
         self._take_log = take_log
+        self._aspect_ratio = None
 
     @abc.abstractmethod
     def sample_ds(self, ds):
-        pass
-
-    @abc.abstractmethod
-    def _aspect_ratio(self):
         pass
 
     @property
@@ -42,6 +39,12 @@ class _Selection(abc.ABC):
             return np.log10(sample)
         return sample
 
+    @staticmethod
+    def _validate_unit_tuple(val):
+        if isinstance(val, tuple):
+            return val[0], val[1]
+        return None, None
+
 
 class Region(_Selection):
     """
@@ -51,10 +54,10 @@ class Region(_Selection):
     ----------
     field: (str, str)
         a yt field present in all timeseries to load.
-    left_edge: unyt_array
+    left_edge: unyt_array or (ndarray, str)
         (optional) a 3-element unyt_array defining the left edge of the region,
         defaults to the domain left_edge of the first loaded timestep.
-    right_edge: unyt_array
+    right_edge: unyt_array or (ndarray, str)
         (optional) a 3-element unyt_array defining the right edge of the region,
         defaults to the domain right_edge of the first loaded timestep.
     resolution: (int, int, int)
@@ -68,8 +71,8 @@ class Region(_Selection):
     def __init__(
         self,
         field: Tuple[str, str],
-        left_edge: Optional[unyt_array] = None,
-        right_edge: Optional[unyt_array] = None,
+        left_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
+        right_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
         resolution: Optional[Tuple[int, int, int]] = (400, 400, 400),
         take_log: Optional[bool] = None,
     ):
@@ -78,17 +81,28 @@ class Region(_Selection):
         self.left_edge = left_edge
         self.right_edge = right_edge
         self.resolution = resolution
+        self._le, self._le_units = self._validate_unit_tuple(left_edge)
+        self._re, self._re_units = self._validate_unit_tuple(right_edge)
 
     def sample_ds(self, ds):
         if self.left_edge is None:
-            self.left_edge = ds.domain_left_edge
+            LE = ds.domain_left_edge
+        elif self._le is not None:
+            LE = ds.arr(self._le, self._le_units)
+        else:
+            LE = self.left_edge
 
         if self.right_edge is None:
-            self.right_edge = ds.domain_right_edge
+            RE = ds.domain_right_edge
+        elif self._re is not None:
+            RE = ds.arr(self._re, self._re_units)
+        else:
+            RE = self.right_edge
 
         res = self.resolution
-        RE = self.right_edge
-        LE = self.left_edge
+        if self._aspect_ratio is None:
+            wid = self.right_edge - self.left_edge
+            self._aspect_ratio = wid / wid[0]
 
         # create the fixed resolution buffer
         frb = ds.r[
@@ -99,11 +113,6 @@ class Region(_Selection):
 
         data = frb[self.field]
         return self._finalize_array(ds, data)
-
-    @property
-    def _aspect_ratio(self):
-        wid = self.right_edge - self.left_edge
-        return wid / wid[0]
 
 
 class Slice(_Selection):
@@ -119,12 +128,12 @@ class Slice(_Selection):
     center: unyt_array
         (optional) a 3-element unyt_array defining the slice center, defaults
         to the domain center of the first loaded timestep.
-    width: unyt_quantity
-        (optional) a unyt_quantity defining the slice width, defaults to the
-        domain width of the first loaded timestep
-    height: unyt_quantity
-        (optional) a unyt_quantity defining the slice height, defaults to the
-        domain width of the first loaded timestep
+    width: unyt_quantity or (value, unit)
+        (optional) the slice width, defaults to the domain width of the first
+        loaded timestep
+    height: unyt_quantity or (value, unit)
+        (optional) the slice height, defaults to the domain height of the first
+        loaded timestep
     resolution: (int, int)
         (optional) 2-element tuple defining the resolution to sample at. Default
         is (400, 400).
@@ -139,9 +148,9 @@ class Slice(_Selection):
         self,
         field: Tuple[str, str],
         normal: Union[str, int],
-        center: Optional[unyt_array] = None,
-        width: Optional[unyt_quantity] = None,
-        height: Optional[unyt_quantity] = None,
+        center: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
+        width: Optional[Union[unyt_quantity, Tuple[float, str]]] = None,
+        height: Optional[Union[unyt_quantity, Tuple[float, str]]] = None,
         resolution: Optional[Tuple[int, int]] = (400, 400),
         periodic: Optional[bool] = False,
         take_log: Optional[bool] = None,
@@ -155,37 +164,45 @@ class Slice(_Selection):
         self.resolution = resolution
         self.periodic = periodic
 
-        for attr in ("width", "height"):
-            if (attval := getattr(self, attr)) is not None:
-                if isinstance(attval, unyt_quantity) is False:
-                    att_type = type(attval)
-                    msg = (
-                        f"{attr} must be single valued unyt_quantity but {attval}"
-                        f"has a type {att_type}"
-                    )
-                    raise TypeError(msg)
+        # handle the case where the length arrays are value-unit tuples
+        self._center_ndarray, self._center_units = self._validate_unit_tuple(center)
+        self._width_val, self._width_units = self._validate_unit_tuple(width)
+        self._height_val, self._height_units = self._validate_unit_tuple(height)
 
     def sample_ds(self, ds):
         if self.center is None:
             center = ds.domain_center
+        elif self._center_ndarray is not None:
+            center = ds.arr(self._center_ndarray, self._center_units)
         else:
             center = self.center
 
         axid = ds.coordinates.axis_id
         if self.width is None:
             x_ax = axid[ds.coordinates.image_axis_name[self.normal][0]]
-            self.width = ds.domain_width[x_ax]
+            width = ds.domain_width[x_ax]
+        elif self._width_val is not None:
+            width = ds.arr(self._width_val, self._width_units)
+        else:
+            width = self.width
 
         if self.height is None:
             y_ax = axid[ds.coordinates.image_axis_name[self.normal][1]]
-            self.height = ds.domain_width[y_ax]
+            height = ds.domain_width[y_ax]
+        elif self._height_val is not None:
+            height = ds.arr(self._height_val, self._height_units)
+        else:
+            height = self.height
+
+        if self._aspect_ratio is None:
+            self._aspect_ratio = np.array([1.0, height / width])
 
         frb, _ = _process_slice(
             ds,
             self.normal,
             center=center,
-            width=self.width,
-            height=self.height,
+            width=width,
+            height=height,
             resolution=self.resolution,
             periodic=self.periodic,
         )
@@ -195,10 +212,6 @@ class Slice(_Selection):
 
         data = frb[self.field]  # extract the field (the slow part)
         return self._finalize_array(ds, data)
-
-    @property
-    def _aspect_ratio(self):
-        return np.array([1.0, self.height / self.width])
 
 
 def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
@@ -327,6 +340,7 @@ def add_to_viewer(
         load_as_stack=load_as_stack,
         use_dask=use_dask,
         return_delayed=return_delayed,
+        **kwargs,
     )
     if load_as_stack:
         viewer.add_image(im_data, **im_kwargs)
