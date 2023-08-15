@@ -94,3 +94,7 @@ def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
 
     r.clear_cache()
     assert len(dataset_cache.available) == 0
+
+
+def test_timseries_widget_reader(make_napari_viewer, tmp_path):
+    pass

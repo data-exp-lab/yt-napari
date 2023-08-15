@@ -6,6 +6,7 @@ import numpy as np
 import yt
 from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
+from yt_napari import _special_loaders
 from yt_napari._data_model import (
     DataContainer,
     InputModel,
@@ -681,7 +682,7 @@ def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
             # was thread safe with logging disabled, so it is possible to
             # build dask arrays pretty easily for single regions and single
             # fields.
-            ds = yt.load(file)
+            ds = _load_with_timeseries_specials_check(file)
             sels = m_data.selections
             temp_list = _load_selections_from_ds(
                 ds, sels, temp_list, timeseries_container=tc
@@ -773,3 +774,21 @@ def _choose_ref_layer(
         raise ValueError(f"method must be one of {vmeths}, found {method}")
 
     return ReferenceLayer(layer_list[ref_layer_id][3])
+
+
+def _load_with_timeseries_specials_check(file):
+    fname = os.path.basename(file)
+    if fname.startswith("_ytnapari") and "-" in fname:
+        # check form of, e.g., _ytnapari_load_grid-001
+        loader, _ = str(fname).split("-")
+        if hasattr(_special_loaders, loader):
+            ds = getattr(_special_loaders, loader)()
+        else:
+            msg = (
+                f"The special loader function, yt_napari._special_loaders.{loader} "
+                f"does not exist."
+            )
+            raise AttributeError(msg)
+    else:
+        ds = yt.load(file)
+    return ds

@@ -2,11 +2,12 @@ import pytest
 
 from yt_napari._data_model import InputModel
 from yt_napari._model_ingestor import _choose_ref_layer, _process_validated_model
+from yt_napari._schema_version import schema_name
 
 jdicts = []
 jdicts.append(
     {
-        "$schema": "yt-napari_0.2.0.json",
+        "$schema": schema_name,
         "datasets": [
             {
                 "filename": "_ytnapari_load_grid",
@@ -28,7 +29,7 @@ jdicts.append(
 )
 jdicts.append(
     {
-        "$schema": "yt-napari_0.2.0.json",
+        "$schema": schema_name,
         "datasets": [
             {
                 "filename": "_ytnapari_load_grid",

@@ -6,6 +6,7 @@ import yt
 from yt.config import ytcfg
 
 from yt_napari import _data_model as dm, _model_ingestor as mi, timeseries as ts
+from yt_napari._special_loaders import _construct_ugrid_timeseries
 
 
 @pytest.fixture(scope="module")
@@ -18,21 +19,6 @@ def yt_ds_0():
     shp = arr.shape
     ds = yt.load_uniform_grid(d, shp, length_unit="Mpc", bbox=bbox, nprocs=64)
     return ds
-
-
-def _construct_ugrid_timeseries(top_dir, nfiles):
-    ts_dir = top_dir / "output_dir"
-    ts_dir.mkdir()
-
-    flist_actual = []
-    for tstep in range(0, nfiles):
-        tstepstr = str(tstep).zfill(4)
-        fname = f"_ytnapari_load_grid-{tstepstr}"
-        newfi = ts_dir / fname
-        newfi.touch()
-
-        flist_actual.append(str(newfi))
-    return str(ts_dir), flist_actual
 
 
 def test_timeseries_file_collection(tmp_path):

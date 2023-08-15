@@ -7,8 +7,7 @@ import yt
 from napari import Viewer
 from unyt import unyt_array, unyt_quantity
 
-from yt_napari import _data_model as _dm, _special_loaders
-from yt_napari._model_ingestor import _find_timeseries_files, _process_slice
+from yt_napari import _data_model as _dm, _model_ingestor as _mi
 
 
 class _Selection(abc.ABC):
@@ -281,7 +280,7 @@ class Slice(_Selection):
         if self._aspect_ratio is None:
             self._calc_aspect_ratio(width, height)
 
-        frb, _ = _process_slice(
+        frb, _ = _mi._process_slice(
             ds,
             self.normal,
             center=center,
@@ -298,15 +297,7 @@ class Slice(_Selection):
 def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
     if is_dask:
         yt.set_log_level(40)  # errors and critical only
-
-    fname = os.path.basename(file)
-    if fname.startswith("_ytnapari") and "-" in fname:
-        # check form of, e.g., _ytnapari_load_grid-001
-        loader, _ = str(fname).split("-")
-        if hasattr(_special_loaders, loader):
-            ds = getattr(_special_loaders, loader)()
-    else:
-        ds = yt.load(file)
+    ds = _mi._load_with_timeseries_specials_check(file)
     return selection.sample_ds(ds)
 
 
@@ -329,7 +320,7 @@ def _get_im_data(
         file_list=file_list,
         file_range=file_range,
     )
-    files = _find_timeseries_files(tfs)
+    files = _mi._find_timeseries_files(tfs)
 
     im_data = []
     if use_dask is False:
