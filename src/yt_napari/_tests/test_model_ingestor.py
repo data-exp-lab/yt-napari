@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 import pytest
 import unyt
+from yt.config import ytcfg
 
 from yt_napari import _data_model as _dm, _model_ingestor as _mi
 
@@ -469,3 +470,29 @@ def test_find_timeseries_file_selection(tmp_path, file_sel_dict):
     files = _mi._find_timeseries_files(tsfs)
     if "file_list" not in file_sel_dict:
         assert len(files) == nfiles
+
+
+def test_yt_data_dir_check(tmp_path):
+
+    fdir = tmp_path / "output"
+    fdir.mkdir()
+
+    init_dir = ytcfg.get("yt", "test_data_dir")
+
+    fname_list = []
+    base_name = "test_fi_blah_"
+    nfiles = 7
+    for ifile in range(0, nfiles):
+        fname = base_name + str(ifile).zfill(3)
+        newfi = fdir / fname
+        newfi.touch()
+        fname_list.append(fname)
+
+    ytcfg.set("yt", "test_data_dir", str(fdir.absolute()))
+
+    files = _mi._validate_files(fname_list)
+    assert len(files) == nfiles
+
+    files = _mi._generate_file_list("test_fi_blah_???")
+    assert len(files) == nfiles
+    ytcfg.set("yt", "test_data_dir", init_dir)
