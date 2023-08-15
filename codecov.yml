@@ -4,3 +4,7 @@ coverage:
       default:
         target: 98%    # the required coverage value
         threshold: 0.1%  # the leniency in hitting the target
+    patch:
+      default:
+        target: 98%
+        threshold: 0.1%
