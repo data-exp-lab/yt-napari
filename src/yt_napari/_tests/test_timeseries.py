@@ -171,6 +171,43 @@ def test_timseries_selection(tmp_path, selection):
 @pytest.mark.parametrize(
     "selection",
     [
+        ts.Region(
+            _field,
+            left_edge=(np.array([-1, -1, -1]), "km"),
+            right_edge=(np.array([1, 2, 2]), "km"),
+        ),
+        ts.Slice(_field, "x", width=(2.0, "km"), height=(1.0, "km")),
+    ],
+)
+def test_validate_scale(selection):
+
+    # check that we pick up the scale
+    kwargdict = {}
+    ts._validate_scale(selection, kwargdict, False, 1.0)
+    assert len(kwargdict["scale"]) == selection.nd
+    assert np.any(kwargdict["scale"] != 1.0)
+
+    # check that stacked dim scale is applied
+    kwargdict = {}
+    ts._validate_scale(selection, kwargdict, True, 10.0)
+    assert len(kwargdict["scale"]) == selection.nd + 1
+    assert np.any(kwargdict["scale"] != 1.0)
+    assert kwargdict["scale"][0] == 10.0
+
+    # check that existing scale is not over-ridden
+    sc_scale = np.random.random((selection.nd,))
+    kwargdict = {"scale": sc_scale}
+    ts._validate_scale(selection, kwargdict, False, 1.0)
+    assert np.all(kwargdict["scale"] == sc_scale)
+
+    kwargdict = {"scale": sc_scale}
+    ts._validate_scale(selection, kwargdict, True, 1.0)
+    assert np.all(kwargdict["scale"][1:] == sc_scale)
+
+
+@pytest.mark.parametrize(
+    "selection",
+    [
         ts.Region(_field, resolution=(20, 20, 20)),
         ts.Slice(_field, "x", resolution=(20, 20)),
     ],
@@ -191,3 +228,30 @@ def test_dask_selection(tmp_path, selection):
 
     # actually computing seems to have problems?
     # assert np.all(im_data2.compute() == im_data)
+
+
+def test_add_to_viewer(make_napari_viewer, tmp_path):
+    nfiles = 4
+    file_dir, _ = _construct_ugrid_timeseries(tmp_path, nfiles)
+    viewer = make_napari_viewer()
+
+    sel = ts.Slice(_field, "x", resolution=(10, 10))
+    file_pat = "_ytnapari_load_grid-????"
+
+    ts.add_to_viewer(viewer, sel, file_dir=file_dir, file_pattern=file_pat)
+    assert len(viewer.layers) == nfiles
+    assert all([layer.data.shape == sel.resolution for layer in viewer.layers])
+    viewer.layers.clear()
+
+    ts.add_to_viewer(
+        viewer, sel, file_dir=file_dir, file_pattern=file_pat, load_as_stack=True
+    )
+    assert len(viewer.layers) == 1
+    expected = (nfiles,) + sel.resolution
+    assert all([layer.data.shape == expected for layer in viewer.layers])
+    viewer.layers.clear()
+
+    ts.add_to_viewer(
+        viewer, sel, file_dir=file_dir, file_pattern=file_pat, name="myname"
+    )
+    assert "myname" in viewer.layers[0].name

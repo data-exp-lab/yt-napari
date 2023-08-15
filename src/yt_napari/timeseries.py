@@ -12,6 +12,8 @@ from yt_napari._model_ingestor import _find_timeseries_files, _process_slice
 
 
 class _Selection(abc.ABC):
+    nd: int = None
+
     def __init__(self, field: Tuple[str, str], take_log: Optional[bool] = None):
         self.field = field
         self._take_log = take_log
@@ -19,7 +21,7 @@ class _Selection(abc.ABC):
 
     @abc.abstractmethod
     def sample_ds(self, ds):
-        pass
+        """sample a yt dataset with the selection object"""
 
     @property
     def _requires_scale(self):
@@ -68,6 +70,8 @@ class Region(_Selection):
         default behavior for the field in the dataset.
     """
 
+    nd = 3
+
     def __init__(
         self,
         field: Tuple[str, str],
@@ -101,6 +105,31 @@ class Region(_Selection):
         self._aspect_ratio = wid / wid[0]
 
     def sample_ds(self, ds):
+        """
+        return a fixed resolution sample of a field in a yt dataset.
+
+        Parameters
+        ----------
+        ds : yt dataset
+            the yt dataset to sample
+
+        Examples
+        --------
+
+        >>> import yt
+        >>> import numpy as np
+        >>> from yt_napari.timeseries import Region
+        >>> ds = yt.load_sample("IsolatedGalaxy")
+        >>> le = np.array([0.4, 0.4, 0.4], 'Mpc')
+        >>> re = np.array([0.6, 0.6, 0.6], 'Mpc')
+        >>> reg = Region(("enzo", "Density"), left_edge=le, right_edge=re)
+        >>> reg_data = reg.sample_ds(ds)
+
+        Notes
+        -----
+        This is equivalent to `ds.r[...,...,..][field]`, but is a useful
+        abstraction for applying the same selection to a series of datasets.
+        """
         if self.left_edge is None:
             LE = ds.domain_left_edge
         elif self._le is not None:
@@ -159,6 +188,8 @@ class Slice(_Selection):
         default behavior for the field in the dataset.
     """
 
+    nd = 2
+
     def __init__(
         self,
         field: Tuple[str, str],
@@ -199,6 +230,30 @@ class Slice(_Selection):
         self._aspect_ratio = np.array([1.0, height / width])
 
     def sample_ds(self, ds):
+        """
+        return a fixed resolution slice of a field in a yt dataset.
+
+        Parameters
+        ----------
+        ds : yt dataset
+            the yt dataset to sample
+
+        Examples
+        --------
+
+        >>> import yt
+        >>> from unyt import unyt_quantity
+        >>> from yt_napari.timeseries import Slice
+        >>> ds = yt.load_sample("IsolatedGalaxy")
+        >>> w = unyt_quantity(0.2, 'Mpc')
+        >>> slc = Slice(("enzo", "Density"), "x", width=w, height=w)
+        >>> slc_data = slc.sample_ds(ds)
+
+        Notes
+        -----
+        This is equivalent to `ds.slice(...).to_frb()[field]`, but is a useful
+        abstraction for applying the same selection to a series of datasets.
+        """
         if self.center is None:
             center = ds.domain_center
         elif self._center_ndarray is not None:
@@ -264,6 +319,7 @@ def _get_im_data(
     load_as_stack: Optional[bool] = False,
     use_dask: Optional[bool] = False,
     return_delayed: Optional[bool] = True,
+    stack_scaling: Optional[float] = 1.0,
     **kwargs,
 ):
 
@@ -292,12 +348,8 @@ def _get_im_data(
             data = delayed(_load_and_sample)(file, selection, use_dask)
             im_data.append(da.from_delayed(data, selection.resolution, dtype=float))
 
-    if use_dask is False or selection._aspect_ratio is not None:
-        if selection._requires_scale:
-            scale = selection._scale
-            if "scale" in kwargs:
-                _ = kwargs.pop("scale")
-            kwargs["scale"] = scale
+    # note: scale validation modifies kwargs in place
+    _validate_scale(selection, kwargs, load_as_stack, stack_scaling)
 
     if load_as_stack:
         im_data = np.stack(im_data)
@@ -306,6 +358,35 @@ def _get_im_data(
         im_data = im_data.compute()
 
     return im_data, kwargs, files
+
+
+def _validate_scale(
+    selection: Union[Slice, Region],
+    kwargdict: dict,
+    load_as_stack: bool,
+    stack_scaling: float,
+):
+
+    if "scale" in kwargdict:
+        # always use provided
+        sc = np.asarray(kwargdict.pop("scale"))
+    elif selection._aspect_ratio is not None:
+        # with dask, might not know the aspect ratio until after computation
+        sc = selection._scale
+    else:
+        sc = np.ones((selection.nd,))
+
+    if len(sc) == selection.nd and load_as_stack:
+        sc = np.concatenate(
+            [
+                [
+                    stack_scaling,
+                ],
+                sc,
+            ]
+        )
+
+    kwargdict["scale"] = sc
 
 
 def add_to_viewer(
@@ -318,6 +399,7 @@ def add_to_viewer(
     load_as_stack: Optional[bool] = False,
     use_dask: Optional[bool] = False,
     return_delayed: Optional[bool] = True,
+    stack_scaling: Optional[float] = 1.0,
     **kwargs,
 ):
     """
@@ -350,7 +432,11 @@ def add_to_viewer(
         array will be a delayed array, resulting in lazy loading in napari. If
         False and if use_dask=True, then dask will distribute sampling tasks
         and assemble a final in-memory array.
-
+    stack_scaling: float
+        (optional, default 1.0) Applies a scaling to the effective image array
+        in the stacked (time) dimension if load_as_stack is True. If scale is
+        provided as a separate parameter, then stack_scaling is only used if
+        the len(scale) matches the dimensionality of the spatial selection.
     **kwargs
         any additional keyword arguments are passed to napari.Viewer().add_image()
 
@@ -375,6 +461,7 @@ def add_to_viewer(
         load_as_stack=load_as_stack,
         use_dask=use_dask,
         return_delayed=return_delayed,
+        stack_scaling=stack_scaling,
         **kwargs,
     )
     if load_as_stack:
