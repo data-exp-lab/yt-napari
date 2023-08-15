@@ -84,6 +84,22 @@ class Region(_Selection):
         self._le, self._le_units = self._validate_unit_tuple(left_edge)
         self._re, self._re_units = self._validate_unit_tuple(right_edge)
 
+        if self.left_edge is not None and self.right_edge is not None:
+            if self._le is not None:
+                LE = self._le
+            else:
+                LE = self.left_edge
+
+            if self._re is not None:
+                RE = self._re
+            else:
+                RE = self.right_edge
+            self._calc_aspect_ratio(LE, RE)
+
+    def _calc_aspect_ratio(self, LE, RE):
+        wid = RE - LE
+        self._aspect_ratio = wid / wid[0]
+
     def sample_ds(self, ds):
         if self.left_edge is None:
             LE = ds.domain_left_edge
@@ -101,8 +117,7 @@ class Region(_Selection):
 
         res = self.resolution
         if self._aspect_ratio is None:
-            wid = self.right_edge - self.left_edge
-            self._aspect_ratio = wid / wid[0]
+            self._calc_aspect_ratio(LE, RE)
 
         # create the fixed resolution buffer
         frb = ds.r[
@@ -169,6 +184,20 @@ class Slice(_Selection):
         self._width_val, self._width_units = self._validate_unit_tuple(width)
         self._height_val, self._height_units = self._validate_unit_tuple(height)
 
+        if self.width is not None and self.height is not None:
+            if self._width_val is not None:
+                width = self._width_val
+            else:
+                width = self.width
+            if self._height_val is not None:
+                height = self._height_val
+            else:
+                height = self.height
+            self._calc_aspect_ratio(width, height)
+
+    def _calc_aspect_ratio(self, width, height):
+        self._aspect_ratio = np.array([1.0, height / width])
+
     def sample_ds(self, ds):
         if self.center is None:
             center = ds.domain_center
@@ -195,7 +224,7 @@ class Slice(_Selection):
             height = self.height
 
         if self._aspect_ratio is None:
-            self._aspect_ratio = np.array([1.0, height / width])
+            self._calc_aspect_ratio(width, height)
 
         frb, _ = _process_slice(
             ds,
@@ -206,9 +235,6 @@ class Slice(_Selection):
             resolution=self.resolution,
             periodic=self.periodic,
         )
-
-        if self.take_log is None:
-            self.take_log = ds._get_field_info(self.field).take_log
 
         data = frb[self.field]  # extract the field (the slow part)
         return self._finalize_array(ds, data)
@@ -266,11 +292,12 @@ def _get_im_data(
             data = delayed(_load_and_sample)(file, selection, use_dask)
             im_data.append(da.from_delayed(data, selection.resolution, dtype=float))
 
-    if selection._requires_scale:
-        scale = selection._scale
-        if "scale" in kwargs:
-            _ = kwargs.pop("scale")
-        kwargs["scale"] = scale
+    if use_dask is False or selection._aspect_ratio is not None:
+        if selection._requires_scale:
+            scale = selection._scale
+            if "scale" in kwargs:
+                _ = kwargs.pop("scale")
+            kwargs["scale"] = scale
 
     if load_as_stack:
         im_data = np.stack(im_data)
