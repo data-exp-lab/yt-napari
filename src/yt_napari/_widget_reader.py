@@ -210,6 +210,9 @@ class SelectionEntry(QWidget):
         return py_kwargs
 
 
+_use_threading = True
+
+
 class TimeSeriesReader(YTReader):
     _pydantic_model = _data_model.Timeseries
 
@@ -262,10 +265,13 @@ class TimeSeriesReader(YTReader):
 
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
-        worker = time_series_load(model)
-        worker.returned.connect(self.process_timeseries_layers)
-        worker.start()
-        # _, layer_list = _model_ingestor._process_validated_model(model)
+        if _use_threading:
+            worker = time_series_load(model)
+            worker.returned.connect(self.process_timeseries_layers)
+            worker.start()
+        else:
+            _, layer_list = _model_ingestor._process_validated_model(model)
+            self.process_timeseries_layers(layer_list)
 
     def process_timeseries_layers(self, layer_list):
         for new_layer in layer_list:
