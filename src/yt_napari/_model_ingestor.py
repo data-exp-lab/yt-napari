@@ -257,7 +257,7 @@ class TimeseriesContainer:
     def layer_list(self) -> List[Layer]:
         layer_list = []
         for layers in self.layers_in_selections.values():
-            for im_data, im_kwargs, layer_type, layer_domain in layers:
+            for im_data, im_kwargs, layer_type, _ in layers:
                 layer_list.append((im_data, im_kwargs, layer_type))
         return layer_list
 
@@ -671,33 +671,30 @@ def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
 
     files = _find_timeseries_files(m_data.file_selection)
 
-    process_in_parallel = False  # future model attribute
+    # process_in_parallel = False  # future model attribute
 
-    if process_in_parallel is False:
-        tc = TimeseriesContainer()
-        temp_list = []
-        for file in files:
-            # note: managing the files independently makes parallel approaches
-            # without MPI feasible. in some limited testing, this actually
-            # was thread safe with logging disabled, so it is possible to
-            # build dask arrays pretty easily for single regions and single
-            # fields.
-            ds = _load_with_timeseries_specials_check(file)
-            sels = m_data.selections
-            temp_list = _load_selections_from_ds(
-                ds, sels, temp_list, timeseries_container=tc
-            )
+    tc = TimeseriesContainer()
+    temp_list = []
+    for file in files:
+        # note: managing the files independently makes parallel approaches
+        # without MPI feasible. in some limited testing, this actually
+        # was thread safe with logging disabled, so it is possible to
+        # build dask arrays pretty easily for single regions and single
+        # fields.
+        ds = _load_with_timeseries_specials_check(file)
+        sels = m_data.selections
+        temp_list = _load_selections_from_ds(
+            ds, sels, temp_list, timeseries_container=tc
+        )
 
-        if m_data.load_as_stack is False:
-            new_layers = tc.layer_list
-        else:
-            new_layers = tc.concat_by_selection()
+    if m_data.load_as_stack is False:
+        new_layers = tc.layer_list
+    else:
+        new_layers = tc.concat_by_selection()
 
-        for layer in new_layers:
-            layer_list.append(layer)
-        return layer_list
-
-    raise NotImplementedError("parallel load is not implemented yet")
+    for layer in new_layers:
+        layer_list.append(layer)
+    return layer_list
 
 
 def _process_validated_model(

@@ -435,3 +435,37 @@ def test_timeseries_container(selection_objs):
     assert concatd[1][0].shape == (4, 10, 10)
     assert concatd[2][0].shape == (2, 10, 10)
     assert concatd[3][0].shape == (2, 10, 10)
+
+
+file_sel_dicts = [
+    {"file_pattern": "test_fi_???"},
+    {},  # just the directory
+    {"file_list": ["test_fi_001", "test_fi_002"]},
+    {
+        "file_pattern": "test_fi_???",
+        "file_range": (0, 100, 1),
+    },
+]
+
+
+@pytest.mark.parametrize("file_sel_dict", file_sel_dicts)
+def test_find_timeseries_file_selection(tmp_path, file_sel_dict):
+
+    fdir = tmp_path / "output"
+    fdir.mkdir()
+
+    base_name = "test_fi_"
+    nfiles = 10
+    for ifile in range(0, nfiles):
+        fname = base_name + str(ifile).zfill(3)
+        newfi = fdir / fname
+        newfi.touch()
+
+    fdir = str(fdir)
+    file_sel_dict["directory"] = fdir
+
+    tsfs = _mi.TimeSeriesFileSelection.parse_obj(file_sel_dict)
+
+    files = _mi._find_timeseries_files(tsfs)
+    if "file_list" not in file_sel_dict:
+        assert len(files) == nfiles
