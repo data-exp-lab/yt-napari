@@ -276,13 +276,14 @@ class TimeSeriesReader(YTReader):
     def process_timeseries_layers(self, layer_list):
         for new_layer in layer_list:
             im_arr, im_kwargs, _ = new_layer
-            if self._post_load_function is not None:
-                im_arr = self._post_load_function(im_arr)
+            # probably can remove since the _special_loaders can be used
+            # if self._post_load_function is not None:
+            #     im_arr = self._post_load_function(im_arr)
             # add the new layer
             self.viewer.add_image(im_arr, **im_kwargs)
 
 
 @thread_worker(progress=True)
-def time_series_load(model):
+def time_series_load(model, worker_id):
     _, layer_list = _model_ingestor._process_validated_model(model)
-    return layer_list
+    return layer_list, worker_id

@@ -33,6 +33,8 @@ def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
     assert isinstance(sel, _wr.SelectionEntry)
     assert sel.selection_type == "Slice"
 
+    r.deleteLater()
+
 
 def _rebuild_data(final_shape, data):
     # the yt file thats being loaded from the pytest fixture is a saved
@@ -61,6 +63,7 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
     rebuild = partial(_rebuild_data, mgui_region.resolution.value)
     r._post_load_function = rebuild
     r.load_data()
+    r.deleteLater()
 
 
 def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
@@ -98,6 +101,8 @@ def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
     r.clear_cache()
     assert len(dataset_cache.available) == 0
 
+    r.deleteLater()
+
 
 def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     viewer = make_napari_viewer()
@@ -133,3 +138,5 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     tsr.ds_container.file_selection.file_pattern.value = ""
     tsr.load_data()
     assert len(viewer.layers) == 2
+
+    tsr.deleteLater()

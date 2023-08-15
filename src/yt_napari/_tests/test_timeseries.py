@@ -241,3 +241,7 @@ def test_add_to_viewer(make_napari_viewer, tmp_path):
         viewer, sel, file_dir=file_dir, file_pattern=file_pat, name="myname"
     )
     assert "myname" in viewer.layers[0].name
+
+
+def test_dask_missing():
+    pass
