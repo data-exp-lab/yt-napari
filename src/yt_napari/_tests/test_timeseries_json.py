@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from yt_napari import _model_ingestor as mi
@@ -127,3 +128,32 @@ def test_load_with_timeseries_specials_check(yt_ugrid_ds_fn, tmp_path):
 
     ds = mi._load_with_timeseries_specials_check(yt_ugrid_ds_fn)
     assert hasattr(ds, "domain_center")
+
+
+def test_aspect_rat(tmp_path):
+    nfiles = 4
+    fdir, flist = _construct_ugrid_timeseries(tmp_path, nfiles)
+
+    slice_1 = slice_dict.copy()
+    slice_1["slice_width"] = {"value": 1.0, "unit": "code_length"}
+    f_dict = {"directory": fdir, "file_pattern": "_ytnapari_load_grid-????"}
+    jdict_ar = {
+        "$schema": schema_name,
+        "timeseries": [
+            {
+                "file_selection": f_dict,
+                "selections": {
+                    "slices": [
+                        slice_1,
+                    ]
+                },
+                "load_as_stack": True,
+            }
+        ],
+    }
+
+    im = InputModel.parse_obj(jdict_ar)
+    _, ts_layers = mi._process_validated_model(im)
+    for _, im_kwargs, _ in ts_layers:
+        print(im_kwargs)
+        assert np.sum(im_kwargs["scale"] != 1.0) > 0

@@ -1,4 +1,5 @@
 import os.path
+import sys
 
 import numpy as np
 import pytest
@@ -243,5 +244,18 @@ def test_add_to_viewer(make_napari_viewer, tmp_path):
     assert "myname" in viewer.layers[0].name
 
 
-def test_dask_missing():
-    pass
+def test_dask_missing(tmp_path, monkeypatch):
+    monkeypatch.setitem(sys.modules, "dask", None)
+
+    nfiles = 4
+    file_dir, flist_actual = _construct_ugrid_timeseries(tmp_path, nfiles)
+
+    selection = ts.Slice(_field, "x", resolution=(20, 20))
+    with pytest.raises(ImportError, match="This functionality requires dask"):
+        _ = ts._get_im_data(
+            selection,
+            file_dir=file_dir,
+            file_pattern="_ytnapari_load_grid-????",
+            load_as_stack=False,
+            use_dask=True,
+        )
