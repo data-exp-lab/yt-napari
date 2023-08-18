@@ -57,10 +57,10 @@ class Region(_Selection):
         a yt field present in all timeseries to load.
     left_edge: unyt_array or (ndarray, str)
         (optional) a 3-element unyt_array defining the left edge of the region,
-        defaults to the domain left_edge of the first loaded timestep.
+        defaults to the domain left_edge of each active timestep.
     right_edge: unyt_array or (ndarray, str)
         (optional) a 3-element unyt_array defining the right edge of the region,
-        defaults to the domain right_edge of the first loaded timestep.
+        defaults to the domain right_edge of each active timestep.
     resolution: (int, int, int)
         (optional) 3-element tuple defining the resolution to sample at. Default
         is (400, 400, 400).
@@ -170,13 +170,13 @@ class Slice(_Selection):
         the normal axis for slicing
     center: unyt_array
         (optional) a 3-element unyt_array defining the slice center, defaults
-        to the domain center of the first loaded timestep.
+        to the domain center of each active timestep.
     width: unyt_quantity or (value, unit)
-        (optional) the slice width, defaults to the domain width of the first
-        loaded timestep
+        (optional) the slice width, defaults to the domain width  of each active
+        timestep.
     height: unyt_quantity or (value, unit)
-        (optional) the slice height, defaults to the domain height of the first
-        loaded timestep
+        (optional) the slice height, defaults to the domain height of each
+        active timestep.
     resolution: (int, int)
         (optional) 2-element tuple defining the resolution to sample at. Default
         is (400, 400).
