@@ -93,4 +93,4 @@ yt-napari provides plugins to help load data from [yt](https://yt-project.org/) 
 
 ![](https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/docs/_static/nb_iso_galaxy_T_rho.png)
 
-See the [full documentation](https://yt-napari.readthedocs.io) for more details.
+See the [full documentation](https://yt-napari.readthedocs.io/en/stable/) for more details.

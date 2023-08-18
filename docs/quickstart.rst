@@ -61,13 +61,13 @@ loading a json file from the napari gui
 .. code-block:: json
 
     {"$schema": "https://yt-napari.readthedocs.io/en/latest/_static/yt-napari_latest.json",
-     "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
-               "selections": {"regions": [{
-                                "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
-                                           {"field_name": "Density", "field_type": "enzo", "take_log": true}],
-                                "left_edge": {"value": [460.0, 460.0, 460.0], "unit": "kpc"},
-                                "right_edge": {"value": [560.0, 560.0, 560.0], "unit": "kpc"},
-                                "resolution": [600, 600, 600]
+     "datasets": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
+                   "selections": {"regions": [{
+                                  "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
+                                             {"field_name": "Density", "field_type": "enzo", "take_log": true}],
+                                 "left_edge": {"value": [460.0, 460.0, 460.0], "unit": "kpc"},
+                                 "right_edge": {"value": [560.0, 560.0, 560.0], "unit": "kpc"},
+                                 "resolution": [600, 600, 600]
                               }]}
              }]
     }
@@ -94,6 +94,16 @@ The use the yt Reader plugin, from a Napari viewer, select "Plugins -> yt-napari
 
 The reader plugin does its best to align new selections of data with existing yt-napari image layers and should be able to properly align selections from different yt datasets (please submit a bug report if it fails!).
 
+
+The yt-napari yt Time Series Reader:
+####################################
+
+This reader will apply a spatial selection to a set of files, similar to working with a yt `DataSeries` object. You specify
+the spatial selections and a list of files or file pattern to match. Note that while the operation is in a non-blocking
+thread, if your simulation data is large it may take a few minutes to load in your selections. Also note that 3D region
+selections can easily exceed available memory if you're not careful... for improving load times and working with
+bigger-than-memory arrays, you can instead use the jupyter notebook interface for napari with the `yt_napari.timeseries`
+module of helper functions to distribute the timestep selections using dask. See the example notebooks for usage.
 
 .. _configfile:
 

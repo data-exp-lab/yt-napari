@@ -98,6 +98,8 @@ nbscreenshot(viewer)
 
 `yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation ([yt-napari.readthedocs.io]) for more examples, including additional helper methods for linking layer appearance.
 
+Additionally, with `yt_napari`>= v0.2.0, you can use the `yt_napari.timeseries` module to help sample and load in selections from across datasets.
+
 ### loading a selection from a yt dataset interactively
 
 `yt-napari` provides two ways to sample a yt dataset and load in an image layer into a Napari viewer: the yt Reader plugin and json file specification.
@@ -110,6 +112,13 @@ To use the yt Reader plugin, click on `Plugins -> yt-napari: yt Reader`. From th
 
 You can add multiple selections and load them all at once or adjust values and click "Load" again.
 
+#### using the yt Time Series Reader plugin
+
+To use the yt Time Series Reader plugin, click on  `Plugins -> yt-napari: yt Time Series Reader`. Specify your file matching: use `file_pattern` to enter glob expressions or use `file_list` to enter a list of specific files.
+Then add a slice or region to sample for each matched dataset file (note: be careful of memory here!):
+
+![Loading timeseries selections from the napari viewer](./assets/images/readme_ex_004_gui_timeseries.gif)
+
 #### using a json file and schema
 
 `yt-napari` also provides the ability to load json that contain specifications for loading a file. Properly formatted files can be loaded from the napari GUI as you would load any image file (`File->Open`). The json file describes the selection process for a dataset as described by a json-schema. The following json file results in similar layers as the above examples:
@@ -117,16 +126,16 @@ You can add multiple selections and load them all at once or adjust values and c
 
 ```json
 {"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
- "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
-           "selections": {"regions": [{
-                            "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
-                                       {"field_name": "Density", "field_type": "enzo", "take_log": true}],
-                            "left_edge": [460.0, 460.0, 460.0],
-                            "right_edge": [560.0, 560.0, 560.0],
-                            "resolution": [600, 600, 600]
-                          }]},
-           "edge_units": "kpc"
-         }]
+ "datasets": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
+               "selections": {"regions": [{
+                                "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
+                                           {"field_name": "Density", "field_type": "enzo", "take_log": true}],
+                                "left_edge": [460.0, 460.0, 460.0],
+                                "right_edge": [560.0, 560.0, 560.0],
+                                "resolution": [600, 600, 600]
+                              }]},
+               "edge_units": "kpc"
+             }]
 }
 ```
 

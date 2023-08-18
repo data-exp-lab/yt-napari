@@ -1,7 +1,10 @@
 ## v0.2.0
 
+This release includes some non-backwards compatible changes to the schema. Old
+json files will need to be updated to use with yt-napari >= v0.2.0
+
 ### New Features
-* new widget: yt-napari timeseries slicer
+* timeseries loading: a new widget, yt-napari timeseries slicer, is available from the napari gui and json files can also specify timeseries selections. Additionally, there is a new `yt_napari.timeseries` module for jupyter notebook interaction.
 
 ### Breaking changes
 

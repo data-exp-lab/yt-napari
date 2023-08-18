@@ -284,6 +284,6 @@ class TimeSeriesReader(YTReader):
 
 
 @thread_worker(progress=True)
-def time_series_load(model, worker_id):
+def time_series_load(model):
     _, layer_list = _model_ingestor._process_validated_model(model)
-    return layer_list, worker_id
+    return layer_list
