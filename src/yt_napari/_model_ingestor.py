@@ -1,9 +1,21 @@
+import os
+from collections import defaultdict
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
+import yt
 from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
-from yt_napari._data_model import DataContainer, InputModel
+from yt_napari import _special_loaders
+from yt_napari._data_model import (
+    DataContainer,
+    InputModel,
+    Region,
+    SelectionObject,
+    Slice,
+    Timeseries,
+    TimeSeriesFileSelection,
+)
 from yt_napari._ds_cache import dataset_cache
 
 
@@ -172,6 +184,82 @@ class ReferenceLayer:
         # (the default), otherwise the domain extent will be updated with the
         # layer_list
         return [self.align_sanitize_layer(layer) for layer in layer_list]
+
+
+def selections_match(sel_1: Union[Slice, Region], sel_2: Union[Slice, Region]) -> bool:
+    # compare selections, ignoring fields
+    if not type(sel_2) == type(sel_1):
+        return False
+
+    for attr in sel_1.__fields__.keys():
+        if attr != "fields":
+            val_1 = getattr(sel_1, attr)
+            val_2 = getattr(sel_2, attr)
+            if val_2 != val_1:
+                return False
+
+    return True
+
+
+class TimeseriesContainer:
+    # for storing image layers across timesteps by selections
+    def __init__(self):
+        self.layers_in_selections = defaultdict(lambda: [])
+        self.selection_objs = {}
+        self.selection_field = {}
+
+    def check_for_selection(
+        self, selection: Union[Slice, Region], current_field: Tuple[str, str]
+    ) -> int:
+        for sel_id, sel_obj in self.selection_objs.items():
+            sel_field = self.selection_field[sel_id]
+            if selections_match(sel_obj, selection) and current_field == sel_field:
+                return sel_id
+
+        # does not exist yet, add it
+        sel_id = len(self.selection_objs)
+        self.selection_objs[sel_id] = selection
+        self.selection_field[sel_id] = current_field
+        return sel_id
+
+    def add(
+        self,
+        selection: Union[Slice, Region],
+        current_field: Tuple[str, str],
+        new_layer: SpatialLayer,
+    ):
+        sel_id = self.check_for_selection(selection, current_field)
+
+        (im, im_kwargs, im_label, layer_domain) = new_layer
+        if layer_domain.requires_scale:
+            im_kwargs["scale"] = 1.0 / layer_domain.aspect_ratio
+            new_layer = (im, im_kwargs, im_label, layer_domain)
+
+        self.layers_in_selections[sel_id].append(new_layer)
+
+    def concat_by_selection_id(self, id: int) -> Layer:
+        the_layers = self.layers_in_selections[id]
+        if len(the_layers) == 1:
+            return the_layers[0]
+        if len(the_layers) == 0:
+            return None
+
+        # assuming that im_kwargs, layer_type do not change. also dr
+        _, im_kwargs, layer_type, domain = the_layers[0]
+        im_arrays = [im[0] for im in the_layers]
+        im = np.stack(im_arrays, axis=0)  # this operation will preserve dask arrays
+        return im, im_kwargs, layer_type
+
+    def concat_by_selection(self):
+        return [self.concat_by_selection_id(id) for id in self.selection_objs.keys()]
+
+    @property
+    def layer_list(self) -> List[Layer]:
+        layer_list = []
+        for layers in self.layers_in_selections.values():
+            for im_data, im_kwargs, layer_type, _ in layers:
+                layer_list.append((im_data, im_kwargs, layer_type))
+        return layer_list
 
 
 def create_metadata_dict(
@@ -343,9 +431,14 @@ class PhysicalDomainTracker:
         self.center, self.width = center_wid
 
 
-def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
+def _load_3D_regions(
+    ds,
+    selections: SelectionObject,
+    layer_list: list,
+    timeseries_container: Optional[TimeseriesContainer] = None,
+) -> list:
 
-    for sel in m_data.selections.regions:
+    for sel in selections.regions:
         # get the left, right edge as a unitful array, initialize the layer
         # domain tracking for this layer and update the global domain extent
         if sel.left_edge is None:
@@ -380,7 +473,10 @@ def _load_3D_regions(ds, m_data: DataContainer, layer_list: list) -> list:
             add_kwargs = {"name": fieldname, "metadata": md}
             layer_type = "image"
 
-            layer_list.append((data, add_kwargs, layer_type, layer_domain))
+            new_layer = (data, add_kwargs, layer_type, layer_domain)
+            layer_list.append(new_layer)
+            if timeseries_container is not None:
+                timeseries_container.add(sel, field, new_layer)
 
     return layer_list
 
@@ -435,9 +531,14 @@ def _process_slice(
     return frb, layer_domain
 
 
-def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
+def _load_2D_slices(
+    ds,
+    selections: SelectionObject,
+    layer_list: list,
+    timeseries_container: Optional[TimeseriesContainer] = None,
+) -> list:
 
-    for slice in m_data.selections.slices:
+    for slice in selections.slices:
 
         if slice.center is None:
             c = None
@@ -476,50 +577,176 @@ def _load_2D_slices(ds, m_data: DataContainer, layer_list: list) -> list:
             md = create_metadata_dict(data, layer_domain, field_container.take_log)
             add_kwargs = {"name": fieldname, "metadata": md}
             layer_type = "image"
-
-            layer_list.append((data, add_kwargs, layer_type, layer_domain))
+            new_layer = (data, add_kwargs, layer_type, layer_domain)
+            layer_list.append(new_layer)
+            if timeseries_container is not None:
+                timeseries_container.add(slice, field, new_layer)
 
     return layer_list
 
 
-def _process_validated_model(model: InputModel) -> List[SpatialLayer]:
+def _load_selections_from_ds(
+    ds,
+    selections: SelectionObject,
+    layer_list: List[SpatialLayer],
+    timeseries_container: Optional[TimeseriesContainer] = None,
+) -> List[SpatialLayer]:
+    if selections.regions is not None:
+        layer_list = _load_3D_regions(
+            ds, selections, layer_list, timeseries_container=timeseries_container
+        )
+    if selections.slices is not None:
+        layer_list = _load_2D_slices(
+            ds, selections, layer_list, timeseries_container=timeseries_container
+        )
+    return layer_list
+
+
+def _load_dataset_selections(
+    m_data: DataContainer, layer_list: List[SpatialLayer]
+) -> List[SpatialLayer]:
+    ds = dataset_cache.check_then_load(m_data.filename)
+    return _load_selections_from_ds(ds, m_data.selections, layer_list)
+
+
+def _validate_files(files):
+
+    valid_files = [f for f in files if os.path.isfile(f)]
+
+    if len(valid_files) == 0:
+        # try the yt directory
+        yt_data_dir = yt.config.ytcfg.get("yt", "test_data_dir")
+        test_files = [os.path.join(yt_data_dir, f) for f in files]
+        valid_files = [f for f in test_files if os.path.isfile(f)]
+
+    return valid_files
+
+
+def _generate_file_list(fpat, fdir=None):
+    import glob
+
+    # try with
+    match_this = fpat
+    if fdir is not None:
+        match_this = os.path.join(fdir, match_this)
+
+    files = glob.glob(match_this)
+    if len(files) == 0:
+        yt_data_dir = yt.config.ytcfg.get("yt", "test_data_dir")
+        files = glob.glob(os.path.join(yt_data_dir, match_this))
+
+    files.sort()
+    return files
+
+
+def _find_timeseries_files(file_selection: TimeSeriesFileSelection):
+
+    fdir = file_selection.directory
+    fpat = file_selection.file_pattern
+    frange = file_selection.file_range
+
+    if file_selection.file_list is not None:
+        # we have a list of files, load them explicitly as dataseries
+        files = file_selection.file_list
+        if fdir is not None:
+            files = [os.path.join(fdir, fi) for fi in files]
+        return _validate_files(files)
+
+    if fpat is None:
+        fpat = "*"
+
+    files = _generate_file_list(fpat, fdir)
+    if frange is not None:
+        # limit the selected files
+        f1, f2, f3 = frange
+        if f2 > len(files):
+            f2 = len(files)
+        picked_files = [files[fileid] for fileid in range(f1, f2, f3)]
+        return picked_files
+
+    return files
+
+
+def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
+
+    files = _find_timeseries_files(m_data.file_selection)
+
+    # process_in_parallel = False  # future model attribute
+
+    tc = TimeseriesContainer()
+    temp_list = []
+    for file in files:
+        # note: managing the files independently makes parallel approaches
+        # without MPI feasible. in some limited testing, this actually
+        # was thread safe with logging disabled, so it is possible to
+        # build dask arrays pretty easily for single regions and single
+        # fields.
+        ds = _load_with_timeseries_specials_check(file)
+        sels = m_data.selections
+        temp_list = _load_selections_from_ds(
+            ds, sels, temp_list, timeseries_container=tc
+        )
+
+    if m_data.load_as_stack is False:
+        new_layers = tc.layer_list
+    else:
+        new_layers = tc.concat_by_selection()
+
+    for layer in new_layers:
+        layer_list.append(layer)
+    return layer_list
+
+
+def _process_validated_model(
+    model: InputModel,
+) -> Tuple[List[SpatialLayer], List[Layer]]:
     # return a list of layer tuples with domain information
+
+    if model.datasets is None:
+        model.datasets = []
+
+    if model.timeseries is None:
+        model.timeseries = []
 
     layer_list = []
     # our model is already validated, so we can assume the field exist with
     # their correct types. This is all the yt-specific code required to load a
     # dataset and return a plain numpy array
-    for m_data in model.data:
+    for m_data in model.datasets:
+        layer_list = _load_dataset_selections(m_data, layer_list)
 
-        ds = dataset_cache.check_then_load(m_data.filename)
-        if m_data.selections.regions is not None:
-            layer_list = _load_3D_regions(ds, m_data, layer_list)
-        if m_data.selections.slices is not None:
-            layer_list = _load_2D_slices(ds, m_data, layer_list)
+    timeseries_layers = []
+    for m_data in model.timeseries:
+        timeseries_layers = _load_timeseries(m_data, timeseries_layers)
 
-    return layer_list
+    return layer_list, timeseries_layers
 
 
 def load_from_json(json_paths: List[str]) -> List[Layer]:
 
     layer_lists = []  # we will concatenate layers across json paths
-
+    timeseries_layers = []  # timeseries layers handled separately
     for json_path in json_paths:
         # InputModel is a pydantic class, the following will validate the json
         model = InputModel.parse_file(json_path)
 
         # now that we have a validated model, we can use the model attributes
         # to execute the code that will return our array for the image
-        layer_lists += _process_validated_model(model)
+        layer_lists_j, timeseries_layers_j = _process_validated_model(model)
+        timeseries_layers += timeseries_layers_j
+        layer_lists += layer_lists_j
 
     # now we need to align all our layers!
     # choose a reference layer -- using the first in the list at present, could
     # make this user configurable and/or use the layer with highest pixel density
     # as the reference so that high density layers do not lose resolution
-    ref_layer = _choose_ref_layer(layer_lists)
-    layer_lists = ref_layer.align_sanitize_layers(layer_lists)
+    if len(layer_lists) > 0:
+        ref_layer = _choose_ref_layer(layer_lists)
+        layer_lists = ref_layer.align_sanitize_layers(layer_lists)
 
-    return layer_lists
+    # timeseries layers are internally aligned
+    out_layers = layer_lists + timeseries_layers
+    return out_layers
 
 
 def _choose_ref_layer(
@@ -544,3 +771,21 @@ def _choose_ref_layer(
         raise ValueError(f"method must be one of {vmeths}, found {method}")
 
     return ReferenceLayer(layer_list[ref_layer_id][3])
+
+
+def _load_with_timeseries_specials_check(file):
+    fname = os.path.basename(file)
+    if fname.startswith("_ytnapari") and "-" in fname:
+        # check form of, e.g., _ytnapari_load_grid-001
+        loader, _ = str(fname).split("-")
+        if hasattr(_special_loaders, loader):
+            ds = getattr(_special_loaders, loader)()
+        else:
+            msg = (
+                f"The special loader function, yt_napari._special_loaders.{loader} "
+                f"does not exist."
+            )
+            raise AttributeError(msg)
+    else:
+        ds = yt.load(file)
+    return ds

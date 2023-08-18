@@ -38,7 +38,7 @@ class DatasetCache:
         self.available = {}
         self._most_recent = None
 
-    def check_then_load(self, filename: str):
+    def check_then_load(self, filename: str, cache_if_not_found: bool = True):
         if self.exists(filename):
             ytnapari_log.info(f"loading {filename} from cache.")
             return self.get_ds(filename)
@@ -51,7 +51,7 @@ class DatasetCache:
         else:
             ds = yt.load(filename)
 
-        if ytcfg.get("yt_napari", "in_memory_cache"):
+        if ytcfg.get("yt_napari", "in_memory_cache") and cache_if_not_found:
             self.add_ds(ds, filename)
         return ds
 

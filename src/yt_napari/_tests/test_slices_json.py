@@ -2,12 +2,13 @@ import pytest
 
 from yt_napari._data_model import InputModel
 from yt_napari._model_ingestor import _choose_ref_layer, _process_validated_model
+from yt_napari._schema_version import schema_name
 
 jdicts = []
 jdicts.append(
     {
-        "$schema": "yt-napari_0.1.0.json",
-        "data": [
+        "$schema": schema_name,
+        "datasets": [
             {
                 "filename": "_ytnapari_load_grid",
                 "selections": {
@@ -28,8 +29,8 @@ jdicts.append(
 )
 jdicts.append(
     {
-        "$schema": "yt-napari_0.1.0.json",
-        "data": [
+        "$schema": schema_name,
+        "datasets": [
             {
                 "filename": "_ytnapari_load_grid",
                 "selections": {
@@ -54,6 +55,6 @@ def test_basic_slice_validation(jdict):
 @pytest.mark.parametrize("jdict", jdicts)
 def test_slice_load(yt_ugrid_ds_fn, jdict):
     im = InputModel.parse_obj(jdict)
-    layer_lists = _process_validated_model(im)
+    layer_lists, _ = _process_validated_model(im)
     ref_layer = _choose_ref_layer(layer_lists)
     _ = ref_layer.align_sanitize_layers(layer_lists)

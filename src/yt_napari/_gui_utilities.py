@@ -218,6 +218,13 @@ def embed_in_list(widget_instance) -> list:
     return returnval
 
 
+def split_comma_sep_string(widget_instance) -> List[str]:
+    files = widget_instance.value
+    for ch in " []":
+        files = files.replace(ch, "")
+    return files.split(",")
+
+
 def _get_pydantic_model_field(py_model, field: str) -> pydantic.fields.ModelField:
     return py_model.__fields__[field]
 
@@ -251,17 +258,31 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
             pydantic_attr_factory=embed_in_list,
         )
 
+    translator.register(
+        _data_model.TimeSeriesFileSelection,
+        "file_list",
+        magicgui_factory=get_magicguidefault,
+        magicgui_args=(_data_model.TimeSeriesFileSelection.__fields__["file_list"],),
+        pydantic_attr_factory=split_comma_sep_string,
+    )
+
 
 translator = MagicPydanticRegistry()
 _register_yt_data_model(translator)
 
 
 def get_yt_data_container(
-    ignore_attrs: Optional[Union[str, List[str]]] = None
+    ignore_attrs: Optional[Union[str, List[str]]] = None,
+    pydantic_model_class: Optional[
+        Union[pydantic.BaseModel, pydantic.main.ModelMetaclass]
+    ] = None,
 ) -> widgets.Container:
+    if pydantic_model_class is None:
+        pydantic_model_class = _data_model.DataContainer
+
     data_container = widgets.Container()
     translator.add_pydantic_to_container(
-        _data_model.DataContainer,
+        pydantic_model_class,
         data_container,
         ignore_attrs=ignore_attrs,
     )

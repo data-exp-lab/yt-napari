@@ -2,9 +2,11 @@ from functools import partial
 
 import numpy as np
 
+from yt_napari import _widget_reader as _wr
 from yt_napari._ds_cache import dataset_cache
-from yt_napari._widget_reader import ReaderWidget, SelectionEntry
-from yt_napari.viewer import Scene
+
+# import ReaderWidget, SelectionEntry, TimeSeriesReader
+from yt_napari._special_loaders import _construct_ugrid_timeseries
 
 # note: the cache is disabled for all the tests in this file due to flakiness
 # in github CI. It may be that loading from a true file, rather than the
@@ -13,11 +15,11 @@ from yt_napari.viewer import Scene
 
 def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
     viewer = make_napari_viewer()
-    r = ReaderWidget(napari_viewer=viewer)
+    r = _wr.ReaderWidget(napari_viewer=viewer)
     r.add_new_button.click()
     assert len(r.active_selections) == 1
     sel = list(r.active_selections.values())[0]
-    assert isinstance(sel, SelectionEntry)
+    assert isinstance(sel, _wr.SelectionEntry)
     assert sel.selection_type == "Region"
     sel.expand()
     sel.expand()
@@ -28,8 +30,10 @@ def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
     r.add_new_button.click()
     assert len(r.active_selections) == 1
     sel = list(r.active_selections.values())[0]
-    assert isinstance(sel, SelectionEntry)
+    assert isinstance(sel, _wr.SelectionEntry)
     assert sel.selection_type == "Slice"
+
+    r.deleteLater()
 
 
 def _rebuild_data(final_shape, data):
@@ -44,12 +48,12 @@ def _rebuild_data(final_shape, data):
 def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
 
     viewer = make_napari_viewer()
-    r = ReaderWidget(napari_viewer=viewer)
+    r = _wr.ReaderWidget(napari_viewer=viewer)
     r.ds_container.filename.value = yt_ugrid_ds_fn
     r.ds_container.store_in_cache.value = False
     r.add_new_button.click()
     sel = list(r.active_selections.values())[0]
-    assert isinstance(sel, SelectionEntry)
+    assert isinstance(sel, _wr.SelectionEntry)
 
     mgui_region = sel.selection_container_raw
     mgui_region.fields.field_type.value = "gas"
@@ -59,18 +63,19 @@ def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
     rebuild = partial(_rebuild_data, mgui_region.resolution.value)
     r._post_load_function = rebuild
     r.load_data()
+    r.deleteLater()
 
 
 def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
     viewer = make_napari_viewer()
 
-    r = ReaderWidget(napari_viewer=viewer)
+    r = _wr.ReaderWidget(napari_viewer=viewer)
     r.ds_container.filename.value = yt_ugrid_ds_fn
     r.ds_container.store_in_cache.value = False
     r.add_new_button.click()
 
     sel = list(r.active_selections.values())[0]
-    assert isinstance(sel, SelectionEntry)
+    assert isinstance(sel, _wr.SelectionEntry)
 
     mgui_region = sel.selection_container_raw
     mgui_region.fields.field_type.value = "gas"
@@ -96,6 +101,42 @@ def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
     r.clear_cache()
     assert len(dataset_cache.available) == 0
 
-    _ = r.yt_scene
-    yt_scene = r.yt_scene
-    assert isinstance(yt_scene, Scene)
+    r.deleteLater()
+
+
+def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
+    viewer = make_napari_viewer()
+    _wr._use_threading = False
+    nfiles = 4
+    file_dir, flist_actual = _construct_ugrid_timeseries(tmp_path, nfiles)
+
+    tsr = _wr.TimeSeriesReader(napari_viewer=viewer)
+
+    tsr.ds_container.file_selection.directory.value = file_dir
+    tsr.ds_container.file_selection.file_pattern.value = "_ytnapari_load_grid-????"
+    tsr.ds_container.load_as_stack.value = True
+    tsr.add_new_button.click()
+    sel = list(tsr.active_selections.values())[0]
+    assert isinstance(sel, _wr.SelectionEntry)
+
+    mgui_region = sel.selection_container_raw
+    mgui_region.fields.field_type.value = "stream"
+    mgui_region.fields.field_name.value = "density"
+    mgui_region.resolution.value = (10, 10, 10)
+
+    tsr.load_data()
+    assert len(viewer.layers) == 1
+
+    viewer.layers.clear()
+    tsr.ds_container.load_as_stack.value = False
+    tsr.load_data()
+    assert len(viewer.layers) == nfiles
+
+    viewer.layers.clear()
+    filestr_list = "_ytnapari_load_grid-0001, _ytnapari_load_grid-0002"
+    tsr.ds_container.file_selection.file_list.value = filestr_list
+    tsr.ds_container.file_selection.file_pattern.value = ""
+    tsr.load_data()
+    assert len(viewer.layers) == 2
+
+    tsr.deleteLater()

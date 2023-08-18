@@ -48,6 +48,9 @@ To install the latest development version of the plugin instead, use:
 
     pip install git+https://github.com/data-exp-lab/yt-napari.git
 
+Note that if you are working off the development version, be sure to use the latest documentation
+for reference: https://yt-napari.readthedocs.io/en/latest/
+
 ## Quick Start
 
 After [installation](#Installation), there are three modes of using `yt-napari`:
@@ -93,7 +96,9 @@ nbscreenshot(viewer)
 
  ![Loading a subset of a yt dataset in napari from a Jupyter notebook](./assets/images/readme_ex_001.png)
 
-`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation (https://yt-napari.readthedocs.io/en/stable/) for more examples, including additional helper methods for linking layer appearance.
+`yt_scene.add_to_viewer` accepts any of the keyword arguments allowed by `viewer.add_image`. See the full documentation ([yt-napari.readthedocs.io]) for more examples, including additional helper methods for linking layer appearance.
+
+Additionally, with `yt_napari`>= v0.2.0, you can use the `yt_napari.timeseries` module to help sample and load in selections from across datasets.
 
 ### loading a selection from a yt dataset interactively
 
@@ -107,6 +112,13 @@ To use the yt Reader plugin, click on `Plugins -> yt-napari: yt Reader`. From th
 
 You can add multiple selections and load them all at once or adjust values and click "Load" again.
 
+#### using the yt Time Series Reader plugin
+
+To use the yt Time Series Reader plugin, click on  `Plugins -> yt-napari: yt Time Series Reader`. Specify your file matching: use `file_pattern` to enter glob expressions or use `file_list` to enter a list of specific files.
+Then add a slice or region to sample for each matched dataset file (note: be careful of memory here!):
+
+![Loading timeseries selections from the napari viewer](./assets/images/readme_ex_004_gui_timeseries.gif)
+
 #### using a json file and schema
 
 `yt-napari` also provides the ability to load json that contain specifications for loading a file. Properly formatted files can be loaded from the napari GUI as you would load any image file (`File->Open`). The json file describes the selection process for a dataset as described by a json-schema. The following json file results in similar layers as the above examples:
@@ -114,16 +126,16 @@ You can add multiple selections and load them all at once or adjust values and c
 
 ```json
 {"$schema": "https://raw.githubusercontent.com/data-exp-lab/yt-napari/main/src/yt_napari/schemas/yt-napari_0.0.1.json",
- "data": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
-           "selections": {"regions": [{
-                            "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
-                                       {"field_name": "Density", "field_type": "enzo", "take_log": true}],
-                            "left_edge": [460.0, 460.0, 460.0],
-                            "right_edge": [560.0, 560.0, 560.0],
-                            "resolution": [600, 600, 600]
-                          }]},
-           "edge_units": "kpc"
-         }]
+ "datasets": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030",
+               "selections": {"regions": [{
+                                "fields": [{"field_name": "Temperature", "field_type": "enzo", "take_log": true},
+                                           {"field_name": "Density", "field_type": "enzo", "take_log": true}],
+                                "left_edge": [460.0, 460.0, 460.0],
+                                "right_edge": [560.0, 560.0, 560.0],
+                                "resolution": [600, 600, 600]
+                              }]},
+               "edge_units": "kpc"
+             }]
 }
 ```
 
@@ -244,7 +256,7 @@ https://napari.org/plugins/stable/index.html
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
-[yt-napari.readthedocs.io]: https://yt-napari.readthedocs.io/
+[yt-napari.readthedocs.io]: https://yt-napari.readthedocs.io/en/stable/
 
 [file an issue]: https://github.com/data-exp-lab/yt-napari/issues
 

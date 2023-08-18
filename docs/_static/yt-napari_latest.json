@@ -2,12 +2,20 @@
   "title": "InputModel",
   "type": "object",
   "properties": {
-    "data": {
-      "title": "Data",
-      "description": "list of data containers to load",
+    "datasets": {
+      "title": "Datasets",
+      "description": "list of dataset containers to load",
       "type": "array",
       "items": {
         "$ref": "#/definitions/DataContainer"
+      }
+    },
+    "timeseries": {
+      "title": "Timeseries",
+      "description": "List of timeseries to load",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Timeseries"
       }
     }
   },
@@ -324,6 +332,75 @@
           "type": "boolean"
         }
       }
+    },
+    "TimeSeriesFileSelection": {
+      "title": "TimeSeriesFileSelection",
+      "type": "object",
+      "properties": {
+        "directory": {
+          "title": "Directory",
+          "description": "The directory of the timseries",
+          "type": "string"
+        },
+        "file_pattern": {
+          "title": "File Pattern",
+          "description": "The file pattern to match",
+          "type": "string"
+        },
+        "file_list": {
+          "title": "File List",
+          "description": "List of files to load.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "file_range": {
+          "title": "File Range",
+          "description": "Given files matched by file_pattern, this option will select a range. Argument orderis taken as start:stop:step.",
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        }
+      }
+    },
+    "Timeseries": {
+      "title": "Timeseries",
+      "type": "object",
+      "properties": {
+        "file_selection": {
+          "$ref": "#/definitions/TimeSeriesFileSelection"
+        },
+        "selections": {
+          "title": "Selections",
+          "description": "selections to load in this dataset",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SelectionObject"
+            }
+          ]
+        },
+        "load_as_stack": {
+          "title": "Load As Stack",
+          "description": "If True, will stack images along a new dimension.",
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "file_selection"
+      ]
     }
   }
 }

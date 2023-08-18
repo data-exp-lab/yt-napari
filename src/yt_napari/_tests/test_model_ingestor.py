@@ -3,8 +3,9 @@ from typing import Optional, Tuple
 import numpy as np
 import pytest
 import unyt
+from yt.config import ytcfg
 
-from yt_napari import _model_ingestor as _mi
+from yt_napari import _data_model as _dm, _model_ingestor as _mi
 
 # indirect testing happens via test_reader, so the tests here focus on explicit
 # testing of the domain tracking and alignment
@@ -315,3 +316,183 @@ def test_2d_3d_mix():
     sp_layer = (np.random.random(res), {}, "testname", layer_2d)
     new_layer_2d = ref.align_sanitize_layer(sp_layer)
     assert "scale" not in new_layer_2d[1]  # no scale when it is all 1
+
+
+@pytest.fixture
+def selection_objs():
+    slc_1 = _dm.Slice(
+        flds=[
+            _dm.ytField(field_type="enzo", field_name="density"),
+        ],
+        normal="x",
+        center=_dm.Length_Tuple(value=[0.5, 0.5, 0.5]),
+        slice_width=_dm.Length_Value(value=0.25),
+        slice_height=_dm.Length_Value(value=0.25),
+    )
+    slc_2 = _dm.Slice(
+        flds=[
+            _dm.ytField(field_type="enzo", field_name="density"),
+        ],
+        normal="x",
+        center=_dm.Length_Tuple(value=[0.5, 0.5, 0.5]),
+        slice_width=_dm.Length_Value(value=0.25),
+        slice_height=_dm.Length_Value(value=0.25),
+        resolution=(10, 10),
+    )
+
+    slc_3 = _dm.Slice(
+        flds=[
+            _dm.ytField(field_type="enzo", field_name="temperature"),
+        ],
+        normal="x",
+        center=_dm.Length_Tuple(value=[0.5, 0.5, 0.5]),
+        slice_width=_dm.Length_Value(value=0.25),
+        slice_height=_dm.Length_Value(value=0.25),
+    )
+
+    reg_1 = _dm.Region(
+        flds=[
+            _dm.ytField(field_type="enzo", field_name="temperature"),
+        ],
+        left_edge=_dm.Left_Edge(value=[0.0, 0.0, 0.0]),
+        right_edge=_dm.Right_Edge(value=[1.0, 1.0, 1.0]),
+    )
+
+    reg_2 = _dm.Region(
+        flds=[
+            _dm.ytField(field_type="enzo", field_name="temperature"),
+        ],
+        left_edge=_dm.Left_Edge(value=[0.0, 0.0, 0.0]),
+        right_edge=_dm.Right_Edge(value=[0.8, 1.0, 1.0]),
+    )
+
+    reg_3 = _dm.Region(
+        flds=[
+            _dm.ytField(field_type="enzo", field_name="density"),
+        ],
+        left_edge=_dm.Left_Edge(value=[0.0, 0.0, 0.0]),
+        right_edge=_dm.Right_Edge(value=[1.0, 1.0, 1.0]),
+    )
+    return slc_1, slc_2, slc_3, reg_1, reg_2, reg_3
+
+
+def test_selection_comparison(selection_objs):
+    slc_1, slc_2, slc_3, reg_1, reg_2, reg_3 = selection_objs
+    assert _mi.selections_match(slc_1, slc_2) is False
+    assert _mi.selections_match(slc_1, slc_3)
+    assert _mi.selections_match(slc_1, reg_1) is False
+    assert _mi.selections_match(reg_1, reg_2) is False
+    assert _mi.selections_match(reg_1, reg_3) is True
+
+
+def test_timeseries_container(selection_objs):
+    slc_1, slc_2, slc_3, reg_1, reg_2, reg_3 = selection_objs
+    tc = _mi.TimeseriesContainer()
+
+    im_kwargs = {}
+    shp = (10, 10, 10)
+    # note: domain here is a placeholder, not actually used in tc
+    domain = _mi.LayerDomain(
+        unyt.unyt_array([0, 0, 0], "m"), unyt.unyt_array([1.0, 1.0, 1.0], "m"), shp
+    )
+    im = np.random.random(shp)
+
+    print("what what")
+    for _ in range(3):
+        tc.add(reg_1, ("enzo", "temperature"), (im, im_kwargs, "image", domain))
+
+    assert len(tc.layers_in_selections[0]) == 3
+
+    shp = (10, 10)
+    # note: domain here is a placeholder, not actually used in tc
+    domain = _mi.LayerDomain(
+        unyt.unyt_array([0, 0], "m"),
+        unyt.unyt_array([1.0, 1.0], "m"),
+        shp,
+        n_d=2,
+    )
+    im = np.random.random(shp)
+
+    for _ in range(2):
+        tc.add(slc_1, ("enzo", "temperature"), (im, im_kwargs, "image", domain))
+    for _ in range(2):
+        tc.add(slc_3, ("enzo", "temperature"), (im, im_kwargs, "image", domain))
+
+    assert len(tc.layers_in_selections[1]) == 4
+
+    for _ in range(2):
+        tc.add(slc_2, ("enzo", "temperature"), (im, im_kwargs, "image", domain))
+
+    assert len(tc.layers_in_selections[2]) == 2
+
+    for _ in range(2):
+        tc.add(slc_2, ("enzo", "density"), (im, im_kwargs, "image", domain))
+
+    assert len(tc.layers_in_selections[3]) == 2
+
+    concatd = tc.concat_by_selection()
+    assert len(concatd) == 4
+    assert concatd[0][0].shape == (3, 10, 10, 10)
+    assert concatd[1][0].shape == (4, 10, 10)
+    assert concatd[2][0].shape == (2, 10, 10)
+    assert concatd[3][0].shape == (2, 10, 10)
+
+
+file_sel_dicts = [
+    {"file_pattern": "test_fi_???"},
+    {},  # just the directory
+    {"file_list": ["test_fi_001", "test_fi_002"]},
+    {
+        "file_pattern": "test_fi_???",
+        "file_range": (0, 100, 1),
+    },
+]
+
+
+@pytest.mark.parametrize("file_sel_dict", file_sel_dicts)
+def test_find_timeseries_file_selection(tmp_path, file_sel_dict):
+
+    fdir = tmp_path / "output"
+    fdir.mkdir()
+
+    base_name = "test_fi_"
+    nfiles = 10
+    for ifile in range(0, nfiles):
+        fname = base_name + str(ifile).zfill(3)
+        newfi = fdir / fname
+        newfi.touch()
+
+    fdir = str(fdir)
+    file_sel_dict["directory"] = fdir
+
+    tsfs = _mi.TimeSeriesFileSelection.parse_obj(file_sel_dict)
+
+    files = _mi._find_timeseries_files(tsfs)
+    if "file_list" not in file_sel_dict:
+        assert len(files) == nfiles
+
+
+def test_yt_data_dir_check(tmp_path):
+
+    fdir = tmp_path / "output"
+    fdir.mkdir()
+
+    init_dir = ytcfg.get("yt", "test_data_dir")
+
+    fname_list = []
+    base_name = "test_fi_blah_"
+    nfiles = 7
+    for ifile in range(0, nfiles):
+        fname = base_name + str(ifile).zfill(3)
+        newfi = fdir / fname
+        newfi.touch()
+        fname_list.append(fname)
+
+    ytcfg.set("yt", "test_data_dir", str(fdir.absolute()))
+
+    files = _mi._validate_files(fname_list)
+    assert len(files) == nfiles
+
+    files = _mi._generate_file_list("test_fi_blah_???")
+    assert len(files) == nfiles
+    ytcfg.set("yt", "test_data_dir", init_dir)

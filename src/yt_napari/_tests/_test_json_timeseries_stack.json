@@ -1,0 +1,52 @@
+{
+  "$schema": "yt-napari_0.2.0.json",
+  "datasets": [],
+  "timeseries": [
+    {
+      "file_selection": {
+        "directory": "",
+        "file_pattern": "enzo_tiny_cosmology/DD????/DD????",
+        "file_list": null,
+        "file_range": [0, 50, 10]
+      },
+      "selections": {
+        "regions": null,
+        "slices": [
+          {
+            "fields": [
+              {
+                "field_type": "enzo",
+                "field_name": "Density",
+                "take_log": true
+              }
+            ],
+            "normal": "x",
+            "center": {
+              "value": [
+                0.5,
+                0.5,
+                0.5
+              ],
+              "unit": "code_length"
+            },
+            "slice_width": {
+              "value": 1.0,
+              "unit": "code_length"
+            },
+            "slice_height": {
+              "value": 0.5,
+              "unit": "code_length"
+            },
+            "resolution": [
+              800,
+              800
+            ],
+            "periodic": false
+          }
+        ]
+      },
+      "load_as_stack": true,
+      "process_in_parallel": false
+    }
+  ]
+}
