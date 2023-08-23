@@ -11,10 +11,10 @@ assignees: ''
 Please provide a brief overview of what the bug is.
 
 **Reproduction**
-If using `yt-napari` from a notebook, please provide the code you run when encountering the bug. 
+If using `yt-napari` from a notebook, please provide the code you run when encountering the bug.
 
 ```python
-code to reproduce 
+code to reproduce
 ...
 ...
 ```
