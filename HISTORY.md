@@ -1,3 +1,10 @@
+## v0.2.1
+
+Bugfix release.
+
+### Fixes
+* fix slice scaling for width!=height
+
 ## v0.2.0
 
 This release includes some non-backwards compatible changes to the schema. Old
