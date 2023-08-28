@@ -496,3 +496,27 @@ def test_yt_data_dir_check(tmp_path):
     files = _mi._generate_file_list("test_fi_blah_???")
     assert len(files) == nfiles
     ytcfg.set("yt", "test_data_dir", init_dir)
+
+
+def test_linear_rescale():
+    data = 10 * np.random.random((5, 5))
+    rsc = _mi._linear_rescale(data)
+    assert rsc.min() == 0.0
+    assert rsc.max() == 1.0
+
+    data[0, 0] = np.nan
+    rsc = _mi._linear_rescale(data)
+    assert np.nanmin(rsc) == 0.0
+    assert np.nanmax(rsc) == 1.0
+
+    data[1, 1] = np.inf
+    rsc = _mi._linear_rescale(data)
+    assert np.nanmin(rsc) == 0.0
+    assert np.nanmax(rsc) == 1.0
+
+    data = 10 * np.random.random((5, 5))
+    data[1, 1] = np.inf
+    with pytest.warns(RuntimeWarning, match="invalid value"):
+        rsc = _mi._linear_rescale(data, fill_inf=False)
+        assert np.nanmin(rsc) == 0.0
+        assert np.nanmax(rsc) == 0.0

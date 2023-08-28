@@ -60,9 +60,13 @@ class Scene:
         take_log,
         colormap=None,
         link_to=None,
+        rescale=False,
         **kwargs,
     ):
         # adds any new data to the viewer
+
+        if rescale:
+            data = _mi._linear_rescale(data)
 
         if colormap is None:
             colormap = "viridis"
@@ -118,6 +122,7 @@ class Scene:
         take_log: Optional[bool] = None,
         colormap: Optional[str] = None,
         link_to: Optional[Union[str, Layer]] = None,
+        rescale: Optional[bool] = False,
         **kwargs,
     ):
         """
@@ -191,6 +196,7 @@ class Scene:
             take_log,
             colormap=colormap,
             link_to=link_to,
+            rescale=rescale,
             **kwargs,
         )
 
@@ -240,6 +246,7 @@ class Scene:
         periodic: Optional[bool] = False,
         colormap: Optional[str] = None,
         link_to: Optional[Union[str, Layer]] = None,
+        rescale: Optional[bool] = False,
         **kwargs,
     ):
         """
@@ -313,6 +320,7 @@ class Scene:
             take_log,
             colormap=colormap,
             link_to=link_to,
+            rescale=rescale,
             **kwargs,
         )
 
