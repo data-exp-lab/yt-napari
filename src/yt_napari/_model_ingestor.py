@@ -133,9 +133,9 @@ class ReferenceLayer:
         sc = other_layer.grid_width / self.grid_width
         sc[sc == 0] = 1.0
 
-        # we also need to multiply by the initial reference layer aspect ratio
-        # to account for any initial distortion.
-        return sc * self.aspect_ratio
+        # we also need to account for any initial distortion relative to ref
+        # layer
+        return sc / self.aspect_ratio
 
     def calculate_translation(self, other_layer: LayerDomain) -> unyt_array:
         # get the translation vector for another layer relative to the left edge
