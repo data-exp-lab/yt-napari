@@ -58,3 +58,10 @@ def test_slice_load(yt_ugrid_ds_fn, jdict):
     layer_lists, _ = _process_validated_model(im)
     ref_layer = _choose_ref_layer(layer_lists)
     _ = ref_layer.align_sanitize_layers(layer_lists)
+
+    jdict["datasets"][0]["selections"]["slices"][0]["rescale"] = True
+    im = InputModel.parse_obj(jdict)
+    layer_lists, _ = _process_validated_model(im)
+    im_data = layer_lists[0][0]
+    assert im_data.min() == 0
+    assert im_data.max() == 1
