@@ -23,7 +23,6 @@ def yt_ds_0():
 
 
 def test_timeseries_file_collection(tmp_path):
-
     nfiles = 8
     file_dir, flist_actual = _construct_ugrid_timeseries(tmp_path, nfiles)
 
@@ -129,7 +128,6 @@ def test_slice(yt_ds_0):
     ],
 )
 def test_timseries_selection(tmp_path, selection):
-
     nfiles = 4
     file_dir, flist_actual = _construct_ugrid_timeseries(tmp_path, nfiles)
 
@@ -167,7 +165,6 @@ def test_timseries_selection(tmp_path, selection):
     ],
 )
 def test_validate_scale(selection):
-
     # check that we pick up the scale
     kwargdict = {}
     ts._validate_scale(selection, kwargdict, False, 1.0)

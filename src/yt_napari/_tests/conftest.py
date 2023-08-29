@@ -5,7 +5,6 @@ import yt
 
 @pytest.fixture(scope="session")
 def yt_ugrid_ds_fn(tmpdir_factory):
-
     # this fixture generates a random yt dataset saved to disk that can be
     # re-loaded and sampled.
     arr = np.random.random(size=(64, 64, 64))

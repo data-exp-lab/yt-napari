@@ -79,7 +79,6 @@ class Region(_Selection):
         resolution: Optional[Tuple[int, int, int]] = (400, 400, 400),
         take_log: Optional[bool] = None,
     ):
-
         super().__init__(field, take_log=take_log)
         self.left_edge = left_edge
         self.right_edge = right_edge
@@ -313,7 +312,6 @@ def _get_im_data(
     stack_scaling: Optional[float] = 1.0,
     **kwargs,
 ):
-
     tfs = _dm.TimeSeriesFileSelection(
         file_pattern=file_pattern,
         directory=file_dir,
@@ -357,7 +355,6 @@ def _validate_scale(
     load_as_stack: bool,
     stack_scaling: float,
 ):
-
     if "scale" in kwargdict:
         # always use provided
         sc = np.asarray(kwargdict.pop("scale"))

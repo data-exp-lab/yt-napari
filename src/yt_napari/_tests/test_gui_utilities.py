@@ -96,7 +96,6 @@ def test_yt_widget(backend):
 
 
 def test_pydantic_magicgui_default(Model, backend, caplog):
-
     app = use_app(backend)  # noqa: F841
 
     model_field = Model.__fields__["field_1"]
@@ -117,7 +116,6 @@ def test_pydantic_magicgui_default(Model, backend, caplog):
 
 
 def test_pydantic_processing(Model, backend):
-
     app = use_app(backend)  # noqa: F841
 
     _ = gu._get_pydantic_model_field(Model, "field_1")

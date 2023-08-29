@@ -13,7 +13,6 @@ from yt_napari.viewer import _check_for_reference_layer
 
 
 class YTReader(QWidget):
-
     _pydantic_model = None
 
     def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
@@ -94,7 +93,6 @@ class YTReader(QWidget):
 
 
 class ReaderWidget(YTReader):
-
     _pydantic_model = _data_model.DataContainer
 
     def add_load_group_widgets(self):
@@ -217,7 +215,6 @@ class TimeSeriesReader(YTReader):
     _pydantic_model = _data_model.Timeseries
 
     def add_load_group_widgets(self):
-
         # the load and clear buttons
         load_group = QHBoxLayout()
 
@@ -227,7 +224,6 @@ class TimeSeriesReader(YTReader):
         self.layout().addLayout(load_group)
 
     def load_data(self):
-
         # first, get the pydantic args for each selection type, embed in lists
         selections_by_type = defaultdict(list)
         for selection in self.active_selections.values():

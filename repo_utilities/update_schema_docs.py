@@ -6,7 +6,6 @@ from yt_napari.schemas._manager import Manager
 
 
 def run_update(source_dir, schema_dir):
-
     m = Manager(schema_dir)
     m.update_docs(source_dir)
 
@@ -21,7 +20,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.version is not None:
-
         v = str(args.version)
         if v.startswith("v"):
             v = v.replace("v", "")

@@ -1,5 +1,4 @@
 def test_config_update():
-
     # note: when the following import is at the top of the file, it errors:
     # UnboundLocalError: local variable 'ytcfg' referenced before assignment
     from yt_napari.config import _defaults, _get_updated_config, ytcfg

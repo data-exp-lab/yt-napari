@@ -47,7 +47,6 @@ class LayerDomain:
         new_dim_value: Optional[unyt_quantity] = None,
         new_dim_axis: Optional[int] = 2,
     ):
-
         if len(left_edge) != len(right_edge):
             raise ValueError("length of edge arrays must match")
 
@@ -110,7 +109,6 @@ class ReferenceLayer:
     # aligning layers.
 
     def __init__(self, ref_layer_domain: LayerDomain):
-
         # copy over standard layer attributes
         self.left_edge = ref_layer_domain.left_edge
         self.right_edge = ref_layer_domain.right_edge
@@ -325,7 +323,6 @@ class PhysicalDomainTracker:
         unit: Optional[Union[str, unit_object.Unit]] = "kpc",
         registry: Optional[unit_registry.UnitRegistry] = None,
     ):
-
         self.unit = None
         self.unit_registry = None
         self.update_unit_info(unit=unit, registry=registry)
@@ -335,7 +332,6 @@ class PhysicalDomainTracker:
         unit: Union[str, unit_object.Unit] = None,
         registry: Optional[unit_registry.UnitRegistry] = None,
     ):
-
         if unit == "code_length" and registry is None:
             raise ValueError("To use 'code_length', you must provide a unit_registry")
 
@@ -437,7 +433,6 @@ def _load_3D_regions(
     layer_list: list,
     timeseries_container: Optional[TimeseriesContainer] = None,
 ) -> list:
-
     for sel in selections.regions:
         # get the left, right edge as a unitful array, initialize the layer
         # domain tracking for this layer and update the global domain extent
@@ -549,9 +544,7 @@ def _load_2D_slices(
     layer_list: list,
     timeseries_container: Optional[TimeseriesContainer] = None,
 ) -> list:
-
     for slice in selections.slices:
-
         if slice.center is None:
             c = None
         else:
@@ -625,7 +618,6 @@ def _load_dataset_selections(
 
 
 def _validate_files(files):
-
     valid_files = [f for f in files if os.path.isfile(f)]
 
     if len(valid_files) == 0:
@@ -655,7 +647,6 @@ def _generate_file_list(fpat, fdir=None):
 
 
 def _find_timeseries_files(file_selection: TimeSeriesFileSelection):
-
     fdir = file_selection.directory
     fpat = file_selection.file_pattern
     frange = file_selection.file_range
@@ -683,7 +674,6 @@ def _find_timeseries_files(file_selection: TimeSeriesFileSelection):
 
 
 def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
-
     files = _find_timeseries_files(m_data.file_selection)
 
     # process_in_parallel = False  # future model attribute
@@ -738,7 +728,6 @@ def _process_validated_model(
 
 
 def load_from_json(json_paths: List[str]) -> List[Layer]:
-
     layer_lists = []  # we will concatenate layers across json paths
     timeseries_layers = []  # timeseries layers handled separately
     for json_path in json_paths:

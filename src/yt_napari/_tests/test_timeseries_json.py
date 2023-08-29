@@ -80,7 +80,6 @@ def test_basic_validation(jdict):
 
 @pytest.mark.parametrize("jdict,expected_res", zip(jdicts, [(10, 10), (10, 10, 10)]))
 def test_full_load(tmp_path, jdict, expected_res):
-
     nfiles = 4
 
     fdir, flist = _construct_ugrid_timeseries(tmp_path, nfiles)
@@ -101,7 +100,6 @@ def test_full_load(tmp_path, jdict, expected_res):
 
 @pytest.mark.parametrize("jdict", jdicts)
 def test_unstacked_load(tmp_path, jdict):
-
     nfiles = 4
     fdir, flist = _construct_ugrid_timeseries(tmp_path, nfiles)
 

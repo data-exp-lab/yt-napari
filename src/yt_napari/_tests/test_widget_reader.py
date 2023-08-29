@@ -46,7 +46,6 @@ def _rebuild_data(final_shape, data):
 
 
 def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
-
     viewer = make_napari_viewer()
     r = _wr.ReaderWidget(napari_viewer=viewer)
     r.ds_container.filename.value = yt_ugrid_ds_fn

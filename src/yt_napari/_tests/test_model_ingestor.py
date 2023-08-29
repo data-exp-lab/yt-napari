@@ -151,7 +151,6 @@ def test_insert_to_unyt_array(x, x2, expected):
 
 
 def test_domain_tracking(domains_to_test):
-
     full_domain = _mi.PhysicalDomainTracker()
     full_domain.update_unit_info(unit="m")
 
@@ -208,7 +207,6 @@ def test_domain_tracking(domains_to_test):
 
 
 def test_reference_layer(domains_to_test):
-
     # assemble some fake layer tuples
     im_type = "image"
 
@@ -299,7 +297,6 @@ def test_ref_layer_selection(domains_to_test):
 
 
 def test_2d_3d_mix():
-
     le = unyt.unyt_array([1.0, 1.0, 1.0], "km")
     re = unyt.unyt_array([2000.0, 2000.0, 2000.0], "m")
     res = (10, 20, 15)
@@ -451,7 +448,6 @@ file_sel_dicts = [
 
 @pytest.mark.parametrize("file_sel_dict", file_sel_dicts)
 def test_find_timeseries_file_selection(tmp_path, file_sel_dict):
-
     fdir = tmp_path / "output"
     fdir.mkdir()
 
@@ -473,7 +469,6 @@ def test_find_timeseries_file_selection(tmp_path, file_sel_dict):
 
 
 def test_yt_data_dir_check(tmp_path):
-
     fdir = tmp_path / "output"
     fdir.mkdir()
 
