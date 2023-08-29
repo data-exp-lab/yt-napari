@@ -13,7 +13,6 @@ def yt_ds():
 
 
 def test_viewer(make_napari_viewer, yt_ds, caplog):
-
     # make_napari_viewer is a pytest fixture. It takes any keyword arguments
     # that napari.Viewer() takes. The fixture takes care of teardown, do **not**
     # explicitly close it!
@@ -51,7 +50,6 @@ def test_viewer(make_napari_viewer, yt_ds, caplog):
 
 
 def test_sanitize_layers(make_napari_viewer, yt_ds):
-
     viewer = make_napari_viewer()
 
     sc = Scene()
@@ -85,7 +83,6 @@ def test_sanitize_layers(make_napari_viewer, yt_ds):
 
 
 def test_get_data_range(make_napari_viewer, yt_ds):
-
     viewer = make_napari_viewer()
 
     sc = Scene()
@@ -104,7 +101,6 @@ def test_get_data_range(make_napari_viewer, yt_ds):
 
 
 def test_cross_layer_features(make_napari_viewer, yt_ds):
-
     viewer = make_napari_viewer()
 
     sc = Scene()

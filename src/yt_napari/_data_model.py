@@ -120,7 +120,6 @@ class TimeSeriesFileSelection(BaseModel):
 
 
 class Timeseries(BaseModel):
-
     file_selection: TimeSeriesFileSelection
     selections: SelectionObject = Field(
         None, description="selections to load in this dataset"

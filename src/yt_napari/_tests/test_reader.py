@@ -93,7 +93,6 @@ def test_reader_load(json_file_fixture):
 
 
 def test_invalid_schema(tmp_path, json_file_fixture, caplog):
-
     # test invalid schema
     with open(json_file_fixture) as jhandle:
         jdict = json.load(jhandle)

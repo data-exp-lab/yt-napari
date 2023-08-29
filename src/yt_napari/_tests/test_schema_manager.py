@@ -10,7 +10,6 @@ skip_win = "Schema manager is not for windows."
 
 @pytest.mark.skipif(sys.platform == "win32", reason=skip_win)
 def test_schema_version_management(tmp_path):
-
     m = Manager(schema_db=tmp_path)
 
     def get_expected(prefix, vstring):
@@ -59,7 +58,6 @@ def test_schema_version_management(tmp_path):
 
 @pytest.mark.skipif(sys.platform == "win32", reason=skip_win)
 def test_schema_generation(tmp_path):
-
     _store_schema(schema_db=tmp_path)
     m = Manager(schema_db=tmp_path)
     pfx = InputModel._schema_prefix
@@ -74,7 +72,6 @@ def test_schema_generation(tmp_path):
 
 @pytest.mark.skipif(sys.platform == "win32", reason=skip_win)
 def test_schema_update_docs(tmp_path):
-
     # directory setup
     docsdir = tmp_path / "docs"
     docsdir.mkdir()
