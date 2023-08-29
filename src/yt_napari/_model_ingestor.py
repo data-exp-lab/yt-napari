@@ -188,7 +188,7 @@ class ReferenceLayer:
 
 def selections_match(sel_1: Union[Slice, Region], sel_2: Union[Slice, Region]) -> bool:
     # compare selections, ignoring fields
-    if not type(sel_2) == type(sel_1):
+    if not type(sel_2) is type(sel_1):
         return False
 
     for attr in sel_1.__fields__.keys():
