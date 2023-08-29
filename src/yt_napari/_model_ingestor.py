@@ -188,7 +188,7 @@ class ReferenceLayer:
 
 def selections_match(sel_1: Union[Slice, Region], sel_2: Union[Slice, Region]) -> bool:
     # compare selections, ignoring fields
-    if not type(sel_2) == type(sel_1):
+    if not type(sel_2) is type(sel_1):
         return False
 
     for attr in sel_1.__fields__.keys():
@@ -467,6 +467,9 @@ def _load_3D_regions(
             if field_container.take_log:
                 data = np.log10(data)
 
+            if sel.rescale:
+                data = _linear_rescale(data)
+
             # create a metadata dict and set a name
             fieldname = ":".join(field)
             md = create_metadata_dict(data, layer_domain, field_container.take_log)
@@ -531,6 +534,15 @@ def _process_slice(
     return frb, layer_domain
 
 
+def _linear_rescale(data, fill_inf=True):
+    # rescales an array between 0, 1 handling nans and infs
+    if fill_inf:
+        data[np.isinf(data)] = np.nan
+    data_max = np.nanmax(data)
+    data_min = np.nanmin(data)
+    return (data - data_min) / (data_max - data_min)
+
+
 def _load_2D_slices(
     ds,
     selections: SelectionObject,
@@ -571,6 +583,9 @@ def _load_2D_slices(
             data = frb[field]  # extract the field (the slow part)
             if field_container.take_log:
                 data = np.log10(data)
+
+            if slice.rescale:
+                data = _linear_rescale(data)
 
             # create a metadata dict and set a name
             fieldname = ":".join(field)

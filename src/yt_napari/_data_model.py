@@ -58,6 +58,9 @@ class Region(BaseModel):
         (400, 400, 400),
         description="the resolution at which to sample between the edges.",
     )
+    rescale: Optional[bool] = Field(
+        False, description="rescale the final image between 0,1"
+    )
 
 
 class Slice(BaseModel):
@@ -80,6 +83,9 @@ class Slice(BaseModel):
     )
     periodic: Optional[bool] = Field(
         False, description="should the slice be periodic? default False."
+    )
+    rescale: Optional[bool] = Field(
+        False, description="rescale the final image between 0,1"
     )
 
 
