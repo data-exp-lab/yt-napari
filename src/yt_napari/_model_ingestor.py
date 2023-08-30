@@ -3,7 +3,8 @@ from collections import defaultdict
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-from unyt import unit_object, unit_registry, unyt_array
+import yt
+from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
 from yt_napari import _special_loaders
 from yt_napari._data_model import (
