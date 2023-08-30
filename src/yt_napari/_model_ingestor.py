@@ -10,6 +10,7 @@ from yt_napari import _special_loaders
 from yt_napari._data_model import (
     DataContainer,
     InputModel,
+    MetadataModel,
     Region,
     SelectionObject,
     Slice,
@@ -793,3 +794,19 @@ def _load_with_timeseries_specials_check(file):
     else:
         ds = yt.load(file)
     return ds
+
+
+def _process_metadata_model(model: MetadataModel):
+    fname = model.filename
+    if fname is None or fname == "" or fname == ".":
+        fname = "IsolatedGalaxy/galaxy0030/galaxy0030"
+
+    ds = yt.load(fname)
+
+    if model.include_field_list:
+        fields = ds.field_list
+        fields_by_type = defaultdict(lambda: [])
+        for field_type, field in fields:
+            fields_by_type[field_type].append(field)
+
+    return fields_by_type
