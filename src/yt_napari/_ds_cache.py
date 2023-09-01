@@ -1,3 +1,7 @@
+import os.path
+from os import PathLike
+from typing import Optional
+
 import yt
 
 from yt_napari import _special_loaders
@@ -42,11 +46,11 @@ class DatasetCache:
         if self.exists(filename):
             ytnapari_log.info(f"loading {filename} from cache.")
             return self.get_ds(filename)
-        elif filename.startswith("_ytnapari") and hasattr(_special_loaders, filename):
+        elif callable_name := _check_for_special(filename):
             # the filename is actually a function handle! get it, call it
-            # this allows yt-napari to to use all the yt fake datasets in
+            # this allows yt-napari to use all the yt fake datasets in
             # testing without saving them to disk.
-            ds_callable = getattr(_special_loaders, filename)
+            ds_callable = getattr(_special_loaders, callable_name)
             ds = ds_callable()
         else:
             ds = yt.load(filename)
@@ -57,3 +61,12 @@ class DatasetCache:
 
 
 dataset_cache = DatasetCache()
+
+
+def _check_for_special(filename: PathLike) -> Optional[str]:
+    # check if a "filename" is one of our short-circuiting special loaders
+    # and return the function name if it is valid.
+    basename = os.path.basename(filename)
+    if basename.startswith("_ytnapari") and hasattr(_special_loaders, basename):
+        return str(basename)
+    return None

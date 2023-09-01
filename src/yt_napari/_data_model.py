@@ -153,3 +153,14 @@ def _store_schema(schema_db: Optional[Union[PosixPath, str]] = None, **kwargs):
     m = _manager.Manager(schema_db)
     prefix, schema_contents = _get_standard_schema_contents()
     m.write_new_schema(schema_contents, schema_prefix=prefix, **kwargs)
+
+
+class MetadataModel(BaseModel):
+    filename: str = Field(None, description="the filename for the dataset")
+    include_field_list: bool = Field(True, description="whether to list the fields")
+    _ds_attrs: Tuple[str] = (
+        "domain_left_edge",
+        "domain_right_edge",
+        "current_time",
+        "domain_dimensions",
+    )

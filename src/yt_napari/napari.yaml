@@ -11,6 +11,9 @@ contributions:
     - id: yt-napari.timeseries_widget
       title: Read 2D selections from yt timeseries
       python_name: yt_napari._widget_reader:TimeSeriesReader
+    - id: yt-napari.metadata_widget
+      title: Inspect the metadata for a yt dataset
+      python_name: yt_napari._widget_matadata:MetadataWidget
   readers:
     - command: yt-napari.get_reader
       accepts_directories: false
@@ -20,3 +23,5 @@ contributions:
       display_name: yt Reader
     - command: yt-napari.timeseries_widget
       display_name: yt Time Series Reader
+    - command: yt-napari.metadata_widget
+      display_name: yt Metadata Explorer

@@ -257,6 +257,13 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
             magicgui_args=(py_model.__fields__[field]),
             pydantic_attr_factory=embed_in_list,
         )
+    translator.register(
+        _data_model.MetadataModel,
+        "filename",
+        magicgui_factory=get_file_widget,
+        magicgui_kwargs={"name": "filename"},
+        pydantic_attr_factory=get_filename,
+    )
 
     translator.register(
         _data_model.TimeSeriesFileSelection,
@@ -306,3 +313,9 @@ def get_yt_selection_container(selection_type: str, return_native: bool = False)
     if return_native:
         return selection_container.native
     return selection_container
+
+
+def get_yt_metadata_container():
+    data_container = widgets.Container()
+    translator.add_pydantic_to_container(_data_model.MetadataModel, data_container)
+    return data_container
