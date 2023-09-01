@@ -798,10 +798,6 @@ def _load_with_timeseries_specials_check(file):
 
 def _process_metadata_model(model: MetadataModel) -> Tuple[dict, dict]:
     fname = model.filename
-    if fname is None or fname == "" or fname == ".":
-        # for testing for now
-        fname = "IsolatedGalaxy/galaxy0030/galaxy0030"
-
     ds = dataset_cache.check_then_load(fname)
     meta_data_dict = {}
     for attr in model._ds_attrs:
