@@ -46,8 +46,10 @@ class MetadataWidget(QWidget):
                 self.layout().removeWidget(list_widget)
                 list_widget.setParent(None)
         self.widgets_to_clear = []
-
+        self.field_lists = {}
+        self.array_vals = {}
         py_kwargs = {}
+
         _gui_utilities.translator.get_pydantic_kwargs(
             self.metadata_input_container, _data_model.MetadataModel, py_kwargs
         )
@@ -62,6 +64,7 @@ class MetadataWidget(QWidget):
         for attr, val in meta_data_dict.items():
             if isinstance(val, unyt_array):
                 newid = UnytArrayQWidget(attr, val)
+                self.array_vals[attr] = newid
             else:
                 newid = QLabel(f"{attr}: {str(val)}")
             self.widgets_to_clear.append(newid)
@@ -72,20 +75,13 @@ class MetadataWidget(QWidget):
         for ftype, fields in fields_by_type.items():
             new_field_list = LayersList(ftype, fields, ilist < 3)
             ilist += 1
+            self.field_lists[ftype] = new_field_list
             self.widgets_to_clear.append(new_field_list)
             self.layout().addWidget(new_field_list)
 
 
 # based on answer here:
 # https://stackoverflow.com/questions/11077793/is-there-a-standard-component-for-collapsible-panel-in-qt
-
-
-class CustomQStandardItem(QStandardItem):
-    def __init__(self, icon, text):
-        super().__init__(icon, text)
-
-    def dropMimeData(self, data, action, row, column, parent):
-        pass
 
 
 class LayersList(QWidget):
@@ -113,7 +109,7 @@ class LayersList(QWidget):
         self.main_layout.addWidget(self.layer_list)
         self.expand_button.clicked.connect(self.expand)
         self.setLayout(self.main_layout)
-        self.resized_size = 16.5 * len(layers)
+        self.resized_size = int(16 * len(layers))
         if not expand:
             self.expand()
 
