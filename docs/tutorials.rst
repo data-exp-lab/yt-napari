@@ -12,6 +12,8 @@ The following videos are now available:
 5. Using the dock reader: `link <https://youtu.be/ajXT11TdV70>`_
 6. Sampling timeseries: `link <https://youtu.be/uNK33C6nOZU>`_
 7. Sampling timeseries with Dask: `link <https://youtu.be/5eeOrcuqvH8>`_
+8. Interactive visualization with the wider plugin ecosystem: `link <https://youtu.be/k1LdEQ_5Gfw>`_
+9. Image segmentation and classification with additional plugins: `link <https://youtu.be/CeOaeOo2rxQ>`_
 
 You can also find all of the above videos in `this youtube playlist <https://www.youtube.com/playlist?list=PLqbhAmYZU5KxuAcnNBIxyBkivUEiKswq1>`_.
 
