@@ -171,7 +171,7 @@ class SelectionEntry(QWidget):
         self.main_layout.setSpacing(0)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.expand_button = QPushButton(f"Selection {name}")
+        self.expand_button = QPushButton(f"{name}")
         self.expand_button.setToolTip(f"show/hide {name}")
 
         self.selection_container_raw = _gui_utilities.get_yt_selection_container(
