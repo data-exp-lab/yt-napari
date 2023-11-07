@@ -128,7 +128,6 @@ class ReaderWidget(YTReader):
                 # Save the JSON data to the selected file
                 with open(file_path, 'w') as json_file:
                     json.dump(py_kwargs, json_file, indent=4)    
-    app.exec_()
 
     def clear_cache(self):
         dataset_cache.rm_all()
