@@ -242,7 +242,6 @@ _use_threading = True
 
 class TimeSeriesReader(YTReader):
     _pydantic_model = _data_model.Timeseries
-    app = QApplication(sys.argv)
 
     def add_load_group_widgets(self):
         # the load and clear buttons
