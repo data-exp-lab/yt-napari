@@ -97,7 +97,6 @@ class YTReader(QWidget):
 
 class ReaderWidget(YTReader):
     _pydantic_model = _data_model.DataContainer
-    app = QApplication(sys.argv)
 
     def add_load_group_widgets(self):
         load_group = QHBoxLayout()
