@@ -272,7 +272,6 @@ class TimeSeriesReader(YTReader):
                 # Save the JSON data to the selected file
                 with open(file_path, 'w') as json_file:
                     json.dump(py_kwargs, json_file, indent=4)    
-    app.exec_()
 
     def load_data(self):
         py_kwargs = {}
