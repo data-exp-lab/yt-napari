@@ -13,8 +13,6 @@ from yt_napari.viewer import _check_for_reference_layer
 import sys
 import json
 
-
-
 class YTReader(QWidget):
     _pydantic_model = None
 
