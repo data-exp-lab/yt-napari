@@ -23,6 +23,11 @@ def schema_version_is_valid(
 
     # now we check the actual version. since the schema prefix (yt-napari) is
     # in the supplied schema_version, we can assume a form of yt-napari_x.x.x.json
+    # or yt-napari_x.x.x.dev+.json
+    if "dev" in schema_version:
+        ytnapari_log.info("Using development schema.")
+        return True
+
     sc_version = _schema_version_tuple_from_str(schema_version)
     _version_tuple = _get_version_tuple()
     if sc_version < _version_tuple:

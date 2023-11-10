@@ -24,6 +24,7 @@ def test_version_tupling(string_to_test, expected):
         ("yt-napari_0.0.1.json", True),
         ("yt-napari_1000.1.0.json", False),
         ("/blah/blah/yt-napari_latest.json", True),
+        ("yt-napari_0.2.1.dev.json", True),
     ],
 )
 def test_schema_str_validation(string_to_test, expected):
