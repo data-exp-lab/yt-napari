@@ -1,4 +1,4 @@
-{"$schema": "yt-napari_0.2.0.json",
+{"$schema": "yt-napari_0.2.0.dev.json",
   "datasets": [{"filename": "IsolatedGalaxy/galaxy0030/galaxy0030/",
              "selections": {
                "slices": [
