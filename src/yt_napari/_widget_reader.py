@@ -1,17 +1,17 @@
 from collections import defaultdict
 from typing import Callable, Optional
-
+from yt_napari._schema_version import schema_name
 import napari
 from magicgui import widgets
 from napari.qt.threading import thread_worker
 from qtpy import QtCore
-from qtpy.QtWidgets import QVBoxLayout, QWidget, QFileDialog, QApplication
+from qtpy.QtWidgets import QVBoxLayout, QWidget, QFileDialog
 from qtpy.QtWidgets import QComboBox, QHBoxLayout, QPushButton
 from yt_napari import _data_model, _gui_utilities, _model_ingestor
 from yt_napari._ds_cache import dataset_cache
 from yt_napari.viewer import _check_for_reference_layer
-import sys
 import json
+
 
 class YTReader(QWidget):
     _pydantic_model = None
@@ -125,7 +125,7 @@ class ReaderWidget(YTReader):
             if file_path:
                 # Save the JSON data to the selected file
                 with open(file_path, 'w') as json_file:
-                    json.dump(py_kwargs, json_file, indent=4)    
+                    json.dump(py_kwargs, json_file, indent=4)
 
     def clear_cache(self):
         dataset_cache.rm_all()
@@ -177,7 +177,7 @@ class ReaderWidget(YTReader):
 
         # now ready to instantiate the base model
         py_kwargs = {
-            "$schema": "https://yt-napari.readthedocs.io/en/latest/_static/yt-napari_latest.json",
+            "$schema": schema_name,
             "datasets": [
                 py_kwargs,
             ]
@@ -233,9 +233,7 @@ class SelectionEntry(QWidget):
         )
         return py_kwargs
 
-
 _use_threading = True
-
 
 class TimeSeriesReader(YTReader):
     _pydantic_model = _data_model.Timeseries
@@ -268,11 +266,11 @@ class TimeSeriesReader(YTReader):
             if file_path:
                 # Save the JSON data to the selected file
                 with open(file_path, 'w') as json_file:
-                    json.dump(py_kwargs, json_file, indent=4)    
+                    json.dump(py_kwargs, json_file, indent=4)
 
     def load_data(self):
         py_kwargs = {}
-        py_kwargs = self._validate_data_model()    
+        py_kwargs = self._validate_data_model()
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
         if _use_threading:
@@ -323,12 +321,13 @@ class TimeSeriesReader(YTReader):
 
         # now ready to instantiate the base model
         py_kwargs = {
-            "$schema": "https://yt-napari.readthedocs.io/en/latest/_static/yt-napari_latest.json",
+            "$schema": schema_name,
             "timeseries": [
                 py_kwargs,
             ]
         }
         return py_kwargs
+
 
 @thread_worker(progress=True)
 def time_series_load(model):
