@@ -233,7 +233,9 @@ class SelectionEntry(QWidget):
         )
         return py_kwargs
 
+
 _use_threading = True
+
 
 class TimeSeriesReader(YTReader):
     _pydantic_model = _data_model.Timeseries
