@@ -176,7 +176,7 @@ Now, to run the tests:
 
     pytest -v --cov=yt_napari --cov-report=html
 
-In addition to telling you whether or not the tests pass, the above command will write out a code coverage reporrt to the `htmlcov` directory. You can open up `htmlcov/index.html` in a browswer and check out the lines of code that were missed by existing tests.
+In addition to telling you whether or not the tests pass, the above command will write out a code coverage report to the `htmlcov` directory. You can open up `htmlcov/index.html` in a browser and check out the lines of code that were missed by existing tests.
 
 For style checks, you can use [pre-commit](https://pre-commit.com/) to run checks as you develop. To set up `pre-commit`:
 
