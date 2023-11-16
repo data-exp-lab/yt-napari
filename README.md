@@ -158,15 +158,25 @@ To start developing, fork the repository and clone your fork to get a local copy
 
 ### tests and style checks
 
-Both bug fixes and new features will need to pass the existing test suite and style checks. While both will be run automatically when you submit a pull request, it is helpful to run the test suites locally and run style checks throughout development. For testing, you can use [tox].
+Both bug fixes and new features will need to pass the existing test suite and style checks. While both will be run automatically when you submit a pull request, it is helpful to run the test suites locally and run style checks throughout development. For testing, you can use [tox] to test different python versions on your platform.
 
     pip install tox
 
 And then from the top level of the `yt-napari` directory, run
 
-    tox .
+    tox
 
 Tox will then run a series of tests in isolated environments. In addition to checking the terminal output for test results, the tox run will generate a test coverage report: a `coverage.xml` file and a `htmlcov` folder -- to view the results, open `htmlcov/index.html` in a browser.
+
+If you prefer a lighter weight test, you can also use `pytest` directly and rely on the Github CI to test different python versions and systems. To do so, first install `pytest` and some related plugins:
+
+    pip install pytest pytest-qt pytest-cov
+
+Now, to run the tests:
+
+    pytest -v --cov=yt_napari --cov-report=html
+
+In addition to telling you whether or not the tests pass, the above command will write out a code coverage reporrt to the `htmlcov` directory. You can open up `htmlcov/index.html` in a browswer and check out the lines of code that were missed by existing tests.
 
 For style checks, you can use [pre-commit](https://pre-commit.com/) to run checks as you develop. To set up `pre-commit`:
 
@@ -174,6 +184,12 @@ For style checks, you can use [pre-commit](https://pre-commit.com/) to run check
     pre-commit install
 
 after which, every time you run `git commit`, some automatic style adjustments and checks will run. The same style checks will run when you submit a pull request, but it's often easier to catch them early.
+
+After submitting a pull request, the `pre-commit.ci` bot will run the style checks. If style checks fail, you can have the bot attempt to auto-fix the failures by adding the following in a comment on it's own:
+
+    pre-commit.ci autofix
+
+The bot will then commit changes to your pull request after which you will want to run `git pull` locally to update your local version of the branch before making further changes to the branch.
 
 ### building documentation locally
 
