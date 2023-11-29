@@ -1,4 +1,11 @@
+import json
+
+# note: the cache is disabled for all the tests in this file due to flakiness
+# in github CI. It may be that loading from a true file, rather than the
+# yt_ugrid_ds_fn fixture would fix that...
+import os
 from functools import partial
+from unittest.mock import patch
 
 import numpy as np
 
@@ -7,13 +14,6 @@ from yt_napari._ds_cache import dataset_cache
 
 # import ReaderWidget, SelectionEntry, TimeSeriesReader
 from yt_napari._special_loaders import _construct_ugrid_timeseries
-
-# note: the cache is disabled for all the tests in this file due to flakiness
-# in github CI. It may be that loading from a true file, rather than the
-# yt_ugrid_ds_fn fixture would fix that...
-import os
-import json
-from unittest.mock import patch
 
 
 def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
@@ -47,6 +47,7 @@ def _rebuild_data(final_shape, data):
     # test datasets from yt in testing, this should be changed.
     return np.random.random(final_shape) * data.mean()
 
+
 def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
     viewer = make_napari_viewer()
     r = _wr.ReaderWidget(napari_viewer=viewer)
@@ -66,25 +67,36 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
 
     temp_file = "test.json"
 
-    with patch('PyQt5.QtWidgets.QFileDialog.exec_') as mock_exec, \
-         patch('PyQt5.QtWidgets.QFileDialog.selectedFiles') as mock_selectedFiles:
+    with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
+        "PyQt5.QtWidgets.QFileDialog.selectedFiles"
+    ) as mock_selectedFiles:
         # Set the return values for the mocked functions
-        mock_exec.return_value = 1  
+        mock_exec.return_value = 1
         mock_selectedFiles.return_value = [temp_file]
 
         r.save_selection()
 
     assert os.path.exists(temp_file)
-    with open(temp_file, 'r') as json_file:
+    with open(temp_file, "r") as json_file:
         saved_data = json.load(json_file)
 
-    assert saved_data["datasets"][0]["selections"]["regions"][0]["fields"][0]["field_type"] == "enzo"
-    assert saved_data["datasets"][0]["selections"]["regions"][0]["fields"][0]["field_name"] == "Density"
-    assert saved_data["datasets"][0]["selections"]["regions"][0]["resolution"] == [400, 400, 400]
+    assert (
+        saved_data["datasets"][0]["selections"]["regions"][0]["fields"][0]["field_type"]
+        == "enzo"
+    )
+    assert (
+        saved_data["datasets"][0]["selections"]["regions"][0]["fields"][0]["field_name"]
+        == "Density"
+    )
+    assert saved_data["datasets"][0]["selections"]["regions"][0]["resolution"] == [
+        400,
+        400,
+        400,
+    ]
 
     os.remove(temp_file)
     r.deleteLater()
-    
+
 
 def simulate_file_selection(args, **kwargs):
     # Simulate filling in a file name, selecting a file type, and closing the dialog
@@ -149,8 +161,6 @@ def test_subsequent_load(make_napari_viewer, yt_ugrid_ds_fn):
     r.deleteLater()
 
 
-
-
 def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     viewer = make_napari_viewer()
     _wr._use_threading = False
@@ -186,12 +196,12 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     tsr.load_data()
     assert len(viewer.layers) == 2
 
-
     temp_file = "test.json"
 
     # Use patch to replace the actual QFileDialog functions with mock functions
-    with patch('PyQt5.QtWidgets.QFileDialog.exec_') as mock_exec, \
-         patch('PyQt5.QtWidgets.QFileDialog.selectedFiles') as mock_selectedFiles:
+    with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
+        "PyQt5.QtWidgets.QFileDialog.selectedFiles"
+    ) as mock_selectedFiles:
         # Set the return values for the mocked functions
         mock_exec.return_value = 1  # Assuming QDialog::Accepted is 1
         mock_selectedFiles.return_value = [temp_file]
@@ -200,12 +210,26 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
         tsr.save_selection()
 
     assert os.path.exists(temp_file)
-    with open(temp_file, 'r') as json_file:
+    with open(temp_file, "r") as json_file:
         saved_data = json.load(json_file)
 
-    assert saved_data["timeseries"][0]["selections"]["regions"][0]["fields"][0]["field_type"] == "stream"
-    assert saved_data["timeseries"][0]["selections"]["regions"][0]["fields"][0]["field_name"] == "density"
-    assert saved_data["timeseries"][0]["selections"]["regions"][0]["resolution"] == [10, 10, 10]
+    assert (
+        saved_data["timeseries"][0]["selections"]["regions"][0]["fields"][0][
+            "field_type"
+        ]
+        == "stream"
+    )
+    assert (
+        saved_data["timeseries"][0]["selections"]["regions"][0]["fields"][0][
+            "field_name"
+        ]
+        == "density"
+    )
+    assert saved_data["timeseries"][0]["selections"]["regions"][0]["resolution"] == [
+        10,
+        10,
+        10,
+    ]
 
     os.remove(temp_file)
 

@@ -1,16 +1,24 @@
+import json
 from collections import defaultdict
 from typing import Callable, Optional
-from yt_napari._schema_version import schema_name
+
 import napari
 from magicgui import widgets
 from napari.qt.threading import thread_worker
 from qtpy import QtCore
-from qtpy.QtWidgets import QVBoxLayout, QWidget, QFileDialog
-from qtpy.QtWidgets import QComboBox, QHBoxLayout, QPushButton
+from qtpy.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QHBoxLayout,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
 from yt_napari import _data_model, _gui_utilities, _model_ingestor
 from yt_napari._ds_cache import dataset_cache
+from yt_napari._schema_version import schema_name
 from yt_napari.viewer import _check_for_reference_layer
-import json
 
 
 class YTReader(QWidget):
@@ -124,7 +132,7 @@ class ReaderWidget(YTReader):
             file_path = file_dialog.selectedFiles()[0]
             if file_path:
                 # Save the JSON data to the selected file
-                with open(file_path, 'w') as json_file:
+                with open(file_path, "w") as json_file:
                     json.dump(py_kwargs, json_file, indent=4)
 
     def clear_cache(self):
@@ -180,7 +188,7 @@ class ReaderWidget(YTReader):
             "$schema": schema_name,
             "datasets": [
                 py_kwargs,
-            ]
+            ],
         }
         return py_kwargs
 
@@ -267,7 +275,7 @@ class TimeSeriesReader(YTReader):
             file_path = file_dialog.selectedFiles()[0]
             if file_path:
                 # Save the JSON data to the selected file
-                with open(file_path, 'w') as json_file:
+                with open(file_path, "w") as json_file:
                     json.dump(py_kwargs, json_file, indent=4)
 
     def load_data(self):
@@ -326,7 +334,7 @@ class TimeSeriesReader(YTReader):
             "$schema": schema_name,
             "timeseries": [
                 py_kwargs,
-            ]
+            ],
         }
         return py_kwargs
 
