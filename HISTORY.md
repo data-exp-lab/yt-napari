@@ -1,3 +1,12 @@
+## v0.3.0
+
+This release introduces an initial metadata explorer widget and improvements to the
+Reader widgets.
+
+### New Features
+* Saving Reader widget selections to yt-napari JSON ([#108](https://github.com/data-exp-lab/yt-napari/pull/108), @TomasPetro)
+* Metadata explorer widget: check fields available in a dataset
+
 ## v0.2.1
 
 Bugfix release.

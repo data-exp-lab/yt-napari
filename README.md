@@ -232,7 +232,7 @@ task update_schema_docs
 It will simply copy over the existing on-disk schema files to the documentation. If you run with a version:
 
 ```commandline
-task update_schema_docs vX.X.X
+task update_schema_docs -v vX.X.X
 ```
 It will write a schema file for the current pydantic model, overwriting any on-disk schema files for
 the provided version.
