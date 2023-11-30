@@ -285,7 +285,7 @@ class TimeSeriesReader(YTReader):
         py_kwargs = self._validate_data_model()
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
-        if _use_threading:
+        if _use_threading:  # pragma: no cover
             worker = time_series_load(model)
             worker.returned.connect(self.process_timeseries_layers)
             worker.start()
@@ -342,6 +342,6 @@ class TimeSeriesReader(YTReader):
 
 
 @thread_worker(progress=True)
-def time_series_load(model):
+def time_series_load(model):  # pragma: no cover
     _, layer_list = _model_ingestor._process_validated_model(model)
     return layer_list
