@@ -105,6 +105,20 @@ selections can easily exceed available memory if you're not careful... for impro
 bigger-than-memory arrays, you can instead use the jupyter notebook interface for napari with the `yt_napari.timeseries`
 module of helper functions to distribute the timestep selections using dask. See the example notebooks for usage.
 
+
+Saving a selection:
+###################
+
+For both the yt Reader and Time Series Reader, you can save your selection configuration
+to a JSON file by clicking "Save Selection". This will save a yt-napari JSON file
+that you can later re-load (see :ref:`loading a json file from the napari gui<jsonload>`).
+
+The yt-napari Metadata explorer:
+################################
+
+The Metadata explorer widget will display some basic information about a selected yt
+dataset including available fields and domain extent.
+
 .. _configfile:
 
 Configuring yt-napari
