@@ -1,16 +1,20 @@
-from functools import partial
-
-import numpy as np
-
-from yt_napari import _widget_reader as _wr
-from yt_napari._ds_cache import dataset_cache
-
-# import ReaderWidget, SelectionEntry, TimeSeriesReader
-from yt_napari._special_loaders import _construct_ugrid_timeseries
+import json
 
 # note: the cache is disabled for all the tests in this file due to flakiness
 # in github CI. It may be that loading from a true file, rather than the
 # yt_ugrid_ds_fn fixture would fix that...
+import os
+from functools import partial
+from unittest.mock import patch
+
+import numpy as np
+
+from yt_napari import _widget_reader as _wr
+from yt_napari._data_model import InputModel
+from yt_napari._ds_cache import dataset_cache
+
+# import ReaderWidget, SelectionEntry, TimeSeriesReader
+from yt_napari._special_loaders import _construct_ugrid_timeseries
 
 
 def test_widget_reader_add_selections(make_napari_viewer, yt_ugrid_ds_fn):
@@ -43,6 +47,57 @@ def _rebuild_data(final_shape, data):
     # inject a correctly shaped random array here. If we start using full
     # test datasets from yt in testing, this should be changed.
     return np.random.random(final_shape) * data.mean()
+
+
+def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):
+    viewer = make_napari_viewer()
+    r = _wr.ReaderWidget(napari_viewer=viewer)
+    r.ds_container.filename.value = yt_ugrid_ds_fn
+    r.ds_container.store_in_cache.value = False
+    r.add_new_button.click()
+    sel = list(r.active_selections.values())[0]
+    assert isinstance(sel, _wr.SelectionEntry)
+
+    mgui_region = sel.selection_container_raw
+    mgui_region.fields.field_type.value = "enzo"
+    mgui_region.fields.field_name.value = "Density"
+    mgui_region.resolution.value = (400, 400, 400)
+
+    rebuild = partial(_rebuild_data, mgui_region.resolution.value)
+    r._post_load_function = rebuild
+
+    temp_file = tmp_path / "test.json"
+
+    with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
+        "PyQt5.QtWidgets.QFileDialog.selectedFiles"
+    ) as mock_selectedFiles:
+        # Set the return values for the mocked functions
+        mock_exec.return_value = 1
+        mock_selectedFiles.return_value = [temp_file]
+
+        r.save_selection()
+
+    assert os.path.exists(temp_file)
+    with open(temp_file, "r") as json_file:
+        saved_data = json.load(json_file)
+
+    assert (
+        saved_data["datasets"][0]["selections"]["regions"][0]["fields"][0]["field_type"]
+        == "enzo"
+    )
+    assert (
+        saved_data["datasets"][0]["selections"]["regions"][0]["fields"][0]["field_name"]
+        == "Density"
+    )
+    assert saved_data["datasets"][0]["selections"]["regions"][0]["resolution"] == [
+        400,
+        400,
+        400,
+    ]
+
+    # ensure that the saved json is a valid model
+    _ = InputModel.parse_obj(saved_data)
+    r.deleteLater()
 
 
 def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
@@ -137,5 +192,43 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     tsr.ds_container.file_selection.file_pattern.value = ""
     tsr.load_data()
     assert len(viewer.layers) == 2
+
+    temp_file = tmp_path / "test.json"
+
+    # Use patch to replace the actual QFileDialog functions with mock functions
+    with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
+        "PyQt5.QtWidgets.QFileDialog.selectedFiles"
+    ) as mock_selectedFiles:
+        # Set the return values for the mocked functions
+        mock_exec.return_value = 1  # Assuming QDialog::Accepted is 1
+        mock_selectedFiles.return_value = [temp_file]
+
+        # Call the save_selection method
+        tsr.save_selection()
+
+    assert os.path.exists(temp_file)
+    with open(temp_file, "r") as json_file:
+        saved_data = json.load(json_file)
+
+    assert (
+        saved_data["timeseries"][0]["selections"]["regions"][0]["fields"][0][
+            "field_type"
+        ]
+        == "stream"
+    )
+    assert (
+        saved_data["timeseries"][0]["selections"]["regions"][0]["fields"][0][
+            "field_name"
+        ]
+        == "density"
+    )
+    assert saved_data["timeseries"][0]["selections"]["regions"][0]["resolution"] == [
+        10,
+        10,
+        10,
+    ]
+
+    # ensure that the saved json is a valid model
+    _ = InputModel.parse_obj(saved_data)
 
     tsr.deleteLater()

@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 from typing import Callable, Optional
 
@@ -5,10 +6,18 @@ import napari
 from magicgui import widgets
 from napari.qt.threading import thread_worker
 from qtpy import QtCore
-from qtpy.QtWidgets import QComboBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QHBoxLayout,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from yt_napari import _data_model, _gui_utilities, _model_ingestor
 from yt_napari._ds_cache import dataset_cache
+from yt_napari._schema_version import schema_name
 from yt_napari.viewer import _check_for_reference_layer
 
 
@@ -68,7 +77,9 @@ class YTReader(QWidget):
         self.layout().addLayout(removal_group_layout)
 
     def add_load_group_widgets(self):
-        pass
+        """
+        add the widgets related to the Load button
+        """
 
     def add_a_selection(self):
         selection_type = self.new_selection_type.currentText()
@@ -106,6 +117,26 @@ class ReaderWidget(YTReader):
         load_group.addWidget(cc.native)
         self.layout().addLayout(load_group)
 
+        ss = widgets.PushButton(text="Save Selection")
+        ss.clicked.connect(self.save_selection)
+        load_group.addWidget(ss.native)
+
+    def save_selection(self):
+        py_kwargs = {}
+        py_kwargs = self._validate_data_model()
+
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.AnyFile)
+        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
+        file_dialog.setNameFilter("JSON Files (*.json);;All Files (*)")
+
+        if file_dialog.exec_():
+            file_path = file_dialog.selectedFiles()[0]
+            if file_path:
+                # Save the JSON data to the selected file
+                with open(file_path, "w") as json_file:
+                    json.dump(py_kwargs, json_file, indent=4)
+
     def clear_cache(self):
         dataset_cache.rm_all()
 
@@ -114,31 +145,8 @@ class ReaderWidget(YTReader):
         # instantiate pydantic objects, which are then handed off to the
         # same data ingestion function as the json loader.
 
-        # first, get the pydantic args for each selection type, embed in lists
-        selections_by_type = defaultdict(list)
-        for selection in self.active_selections.values():
-            py_kwargs = selection.get_current_pydantic_kwargs()
-            sel_key = selection.selection_type.lower() + "s"
-            selections_by_type[sel_key].append(py_kwargs)
-
-        # next, process remaining arguments (skipping selections):
         py_kwargs = {}
-        _gui_utilities.translator.get_pydantic_kwargs(
-            self.ds_container,
-            self._pydantic_model,
-            py_kwargs,
-            ignore_attrs="selections",
-        )
-
-        # add selections in
-        py_kwargs["selections"] = selections_by_type
-
-        # now ready to instantiate the base model
-        py_kwargs = {
-            "datasets": [
-                py_kwargs,
-            ]
-        }
+        py_kwargs = self._validate_data_model()
         model = _data_model.InputModel.parse_obj(py_kwargs)
 
         # process each layer
@@ -157,6 +165,34 @@ class ReaderWidget(YTReader):
 
             # add the new layer
             self.viewer.add_image(im_arr, **im_kwargs)
+
+    def _validate_data_model(self):
+        # this function save json data
+        selections_by_type = defaultdict(list)
+        for selection in self.active_selections.values():
+            py_kwargs = selection.get_current_pydantic_kwargs()
+            sel_key = selection.selection_type.lower() + "s"
+            selections_by_type[sel_key].append(py_kwargs)
+
+        # next, process remaining arguments (skipping selections):
+        py_kwargs = {}
+        _gui_utilities.translator.get_pydantic_kwargs(
+            self.ds_container,
+            self._pydantic_model,
+            py_kwargs,
+            ignore_attrs="selections",
+        )
+        # add selections in
+        py_kwargs["selections"] = selections_by_type
+
+        # now ready to instantiate the base model
+        py_kwargs = {
+            "$schema": schema_name,
+            "datasets": [
+                py_kwargs,
+            ],
+        }
+        return py_kwargs
 
 
 class SelectionEntry(QWidget):
@@ -223,7 +259,50 @@ class TimeSeriesReader(YTReader):
         load_group.addWidget(pb.native)
         self.layout().addLayout(load_group)
 
+        ss = widgets.PushButton(text="Save Selection")
+        ss.clicked.connect(self.save_selection)
+        load_group.addWidget(ss.native)
+
+    def save_selection(self):
+        py_kwargs = {}
+        py_kwargs = self._validate_data_model()
+        # model = _data_model.InputModel.parse_obj(py_kwargs)
+
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.AnyFile)
+        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
+        file_dialog.setNameFilter("JSON Files (*.json);;All Files (*)")
+
+        if file_dialog.exec_():
+            file_path = file_dialog.selectedFiles()[0]
+            if file_path:
+                # Save the JSON data to the selected file
+                with open(file_path, "w") as json_file:
+                    json.dump(py_kwargs, json_file, indent=4)
+
     def load_data(self):
+        py_kwargs = {}
+        py_kwargs = self._validate_data_model()
+        model = _data_model.InputModel.parse_obj(py_kwargs)
+
+        if _use_threading:  # pragma: no cover
+            worker = time_series_load(model)
+            worker.returned.connect(self.process_timeseries_layers)
+            worker.start()
+        else:
+            _, layer_list = _model_ingestor._process_validated_model(model)
+            self.process_timeseries_layers(layer_list)
+
+    def process_timeseries_layers(self, layer_list):
+        for new_layer in layer_list:
+            im_arr, im_kwargs, _ = new_layer
+            # probably can remove since the _special_loaders can be used
+            # if self._post_load_function is not None:
+            #     im_arr = self._post_load_function(im_arr)
+            # add the new layer
+            self.viewer.add_image(im_arr, **im_kwargs)
+
+    def _validate_data_model(self):
         # first, get the pydantic args for each selection type, embed in lists
         selections_by_type = defaultdict(list)
         for selection in self.active_selections.values():
@@ -254,32 +333,15 @@ class TimeSeriesReader(YTReader):
 
         # now ready to instantiate the base model
         py_kwargs = {
+            "$schema": schema_name,
             "timeseries": [
                 py_kwargs,
-            ]
+            ],
         }
-
-        model = _data_model.InputModel.parse_obj(py_kwargs)
-
-        if _use_threading:
-            worker = time_series_load(model)
-            worker.returned.connect(self.process_timeseries_layers)
-            worker.start()
-        else:
-            _, layer_list = _model_ingestor._process_validated_model(model)
-            self.process_timeseries_layers(layer_list)
-
-    def process_timeseries_layers(self, layer_list):
-        for new_layer in layer_list:
-            im_arr, im_kwargs, _ = new_layer
-            # probably can remove since the _special_loaders can be used
-            # if self._post_load_function is not None:
-            #     im_arr = self._post_load_function(im_arr)
-            # add the new layer
-            self.viewer.add_image(im_arr, **im_kwargs)
+        return py_kwargs
 
 
 @thread_worker(progress=True)
-def time_series_load(model):
+def time_series_load(model):  # pragma: no cover
     _, layer_list = _model_ingestor._process_validated_model(model)
     return layer_list
