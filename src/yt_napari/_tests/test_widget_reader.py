@@ -10,6 +10,7 @@ from unittest.mock import patch
 import numpy as np
 
 from yt_napari import _widget_reader as _wr
+from yt_napari._data_model import InputModel
 from yt_napari._ds_cache import dataset_cache
 
 # import ReaderWidget, SelectionEntry, TimeSeriesReader
@@ -48,7 +49,7 @@ def _rebuild_data(final_shape, data):
     return np.random.random(final_shape) * data.mean()
 
 
-def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
+def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):
     viewer = make_napari_viewer()
     r = _wr.ReaderWidget(napari_viewer=viewer)
     r.ds_container.filename.value = yt_ugrid_ds_fn
@@ -65,7 +66,7 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
     rebuild = partial(_rebuild_data, mgui_region.resolution.value)
     r._post_load_function = rebuild
 
-    temp_file = "test.json"
+    temp_file = tmp_path / "test.json"
 
     with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
         "PyQt5.QtWidgets.QFileDialog.selectedFiles"
@@ -94,13 +95,9 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
         400,
     ]
 
-    os.remove(temp_file)
+    # ensure that the saved json is a valid model
+    _ = InputModel.parse_obj(saved_data)
     r.deleteLater()
-
-
-def simulate_file_selection(args, **kwargs):
-    # Simulate filling in a file name, selecting a file type, and closing the dialog
-    return ("selected_file.json", "JSON Files (.json)")
 
 
 def test_widget_reader(make_napari_viewer, yt_ugrid_ds_fn):
@@ -196,7 +193,7 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     tsr.load_data()
     assert len(viewer.layers) == 2
 
-    temp_file = "test.json"
+    temp_file = tmp_path / "test.json"
 
     # Use patch to replace the actual QFileDialog functions with mock functions
     with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
@@ -231,6 +228,7 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
         10,
     ]
 
-    os.remove(temp_file)
+    # ensure that the saved json is a valid model
+    _ = InputModel.parse_obj(saved_data)
 
     tsr.deleteLater()

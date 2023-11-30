@@ -77,7 +77,9 @@ class YTReader(QWidget):
         self.layout().addLayout(removal_group_layout)
 
     def add_load_group_widgets(self):
-        pass
+        """
+        add the widgets related to the Load button
+        """
 
     def add_a_selection(self):
         selection_type = self.new_selection_type.currentText()
