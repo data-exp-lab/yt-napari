@@ -68,9 +68,10 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):
 
     temp_file = tmp_path / "test.json"
 
-    with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
-        "PyQt5.QtWidgets.QFileDialog.selectedFiles"
-    ) as mock_selectedFiles:
+    with (
+        patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec,
+        patch("PyQt5.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
+    ):
         # Set the return values for the mocked functions
         mock_exec.return_value = 1
         mock_selectedFiles.return_value = [temp_file]
@@ -196,9 +197,10 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     temp_file = tmp_path / "test.json"
 
     # Use patch to replace the actual QFileDialog functions with mock functions
-    with patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec, patch(
-        "PyQt5.QtWidgets.QFileDialog.selectedFiles"
-    ) as mock_selectedFiles:
+    with (
+        patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec,
+        patch("PyQt5.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
+    ):
         # Set the return values for the mocked functions
         mock_exec.return_value = 1  # Assuming QDialog::Accepted is 1
         mock_selectedFiles.return_value = [temp_file]
