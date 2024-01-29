@@ -8,6 +8,7 @@ https://napari.org/plugins/stable/npe2_manifest_specification.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/dev/plugins/index.html
 """
+
 import json
 
 from yt_napari.logging import ytnapari_log
