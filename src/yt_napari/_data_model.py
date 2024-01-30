@@ -66,7 +66,28 @@ class Region(_ytBaseModel):
     rescale: bool = Field(False, description="rescale the final image between 0,1")
 
 
-class Slice(_ytBaseModel):
+class CoveringGrid(BaseModel):
+    fields: List[ytField] = Field(
+        None, description="list of fields to load for this selection"
+    )
+    left_edge: Optional[Left_Edge] = Field(
+        None,
+        description="the left edge (min x, min y, min z)",
+    )
+    right_edge: Optional[Right_Edge] = Field(
+        None,
+        description="the right edge (max x, max y, max z)",
+    )
+    level: Optional[int] = (Field(0, description="Grid level to sample at"),)
+    num_ghost_zones: Optional[int] = (
+        Field(None, description="Number of ghost zones to include"),
+    )
+    rescale: Optional[bool] = Field(
+        False, description="rescale the final image between 0,1"
+    )
+
+
+class Slice(BaseModel):
     fields: List[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
@@ -93,7 +114,8 @@ class Slice(_ytBaseModel):
 class SelectionObject(_ytBaseModel):
     regions: List[Region] = Field(None, description="a list of regions to load")
     slices: List[Slice] = Field(None, description="a list of slices to load")
-
+    covering_grids: List[CoveringGrid] = Field(
+        None, description="a list of covering grids to load")
 
 class DataContainer(_ytBaseModel):
     filename: str = Field(None, description="the filename for the dataset")

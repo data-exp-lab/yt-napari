@@ -107,6 +107,8 @@ class MagicPydanticRegistry:
         if self.is_registered(pydantic_model, field, required=True):
             func, args, kwargs = self.registry[pydantic_model][field]["pydantic"]
             return func(widget_instance, *args, **kwargs)
+        else:
+            raise RuntimeError("unexpected")
 
     def add_pydantic_to_container(
         self,
@@ -214,6 +216,15 @@ def get_filename(file_widget: widgets.FileEdit):
     return str(file_widget.value)
 
 
+def get_int_box_widget(*args, **kwargs):
+    # could remove the need for this if the model uses pathlib.Path for typing
+    return widgets.IntText(*args, **kwargs)
+
+
+def get_int_val(int_box: widgets.IntText):
+    return int(int_box.value)
+
+
 def get_magicguidefault(field_name: str, field_def: pydantic.fields.Field):
     # returns an instance of the default widget selected by magicgui
     # returns an instance of the default widget selected by magicgui
@@ -255,8 +266,10 @@ def _get_pydantic_model_field(
 _models_to_embed_in_list = (
     (_data_model.Slice, "fields"),
     (_data_model.Region, "fields"),
+    (_data_model.CoveringGrid, "fields"),
     (_data_model.DataContainer, "selections"),
     (_data_model.SelectionObject, "regions"),
+    (_data_model.SelectionObject, "covering_grids"),
     (_data_model.SelectionObject, "slices"),
 )
 
@@ -297,6 +310,21 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
         pydantic_attr_factory=handle_str_list_edit,
     )
 
+    translator.register(
+        _data_model.CoveringGrid,
+        "level",
+        magicgui_factory=get_int_box_widget,
+        magicgui_kwargs={"name": "level"},
+        pydantic_attr_factory=get_int_val,
+    )
+    translator.register(
+        _data_model.CoveringGrid,
+        "num_ghost_zones",
+        magicgui_factory=get_int_box_widget,
+        magicgui_kwargs={"name": "num_ghost_zones"},
+        pydantic_attr_factory=get_int_val,
+    )
+
 
 translator = MagicPydanticRegistry()
 _register_yt_data_model(translator)
@@ -318,7 +346,7 @@ def get_yt_data_container(
     return data_container
 
 
-_valid_selections = ("Region", "Slice")
+_valid_selections = ("Region", "Slice", "CoveringGrid")
 
 
 def get_yt_selection_container(selection_type: str, return_native: bool = False):

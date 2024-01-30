@@ -122,7 +122,6 @@ class ReaderWidget(YTReader):
         load_group.addWidget(ss.native)
 
     def save_selection(self):
-        py_kwargs = {}
         py_kwargs = self._validate_data_model()
 
         file_dialog = QFileDialog()
@@ -150,7 +149,6 @@ class ReaderWidget(YTReader):
 
         # process each layer
         layer_list, _ = _model_ingestor._process_validated_model(model)
-
         # align all layers after checking for or setting the reference layer
         ref_layer = _check_for_reference_layer(self.viewer.layers)
         if ref_layer is None:
@@ -166,11 +164,13 @@ class ReaderWidget(YTReader):
             self.viewer.add_image(im_arr, **im_kwargs)
 
     def _validate_data_model(self):
-        # this function save json data
+
         selections_by_type = defaultdict(list)
         for selection in self.active_selections.values():
             py_kwargs = selection.get_current_pydantic_kwargs()
             sel_key = selection.selection_type.lower() + "s"
+            if "covering" in sel_key:
+                sel_key = "covering_grids"
             selections_by_type[sel_key].append(py_kwargs)
 
         # next, process remaining arguments (skipping selections):
