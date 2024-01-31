@@ -78,9 +78,10 @@ class CoveringGrid(BaseModel):
         None,
         description="the right edge (max x, max y, max z)",
     )
-    level: Optional[int] = (Field(0, description="Grid level to sample at"),)
-    num_ghost_zones: Optional[int] = (
-        Field(None, description="Number of ghost zones to include"),
+    level: Optional[int] = Field(0, description="Grid level to sample at")
+    num_ghost_zones: Optional[int] = Field(
+        None,
+        description="Number of ghost zones to include",
     )
     rescale: Optional[bool] = Field(
         False, description="rescale the final image between 0,1"
