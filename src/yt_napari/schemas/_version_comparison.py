@@ -16,7 +16,7 @@ def _get_version_tuple():
 def schema_version_is_valid(
     schema_version: str, dev_version_check: bool = True
 ) -> bool:
-    pfx = InputModel._schema_prefix
+    pfx = str(InputModel._schema_prefix)
     if schema_version is None or pfx not in schema_version:
         # the schema does not match a known schema for this plugin
         return False
