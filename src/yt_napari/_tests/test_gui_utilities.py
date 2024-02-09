@@ -33,7 +33,7 @@ def Model():
 
     class TestModel(pydantic.BaseModel):
         field_1: int = 1
-        vec_field1: Tuple[float, float] = (1.0, 2.0)
+        vec_field1: Tuple[float, float] = pydantic.Field((1.0, 2.0))
         vec_field2: Tuple[float, float, float]
         bad_field: TypeVar("BadType")
         low_model: LowerModel
@@ -99,12 +99,12 @@ def test_pydantic_magicgui_default(Model, backend, caplog):
     app = use_app(backend)  # noqa: F841
 
     model_field = Model.__fields__["field_1"]
-    c = gu.get_magicguidefault(model_field)
+    c = gu.get_magicguidefault("field_1", model_field)
     assert c.value == model_field.default
     c.close()
 
     model_field = Model.__fields__["bad_field"]
-    empty = gu.get_magicguidefault(model_field)
+    empty = gu.get_magicguidefault("bad_field", model_field)
     assert isinstance(empty, widgets.EmptyWidget)
     empty.close()
 
