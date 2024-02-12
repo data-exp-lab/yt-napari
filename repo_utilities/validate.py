@@ -97,8 +97,7 @@ def validate(version: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "version", help="The upcoming release string to check", type=str
-    )
+    deets = "The upcoming release string to check (format as vX.X.X)"
+    parser.add_argument("version", help=deets, type=str)
     args = parser.parse_args()
     validate(args.version)
