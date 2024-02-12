@@ -66,7 +66,7 @@ class Region(_ytBaseModel):
     rescale: bool = Field(False, description="rescale the final image between 0,1")
 
 
-class CoveringGrid(BaseModel):
+class CoveringGrid(_ytBaseModel):
     fields: List[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
@@ -86,7 +86,7 @@ class CoveringGrid(BaseModel):
     rescale: bool = Field(False, description="rescale the final image between 0,1")
 
 
-class Slice(BaseModel):
+class Slice(_ytBaseModel):
     fields: List[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
