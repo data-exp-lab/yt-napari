@@ -1,3 +1,4 @@
+import json
 import shutil
 from collections import defaultdict
 from os import PathLike
@@ -55,7 +56,7 @@ class Manager:
 
     def write_new_schema(
         self,
-        schema_json: str,
+        schema_json: Union[str, dict],
         schema_prefix: Optional[str] = None,
         inc_micro: Optional[bool] = True,
         inc_minor: Optional[bool] = False,
@@ -69,8 +70,9 @@ class Manager:
 
         Parameters:
         -----------
-        schema_json: str
-            the json string to write, assumes that it is already validated
+        schema_json: str or dict
+            the json string or dict to write, assumes that it is already validated.
+            If dict, will call json_dumps with indent=2.
         schema_prefix: Optional[str]
             file prefix for the schema. Version incrementing will only check
             schemas with matching prefix for determining the current version.
@@ -119,6 +121,8 @@ class Manager:
 
         # write out json to filename
         ytnapari_log.info(f"writing new schema {filename}")
+        if isinstance(schema_json, dict):
+            schema_json = json.dumps(schema_json, indent=2)
         with open(filename, "w") as f:
             f.write(schema_json)
 

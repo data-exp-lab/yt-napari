@@ -23,7 +23,7 @@ def test_schema_version_management(tmp_path):
 
     # run again with defaults, should increment
     expected_file = get_expected(pfx, "0.0.2")
-    m.write_new_schema("any old string")
+    m.write_new_schema({"or a": "dictionary"})
     assert expected_file.is_file()
 
     # test other increments
@@ -60,12 +60,12 @@ def test_schema_version_management(tmp_path):
 def test_schema_generation(tmp_path):
     _store_schema(schema_db=tmp_path)
     m = Manager(schema_db=tmp_path)
-    pfx = InputModel._schema_prefix
+    pfx = InputModel._schema_prefix.default
     expected_file = tmp_path.joinpath(m._filename(pfx, "0.0.1"))
     file_exists = expected_file.is_file()
     assert file_exists
 
-    schema_contents = InputModel.schema_json(indent=2)
+    schema_contents = InputModel.model_json_schema()
     with pytest.raises(ValueError):
         m.write_new_schema(schema_contents, schema_prefix="bad_prefix")
 

@@ -1,4 +1,5 @@
 import inspect
+import json
 from pathlib import PosixPath
 from typing import List, Optional, Tuple, Union
 
@@ -8,110 +9,108 @@ from yt_napari.config import ytcfg
 from yt_napari.schemas import _manager
 
 
-class ytField(BaseModel):
+class _ytBaseModel(BaseModel):
+    pass
+
+
+class ytField(_ytBaseModel):
     field_type: str = Field(None, description="a field type in the yt dataset")
     field_name: str = Field(None, description="a field in the yt dataset")
-    take_log: Optional[bool] = Field(
+    take_log: bool = Field(
         True, description="if true, will apply log10 to the selected data"
     )
 
 
-class Length_Value(BaseModel):
+class Length_Value(_ytBaseModel):
     value: float = Field(None, description="Single unitful value.")
     unit: str = Field("code_length", description="the unit length string.")
 
 
-class Left_Edge(BaseModel):
+class Left_Edge(_ytBaseModel):
     value: Tuple[float, float, float] = Field(
         (0.0, 0.0, 0.0), description="3-element unitful tuple."
     )
     unit: str = Field("code_length", description="the unit length string.")
 
 
-class Right_Edge(BaseModel):
+class Right_Edge(_ytBaseModel):
     value: Tuple[float, float, float] = Field(
         (1.0, 1.0, 1.0), description="3-element unitful tuple."
     )
     unit: str = Field("code_length", description="the unit length string.")
 
 
-class Length_Tuple(BaseModel):
+class Length_Tuple(_ytBaseModel):
     value: Tuple[float, float, float] = Field(
         None, description="3-element unitful tuple."
     )
     unit: str = Field("code_length", description="the unit length string.")
 
 
-class Region(BaseModel):
+class Region(_ytBaseModel):
     fields: List[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
-    left_edge: Optional[Left_Edge] = Field(
+    left_edge: Left_Edge = Field(
         None,
         description="the left edge (min x, min y, min z)",
     )
-    right_edge: Optional[Right_Edge] = Field(
+    right_edge: Right_Edge = Field(
         None,
         description="the right edge (max x, max y, max z)",
     )
-    resolution: Optional[Tuple[int, int, int]] = Field(
+    resolution: Tuple[int, int, int] = Field(
         (400, 400, 400),
         description="the resolution at which to sample between the edges.",
     )
-    rescale: Optional[bool] = Field(
-        False, description="rescale the final image between 0,1"
-    )
+    rescale: bool = Field(False, description="rescale the final image between 0,1")
 
 
-class Slice(BaseModel):
+class Slice(_ytBaseModel):
     fields: List[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
     normal: str = Field(None, description="the normal axis of the slice")
-    center: Optional[Length_Tuple] = Field(
+    center: Length_Tuple = Field(
         None, description="The center point of the slice, default domain center"
     )
-    slice_width: Optional[Length_Value] = Field(
+    slice_width: Length_Value = Field(
         None, description="The slice width, defaults to full domain"
     )
-    slice_height: Optional[Length_Value] = Field(
+    slice_height: Length_Value = Field(
         None, description="The slice width, defaults to full domain"
     )
-    resolution: Optional[Tuple[int, int]] = Field(
+    resolution: Tuple[int, int] = Field(
         (400, 400),
         description="the resolution at which to sample the slice",
     )
-    periodic: Optional[bool] = Field(
+    periodic: bool = Field(
         False, description="should the slice be periodic? default False."
     )
-    rescale: Optional[bool] = Field(
-        False, description="rescale the final image between 0,1"
-    )
+    rescale: bool = Field(False, description="rescale the final image between 0,1")
 
 
-class SelectionObject(BaseModel):
-    regions: Optional[List[Region]] = Field(
-        None, description="a list of regions to load"
-    )
-    slices: Optional[List[Slice]] = Field(None, description="a list of slices to load")
+class SelectionObject(_ytBaseModel):
+    regions: List[Region] = Field(None, description="a list of regions to load")
+    slices: List[Slice] = Field(None, description="a list of slices to load")
 
 
-class DataContainer(BaseModel):
+class DataContainer(_ytBaseModel):
     filename: str = Field(None, description="the filename for the dataset")
     selections: SelectionObject = Field(
         None, description="selections to load in this dataset"
     )
-    store_in_cache: Optional[bool] = Field(
+    store_in_cache: bool = Field(
         ytcfg.get("yt_napari", "in_memory_cache"),
         description="if enabled, will store references to yt datasets.",
     )
 
 
-class TimeSeriesFileSelection(BaseModel):
+class TimeSeriesFileSelection(_ytBaseModel):
     directory: str = Field(None, description="The directory of the timseries")
-    file_pattern: Optional[str] = Field(None, description="The file pattern to match")
-    file_list: Optional[List[str]] = Field(None, description="List of files to load.")
-    file_range: Optional[Tuple[int, int, int]] = Field(
+    file_pattern: str = Field(None, description="The file pattern to match")
+    file_list: List[str] = Field(None, description="List of files to load.")
+    file_range: Tuple[int, int, int] = Field(
         None,
         description="Given files matched by file_pattern, "
         "this option will select a range. Argument order"
@@ -119,12 +118,12 @@ class TimeSeriesFileSelection(BaseModel):
     )
 
 
-class Timeseries(BaseModel):
+class Timeseries(_ytBaseModel):
     file_selection: TimeSeriesFileSelection
     selections: SelectionObject = Field(
         None, description="selections to load in this dataset"
     )
-    load_as_stack: Optional[bool] = Field(
+    load_as_stack: bool = Field(
         False, description="If True, will stack images along a new dimension."
     )
     # process_in_parallel: Optional[bool] = Field(
@@ -132,7 +131,7 @@ class Timeseries(BaseModel):
     # )
 
 
-class InputModel(BaseModel):
+class InputModel(_ytBaseModel):
     datasets: List[DataContainer] = Field(
         None, description="list of dataset containers to load"
     )
@@ -141,8 +140,9 @@ class InputModel(BaseModel):
 
 
 def _get_standard_schema_contents() -> Tuple[str, str]:
-    prefix = InputModel._schema_prefix
-    schema_contents = InputModel.schema_json(indent=2)
+    prefix = InputModel._schema_prefix.default
+    schema_contents = InputModel.model_json_schema()
+    schema_contents = json.dumps(schema_contents, indent=2)
     return prefix, schema_contents
 
 
@@ -155,7 +155,7 @@ def _store_schema(schema_db: Optional[Union[PosixPath, str]] = None, **kwargs):
     m.write_new_schema(schema_contents, schema_prefix=prefix, **kwargs)
 
 
-class MetadataModel(BaseModel):
+class MetadataModel(_ytBaseModel):
     filename: str = Field(None, description="the filename for the dataset")
     include_field_list: bool = Field(True, description="whether to list the fields")
     _ds_attrs: Tuple[str] = (
@@ -164,3 +164,16 @@ class MetadataModel(BaseModel):
         "current_time",
         "domain_dimensions",
     )
+
+
+def _get_dm_listing(locals_dict):
+    _data_model_list = []
+    for ky, val in locals_dict.items():
+        if inspect.isclass(val) and issubclass(val, _ytBaseModel):
+            _data_model_list.append(ky)
+            _data_model_list.append(val)
+            _data_model_list.append(val.__module__ + "." + ky)
+    return tuple(_data_model_list)
+
+
+_data_model_list = _get_dm_listing(locals())

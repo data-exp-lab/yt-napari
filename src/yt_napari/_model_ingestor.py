@@ -190,7 +190,7 @@ def selections_match(sel_1: Union[Slice, Region], sel_2: Union[Slice, Region]) -
     if not type(sel_2) is type(sel_1):
         return False
 
-    for attr in sel_1.__fields__.keys():
+    for attr in sel_1.model_fields.keys():
         if attr != "fields":
             val_1 = getattr(sel_1, attr)
             val_2 = getattr(sel_2, attr)
@@ -733,7 +733,8 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
     timeseries_layers = []  # timeseries layers handled separately
     for json_path in json_paths:
         # InputModel is a pydantic class, the following will validate the json
-        model = InputModel.parse_file(json_path)
+        with open(json_path, "r") as open_file:
+            model = InputModel.model_validate_json(open_file.read())
 
         # now that we have a validated model, we can use the model attributes
         # to execute the code that will return our array for the image

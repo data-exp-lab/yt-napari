@@ -75,7 +75,7 @@ jdicts.append(
 
 @pytest.mark.parametrize("jdict", jdicts)
 def test_basic_validation(jdict):
-    _ = InputModel.parse_obj(jdict)
+    _ = InputModel.model_validate(jdict)
 
 
 @pytest.mark.parametrize("jdict,expected_res", zip(jdicts, [(10, 10), (10, 10, 10)]))
@@ -88,7 +88,7 @@ def test_full_load(tmp_path, jdict, expected_res):
 
     jdict_new = jdict.copy()
     jdict_new["timeseries"][0]["file_selection"] = f_dict
-    im = InputModel.parse_obj(jdict_new)
+    im = InputModel.model_validate(jdict_new)
 
     files = mi._find_timeseries_files(im.timeseries[0].file_selection)
     assert all([file in files for file in flist])
@@ -109,7 +109,7 @@ def test_unstacked_load(tmp_path, jdict):
     jdict_new["timeseries"][0]["file_selection"] = f_dict
     jdict_new["timeseries"][0]["load_as_stack"] = False
 
-    im = InputModel.parse_obj(jdict_new)
+    im = InputModel.model_validate(jdict_new)
     _, ts_layers = mi._process_validated_model(im)
     assert len(ts_layers) == 2 * nfiles  # two fields per file
 
@@ -150,7 +150,7 @@ def test_aspect_rat(tmp_path):
         ],
     }
 
-    im = InputModel.parse_obj(jdict_ar)
+    im = InputModel.model_validate(jdict_ar)
     _, ts_layers = mi._process_validated_model(im)
     for _, im_kwargs, _ in ts_layers:
         print(im_kwargs)

@@ -55,7 +55,7 @@ class MetadataWidget(QWidget):
         )
 
         # instantiate the base model
-        model = _data_model.MetadataModel.parse_obj(py_kwargs)
+        model = _data_model.MetadataModel.model_validate(py_kwargs)
 
         # process it!
         meta_data_dict, fields_by_type = _model_ingestor._process_metadata_model(model)

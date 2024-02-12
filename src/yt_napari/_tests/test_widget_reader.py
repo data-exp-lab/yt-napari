@@ -67,10 +67,9 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):
     r._post_load_function = rebuild
 
     temp_file = tmp_path / "test.json"
-
     with (
-        patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec,
-        patch("PyQt5.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
+        patch("qtpy.QtWidgets.QFileDialog.exec_") as mock_exec,
+        patch("qtpy.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
     ):
         # Set the return values for the mocked functions
         mock_exec.return_value = 1
@@ -97,7 +96,7 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):
     ]
 
     # ensure that the saved json is a valid model
-    _ = InputModel.parse_obj(saved_data)
+    _ = InputModel.model_validate(saved_data)
     r.deleteLater()
 
 
@@ -188,8 +187,11 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     assert len(viewer.layers) == nfiles
 
     viewer.layers.clear()
-    filestr_list = "_ytnapari_load_grid-0001, _ytnapari_load_grid-0002"
-    tsr.ds_container.file_selection.file_list.value = filestr_list
+    file_list = [
+        "_ytnapari_load_grid-0001",
+        "_ytnapari_load_grid-0002",
+    ]
+    tsr.ds_container.file_selection.file_list.value = file_list
     tsr.ds_container.file_selection.file_pattern.value = ""
     tsr.load_data()
     assert len(viewer.layers) == 2
@@ -198,8 +200,8 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
 
     # Use patch to replace the actual QFileDialog functions with mock functions
     with (
-        patch("PyQt5.QtWidgets.QFileDialog.exec_") as mock_exec,
-        patch("PyQt5.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
+        patch("qtpy.QtWidgets.QFileDialog.exec_") as mock_exec,
+        patch("qtpy.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
     ):
         # Set the return values for the mocked functions
         mock_exec.return_value = 1  # Assuming QDialog::Accepted is 1
@@ -231,6 +233,6 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     ]
 
     # ensure that the saved json is a valid model
-    _ = InputModel.parse_obj(saved_data)
+    _ = InputModel.model_validate(saved_data)
 
     tsr.deleteLater()
