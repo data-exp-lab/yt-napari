@@ -60,7 +60,7 @@ def test_schema_version_management(tmp_path):
 def test_schema_generation(tmp_path):
     _store_schema(schema_db=tmp_path)
     m = Manager(schema_db=tmp_path)
-    pfx = InputModel._schema_prefix
+    pfx = InputModel._schema_prefix.default
     expected_file = tmp_path.joinpath(m._filename(pfx, "0.0.1"))
     file_exists = expected_file.is_file()
     assert file_exists

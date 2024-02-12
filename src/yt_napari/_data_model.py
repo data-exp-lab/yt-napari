@@ -139,7 +139,7 @@ class InputModel(_ytBaseModel):
 
 
 def _get_standard_schema_contents() -> Tuple[str, str]:
-    prefix = InputModel._schema_prefix
+    prefix = InputModel._schema_prefix.default
     schema_contents = InputModel.schema_json(indent=2)
     return prefix, schema_contents
 
