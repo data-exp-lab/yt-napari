@@ -312,12 +312,17 @@ def _get_im_data(
     stack_scaling: Optional[float] = 1.0,
     **kwargs,
 ):
-    tfs = _dm.TimeSeriesFileSelection(
+    ts_kwargs = dict(
         file_pattern=file_pattern,
         directory=file_dir,
         file_list=file_list,
         file_range=file_range,
     )
+    for ky in ["file_pattern", "directory", "file_list", "file_range"]:
+        if ts_kwargs[ky] is None:
+            _ = ts_kwargs.pop(ky)
+
+    tfs = _dm.TimeSeriesFileSelection(**ts_kwargs)
     files = _mi._find_timeseries_files(tfs)
 
     im_data = []

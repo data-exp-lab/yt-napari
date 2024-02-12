@@ -33,6 +33,7 @@ class MagicPydanticRegistry:
         pydantic_attr_factory: Callable = None,
         pydantic_attr_args: Optional[tuple] = None,
         pydantic_attr_kwargs: Optional[dict] = None,
+        auto_list_handling: Optional[bool] = False,
     ):
         """
 
@@ -55,6 +56,9 @@ class MagicPydanticRegistry:
             a tuple containing arguments to pydantic_attr_factory
         pydantic_attr_kwargs :
             a dict containing keyword arguments to pydantic_attr_factory
+        auto_list_handling: bool
+            True if the field is an embedded list that should be
+            handled as a single entry in a container
         """
         magicgui_args = set_default(magicgui_args, ())
         magicgui_kwargs = set_default(magicgui_kwargs, {})
@@ -69,6 +73,7 @@ class MagicPydanticRegistry:
                 pydantic_attr_args,
                 pydantic_attr_kwargs,
             ),
+            "auto_list_handling": auto_list_handling,
         }
 
         self.registry[pydantic_model][field] = new_entry
@@ -127,7 +132,8 @@ class MagicPydanticRegistry:
                 new_widget = new_widget_cls(name=field)
                 self.add_pydantic_to_container(ftype, new_widget)
             elif self.is_registered(py_model, field):
-                if get_origin(field_def.annotation) is list:
+                auto_list = self.registry[py_model][field]["auto_list_handling"]
+                if get_origin(field_def.annotation) is list and auto_list:
                     new_widget_cls = widgets.Container
                     new_widget = new_widget_cls(name=field)
                     ftype_inner = get_args(field_def.annotation)[0]
@@ -161,24 +167,34 @@ class MagicPydanticRegistry:
             if field in ignore_attrs:
                 continue
             ftype = field_def.annotation
-
             if _is_base_model_or_yt_obj(field_def):
                 new_kwargs = {}  # new dictionary for the new nest level
                 # any pydantic class will be a container, so pull that out to pass
                 # to the recursive call
                 sub_container = getattr(container, field)
                 self.get_pydantic_kwargs(sub_container, ftype, new_kwargs)
-                if "typing.List" in str(field_def.outer_type_):
+                if get_origin(ftype) is list:
                     new_kwargs = [
                         new_kwargs,
                     ]
                 pydantic_kwargs[field] = new_kwargs
 
             elif self.is_registered(py_model, field):
-                widget_instance = getattr(container, field)  # pull from container
-                pydantic_kwargs[field] = self.get_pydantic_attr(
-                    py_model, field, widget_instance
-                )
+                auto_list = self.registry[py_model][field]["auto_list_handling"]
+                if get_origin(ftype) is list and auto_list:
+                    inner = get_args(ftype)[0]
+                    sub_container = getattr(container, field)  # pull from container
+                    new_kwargs = {}
+                    self.get_pydantic_kwargs(sub_container, inner, new_kwargs)
+                    new_kwargs = [
+                        new_kwargs,
+                    ]
+                    pydantic_kwargs[field] = new_kwargs
+                else:
+                    widget_instance = getattr(container, field)  # pull from container
+                    pydantic_kwargs[field] = self.get_pydantic_attr(
+                        py_model, field, widget_instance
+                    )
             else:
                 # not a pydantic class, just pull the field value from the container
                 if hasattr(container, field):
@@ -222,11 +238,11 @@ def embed_in_list(widget_instance) -> list:
     return returnval
 
 
-def split_comma_sep_string(widget_instance) -> List[str]:
-    files = widget_instance.value
-    for ch in " []":
-        files = files.replace(ch, "")
-    return files.split(",")
+def handle_str_list_edit(widget_instance) -> List[str]:
+    # recent versions of magicgui will return a ListEdit
+    # where the value is a list of strings here, just
+    # return it.
+    return widget_instance.value
 
 
 def _get_pydantic_model_field(
@@ -256,13 +272,11 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
     )
 
     for py_model, field in _models_to_embed_in_list:
-        # lists are automatically embedded in pydantic
-        # containers if registered, only need to provide
-        # the function for building the pydantic args.
+        # identified lists are automatically handled a bit differently.
         translator.register(
             py_model,
             field,
-            pydantic_attr_factory=embed_in_list,
+            auto_list_handling=True,
         )
     translator.register(
         _data_model.MetadataModel,
@@ -280,7 +294,7 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
             "file_list",
             _data_model.TimeSeriesFileSelection.model_fields["file_list"],
         ),
-        pydantic_attr_factory=split_comma_sep_string,
+        pydantic_attr_factory=handle_str_list_edit,
     )
 
 

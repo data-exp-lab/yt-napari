@@ -190,7 +190,7 @@ def selections_match(sel_1: Union[Slice, Region], sel_2: Union[Slice, Region]) -
     if not type(sel_2) is type(sel_1):
         return False
 
-    for attr in sel_1.__fields__.keys():
+    for attr in sel_1.model_fields.keys():
         if attr != "fields":
             val_1 = getattr(sel_1, attr)
             val_2 = getattr(sel_2, attr)

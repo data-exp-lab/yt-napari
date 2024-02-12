@@ -28,7 +28,7 @@ jdicts.append(
 @pytest.mark.parametrize("jdict", jdicts)
 def test_load_region(jdict):
     jdict["datasets"][0]["selections"]["regions"][0]["rescale"] = True
-    m = InputModel.parse_obj(jdict)
+    m = InputModel.model_validate(jdict)
     layers, _ = _process_validated_model(m)
     im_data = layers[0][0]
     assert im_data.min() == 0.0

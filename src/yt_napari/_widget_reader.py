@@ -145,9 +145,8 @@ class ReaderWidget(YTReader):
         # instantiate pydantic objects, which are then handed off to the
         # same data ingestion function as the json loader.
 
-        py_kwargs = {}
         py_kwargs = self._validate_data_model()
-        model = _data_model.InputModel.parse_obj(py_kwargs)
+        model = _data_model.InputModel.model_validate(py_kwargs)
 
         # process each layer
         layer_list, _ = _model_ingestor._process_validated_model(model)
@@ -264,9 +263,7 @@ class TimeSeriesReader(YTReader):
         load_group.addWidget(ss.native)
 
     def save_selection(self):
-        py_kwargs = {}
         py_kwargs = self._validate_data_model()
-        # model = _data_model.InputModel.parse_obj(py_kwargs)
 
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.AnyFile)
@@ -281,17 +278,15 @@ class TimeSeriesReader(YTReader):
                     json.dump(py_kwargs, json_file, indent=4)
 
     def load_data(self):
-        py_kwargs = {}
         py_kwargs = self._validate_data_model()
-        model = _data_model.InputModel.parse_obj(py_kwargs)
-
+        model = _data_model.InputModel.model_validate(py_kwargs)
         if _use_threading:  # pragma: no cover
             worker = time_series_load(model)
             worker.returned.connect(self.process_timeseries_layers)
             worker.start()
         else:
             _, layer_list = _model_ingestor._process_validated_model(model)
-            self.process_timeseries_layers(layer_list)
+        self.process_timeseries_layers(layer_list)
 
     def process_timeseries_layers(self, layer_list):
         for new_layer in layer_list:
@@ -320,13 +315,14 @@ class TimeSeriesReader(YTReader):
         )
 
         if py_kwargs["file_selection"]["file_pattern"] == "":
-            py_kwargs["file_selection"]["file_pattern"] = None
+            _ = py_kwargs["file_selection"].pop("file_pattern")
 
-        if py_kwargs["file_selection"]["file_list"] == [""]:
-            py_kwargs["file_selection"]["file_list"] = None
+        flist = py_kwargs["file_selection"]["file_list"]
+        if flist == [""] or len(flist) == 0:
+            _ = py_kwargs["file_selection"].pop("file_list")
 
         if py_kwargs["file_selection"]["file_range"] == (0, 0, 0):
-            py_kwargs["file_selection"]["file_range"] = None
+            _ = py_kwargs["file_selection"].pop("file_range")
 
         # add selections in
         py_kwargs["selections"] = selections_by_type

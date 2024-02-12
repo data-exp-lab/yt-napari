@@ -461,7 +461,7 @@ def test_find_timeseries_file_selection(tmp_path, file_sel_dict):
     fdir = str(fdir)
     file_sel_dict["directory"] = fdir
 
-    tsfs = _mi.TimeSeriesFileSelection.parse_obj(file_sel_dict)
+    tsfs = _mi.TimeSeriesFileSelection.model_validate(file_sel_dict)
 
     files = _mi._find_timeseries_files(tsfs)
     if "file_list" not in file_sel_dict:
