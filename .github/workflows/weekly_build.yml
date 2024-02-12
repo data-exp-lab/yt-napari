@@ -40,7 +40,7 @@ jobs:
 
       # this runs the platform-specific tests declared in tox.ini
       - name: Test with tox
-        uses: coactions/setup-xvfb@v1
+        uses: aganders3/headless-gui@v2
         with:
           # run tox using the version of Python in `PATH`
           run: |
