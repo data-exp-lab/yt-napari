@@ -23,7 +23,7 @@ def test_schema_version_management(tmp_path):
 
     # run again with defaults, should increment
     expected_file = get_expected(pfx, "0.0.2")
-    m.write_new_schema("any old string")
+    m.write_new_schema({"or a": "dictionary"})
     assert expected_file.is_file()
 
     # test other increments

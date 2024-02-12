@@ -345,7 +345,4 @@ def get_yt_metadata_container():
 
 def _is_base_model_or_yt_obj(field_info: pydantic.fields.FieldInfo):
     ftype = field_info.annotation
-    ispydy = isinstance(ftype, pydantic.BaseModel)
-    if ispydy:
-        return ispydy
     return ftype in _data_model._data_model_list
