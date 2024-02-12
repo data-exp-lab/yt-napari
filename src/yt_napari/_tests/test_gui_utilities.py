@@ -98,12 +98,12 @@ def test_yt_widget(backend):
 def test_pydantic_magicgui_default(Model, backend, caplog):
     app = use_app(backend)  # noqa: F841
 
-    model_field = Model.__fields__["field_1"]
+    model_field = Model.model_fields["field_1"]
     c = gu.get_magicguidefault("field_1", model_field)
     assert c.value == model_field.default
     c.close()
 
-    model_field = Model.__fields__["bad_field"]
+    model_field = Model.model_fields["bad_field"]
     empty = gu.get_magicguidefault("bad_field", model_field)
     assert isinstance(empty, widgets.EmptyWidget)
     empty.close()

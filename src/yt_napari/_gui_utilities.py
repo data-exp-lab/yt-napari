@@ -126,13 +126,14 @@ class MagicPydanticRegistry:
                 new_widget_cls = widgets.Container
                 new_widget = new_widget_cls(name=field)
                 self.add_pydantic_to_container(ftype, new_widget)
-            elif get_origin(field_def.annotation) is list:
-                new_widget_cls = widgets.Container
-                new_widget = new_widget_cls(name=field)
-                ftype_inner = get_args(field_def.annotation)[0]
-                self.add_pydantic_to_container(ftype_inner, new_widget)
             elif self.is_registered(py_model, field):
-                new_widget = self.get_widget_instance(py_model, field)
+                if get_origin(field_def.annotation) is list:
+                    new_widget_cls = widgets.Container
+                    new_widget = new_widget_cls(name=field)
+                    ftype_inner = get_args(field_def.annotation)[0]
+                    self.add_pydantic_to_container(ftype_inner, new_widget)
+                else:
+                    new_widget = self.get_widget_instance(py_model, field)
             else:
                 new_widget = get_magicguidefault(field, field_def)
                 if isinstance(new_widget, widgets.EmptyWidget):
@@ -255,11 +256,12 @@ def _register_yt_data_model(translator: MagicPydanticRegistry):
     )
 
     for py_model, field in _models_to_embed_in_list:
+        # lists are automatically embedded in pydantic
+        # containers if registered, only need to provide
+        # the function for building the pydantic args.
         translator.register(
             py_model,
             field,
-            magicgui_factory=get_magicguidefault,
-            magicgui_args=(field, py_model.model_fields[field]),
             pydantic_attr_factory=embed_in_list,
         )
     translator.register(
