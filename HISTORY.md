@@ -1,3 +1,8 @@
+## v0.4.0
+This release upgrades required dependencies:
+* napari >= 0.4.19
+* pydantic>2.0
+
 ## v0.3.0
 
 This release introduces an initial metadata explorer widget and improvements to the

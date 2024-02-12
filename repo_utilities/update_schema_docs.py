@@ -13,7 +13,7 @@ def run_update(source_dir, schema_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     msg = (
-        "the schema version to write (form X.X.X). If not provided, "
+        "the schema version to write (form X.X.X or vX.X.X). If not provided, "
         "will only copy over the current schema without writing a new one."
     )
     parser.add_argument("-v", "--version", type=str, default=None, help=msg)
