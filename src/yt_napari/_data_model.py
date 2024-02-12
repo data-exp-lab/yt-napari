@@ -1,4 +1,5 @@
 import inspect
+import json
 from pathlib import PosixPath
 from typing import List, Optional, Tuple, Union
 
@@ -140,7 +141,8 @@ class InputModel(_ytBaseModel):
 
 def _get_standard_schema_contents() -> Tuple[str, str]:
     prefix = InputModel._schema_prefix.default
-    schema_contents = InputModel.schema_json(indent=2)
+    schema_contents = InputModel.model_json_schema()
+    schema_contents = json.dumps(schema_contents, indent=2)
     return prefix, schema_contents
 
 
