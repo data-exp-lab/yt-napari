@@ -8,6 +8,7 @@ from unyt import unit_object, unit_registry, unyt_array, unyt_quantity
 
 from yt_napari import _special_loaders
 from yt_napari._data_model import (
+    CoveringGrid,
     DataContainer,
     InputModel,
     MetadataModel,
@@ -434,7 +435,13 @@ def _load_3D_regions(
     layer_list: list,
     timeseries_container: Optional[TimeseriesContainer] = None,
 ) -> list:
-    for sel in selections.regions:
+
+    sels = []
+    for seltype in ("regions", "covering_grids"):
+        if getattr(selections, seltype) is not None:
+            sels += [sel for sel in getattr(selections, seltype)]
+
+    for sel in sels:
         # get the left, right edge as a unitful array, initialize the layer
         # domain tracking for this layer and update the global domain extent
         if sel.left_edge is None:
@@ -446,16 +453,27 @@ def _load_3D_regions(
             RE = ds.domain_right_edge
         else:
             RE = ds.arr(sel.right_edge.value, sel.right_edge.unit)
-        res = sel.resolution
+
+        if isinstance(sel, Region):
+            res = sel.resolution
+            frb = ds.r[
+                LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
+                LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
+                LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
+            ]
+        elif isinstance(sel, CoveringGrid):
+            # get a temp covering grid with specified ghost zones then
+            # recalcuate dims at correct dds
+            dims = (4, 4, 4)
+            nghostzones = sel.num_ghost_zones
+            temp_cg = ds.covering_grid(sel.level, LE, dims, num_ghost_zones=nghostzones)
+            effective_dds = temp_cg.dds
+            dims = (RE - LE) / effective_dds
+            # get the actual covering grid
+            frb = ds.covering_grid(sel.level, LE, dims, num_ghost_zones=nghostzones)
+            res = dims
+
         layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
-
-        # create the fixed resolution buffer
-        frb = ds.r[
-            LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
-            LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
-            LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
-        ]
-
         for field_container in sel.fields:
             field = (field_container.field_type, field_container.field_name)
 
@@ -600,7 +618,7 @@ def _load_selections_from_ds(
     layer_list: List[SpatialLayer],
     timeseries_container: Optional[TimeseriesContainer] = None,
 ) -> List[SpatialLayer]:
-    if selections.regions is not None:
+    if selections.regions is not None or selections.covering_grids is not None:
         layer_list = _load_3D_regions(
             ds, selections, layer_list, timeseries_container=timeseries_container
         )
