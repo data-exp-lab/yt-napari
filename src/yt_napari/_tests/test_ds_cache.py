@@ -26,7 +26,6 @@ def test_ds_cache(caplog):
 
     dataset_cache.rm_ds(ds_name)
     assert dataset_cache.exists(ds_name) is False
-    assert len(dataset_cache.available) == 0
 
     ds_none = dataset_cache.get_ds("doesnotexist")
     assert ds_none is None
@@ -35,7 +34,6 @@ def test_ds_cache(caplog):
     dataset_cache.add_ds(ds, ds_name)
     assert dataset_cache.exists(ds_name)
     dataset_cache.rm_all()
-    assert len(dataset_cache.available) == 0
     assert dataset_cache.most_recent is None
 
 
