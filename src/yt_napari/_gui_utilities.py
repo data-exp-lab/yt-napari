@@ -240,6 +240,10 @@ def get_magicguidefault(field_name: str, field_def: pydantic.fields.Field):
         options=opts_dict,
         raise_on_unknown=False,
     )
+
+    if new_widget_cls == widgets.TupleEdit:
+        ops["options"] = {"min": -1e12, "max": 1e12}
+
     return new_widget_cls(**ops)
 
 
