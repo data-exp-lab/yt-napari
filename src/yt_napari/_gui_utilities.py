@@ -101,14 +101,16 @@ class MagicPydanticRegistry:
             func, args, kwargs = self.registry[pydantic_model][field]["magicgui"]
             return func(*args, **kwargs)
 
-    def get_pydantic_attr(self, pydantic_model, field: str, widget_instance):
+    def get_pydantic_attr(
+        self, pydantic_model, field: str, widget_instance, required: bool = True
+    ):
         # given a widget instance, return an object that can be used to set a
         # pydantic field
-        if self.is_registered(pydantic_model, field, required=True):
+        if self.is_registered(pydantic_model, field, required=required):
             func, args, kwargs = self.registry[pydantic_model][field]["pydantic"]
             return func(widget_instance, *args, **kwargs)
         else:
-            raise RuntimeError("unexpected")
+            raise RuntimeError("Could not retrieve pydantic attribute.")
 
     def add_pydantic_to_container(
         self,

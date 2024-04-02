@@ -200,6 +200,96 @@ class Scene:
             **kwargs,
         )
 
+    def add_covering_grid(
+        self,
+        viewer: Viewer,
+        ds,
+        field: Tuple[str, str],
+        left_edge: Optional[unyt_array] = None,
+        right_edge: Optional[unyt_array] = None,
+        level: Optional[int] = 0,
+        num_ghost_zones: Optional[int] = 0,
+        take_log: Optional[bool] = None,
+        colormap: Optional[str] = None,
+        link_to: Optional[Union[str, Layer]] = None,
+        rescale: Optional[bool] = False,
+        **kwargs,
+    ):
+        """
+        uniformly sample a region from a yt dataset using a covering grid
+        and add it to a viewer
+
+        Parameters
+        ----------
+        viewer: napari.Viewer
+            the active napari viewer
+        ds
+            the yt dataset to sample
+        field: Tuple[str, str]
+            the field tuple to sample  e.g., ('enzo', 'Density')
+        left_edge: unyt_array
+            the left edge of the bounding box
+        right_edge: unyt_array
+            the right edge of the bounding box
+        level: int
+            the level to sample at (default 0)
+        num_ghost_zones: int
+            number of ghost zones to inclue (default 0)
+        take_log : Optional[bool]
+            if True, will take the log of the extracted data. Defaults to the
+            default behavior for the field set by ds.
+        colormap : Optional[str]
+            the color map to use, default is "viridis"
+        link_to : Optional[Union[str, Layer]]
+            specify a layer to which the new layer should link
+        **kwargs :
+            any keyword argument accepted by Viewer.add_image()
+
+        Examples
+        --------
+
+        >>> import napari
+        >>> import yt
+        >>> from yt_napari.viewer import Scene
+        >>> viewer = napari.Viewer()
+        >>> ds = yt.load_sample("IsolatedGalaxy")
+        >>> yt_scene = Scene()
+        >>> yt_scene.add_region(viewer, ds, ("enzo", "Temperature"))
+
+        """
+
+        # set defaults
+        if left_edge is None:
+            left_edge = ds.domain_left_edge
+        if right_edge is None:
+            right_edge = ds.domain_right_edge
+
+        if take_log is None:
+            take_log = ds._get_field_info(field).take_log
+
+        # create the fixed resolution buffer
+        frb, dims = _mi._get_covering_grid(
+            ds, left_edge, right_edge, level, num_ghost_zones
+        )
+        data = frb[field]
+        if take_log:
+            data = np.log10(data)
+
+        # add the bounds of this new layer
+        layer_domain = _mi.LayerDomain(left_edge, right_edge, dims)
+
+        self._add_to_scene(
+            viewer,
+            data,
+            layer_domain,
+            field,
+            take_log,
+            colormap=colormap,
+            link_to=link_to,
+            rescale=rescale,
+            **kwargs,
+        )
+
     def add_to_viewer(
         self,
         viewer: Viewer,

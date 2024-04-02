@@ -42,6 +42,13 @@ def test_viewer(make_napari_viewer, yt_ds, caplog):
     expected_layers += 1
     assert len(viewer.layers) == expected_layers
 
+    LE = yt_ds.domain_left_edge
+    dds = yt_ds.domain_width / yt_ds.domain_dimensions
+    RE = yt_ds.arr(LE + dds * 10)
+    sc.add_covering_grid(viewer, yt_ds, ("gas", "density"), left_edge=LE, right_edge=RE)
+    expected_layers += 1
+    assert len(viewer.layers) == expected_layers
+
     # build a new scene so it builds from prior
     sc = Scene()
     sc.add_region(viewer, yt_ds, ("gas", "density"))

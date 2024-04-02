@@ -30,6 +30,21 @@ def _le_re_to_cen_wid(
     return center, width
 
 
+def _get_covering_grid(
+    ds, left_edge, right_edge, level, num_ghost_zones, test_dims=None
+):
+    # returns a covering grid instance and the resolution of the covering grid
+    if test_dims is None:
+        test_dims = (4, 4, 4)
+    nghostzones = num_ghost_zones
+    temp_cg = ds.covering_grid(level, left_edge, test_dims, num_ghost_zones=nghostzones)
+    effective_dds = temp_cg.dds
+    dims = (right_edge - left_edge) / effective_dds
+    # get the actual covering grid
+    frb = ds.covering_grid(level, left_edge, dims, num_ghost_zones=nghostzones)
+    return frb, dims
+
+
 class LayerDomain:
     # container for domain info for a single layer
     # left_edge, right_edge, resolution, n_d are all self explanatory.
@@ -462,15 +477,7 @@ def _load_3D_regions(
                 LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
             ]
         elif isinstance(sel, CoveringGrid):
-            # get a temp covering grid with specified ghost zones then
-            # recalcuate dims at correct dds
-            dims = (4, 4, 4)
-            nghostzones = sel.num_ghost_zones
-            temp_cg = ds.covering_grid(sel.level, LE, dims, num_ghost_zones=nghostzones)
-            effective_dds = temp_cg.dds
-            dims = (RE - LE) / effective_dds
-            # get the actual covering grid
-            frb = ds.covering_grid(sel.level, LE, dims, num_ghost_zones=nghostzones)
+            frb, dims = _get_covering_grid(ds, LE, RE, sel.level, sel.num_ghost_zones)
             res = dims
 
         layer_domain = LayerDomain(left_edge=LE, right_edge=RE, resolution=res)
