@@ -211,9 +211,10 @@ def test_reference_layer(domains_to_test):
     im_type = "image"
 
     spatial_layer_list = []
+    rng = np.random.default_rng()
     for d in domains_to_test.domain_sets:
         layer_domain = _mi.LayerDomain(d.left_edge, d.right_edge, d.resolution)
-        im = np.random.random(d.resolution)
+        im = rng.random(d.resolution)
         spatial_layer_list.append((im, {}, im_type, layer_domain))
 
     layer_for_ref = spatial_layer_list[0][3]
@@ -270,9 +271,10 @@ def test_ref_layer_selection(domains_to_test):
     im_type = "image"
 
     spatial_layer_list = []
+    rng = np.random.default_rng()
     for d in domains_to_test.domain_sets:
         layer_domain = _mi.LayerDomain(d.left_edge, d.right_edge, d.resolution)
-        im = np.random.random(d.resolution)
+        im = rng.random(d.resolution)
         spatial_layer_list.append((im, {}, im_type, layer_domain))
 
     # add another small volume layer
@@ -280,7 +282,7 @@ def test_ref_layer_selection(domains_to_test):
     re = unyt.unyt_array([0.2, 0.2, 0.2], "m")
     res = (3, 4, 5)
     small_vol_domain = _mi.LayerDomain(le, re, resolution=res)
-    im = np.random.random(res)
+    im = rng.random(res)
     spatial_layer_list.append((im, {}, im_type, small_vol_domain))
 
     first_ref = _mi._choose_ref_layer(spatial_layer_list, method="first_in_list")
@@ -309,8 +311,8 @@ def test_2d_3d_mix():
     layer_2d = _mi.LayerDomain(
         le, re, res, n_d=2, new_dim_value=unyt.unyt_quantity(1, "km")
     )
-
-    sp_layer = (np.random.random(res), {}, "testname", layer_2d)
+    rng = np.random.default_rng()
+    sp_layer = (rng.random(res), {}, "testname", layer_2d)
     new_layer_2d = ref.align_sanitize_layer(sp_layer)
     assert "scale" not in new_layer_2d[1]  # no scale when it is all 1
 
@@ -392,9 +394,9 @@ def test_timeseries_container(selection_objs):
     domain = _mi.LayerDomain(
         unyt.unyt_array([0, 0, 0], "m"), unyt.unyt_array([1.0, 1.0, 1.0], "m"), shp
     )
-    im = np.random.random(shp)
+    rng = np.random.default_rng()
+    im = rng.random(shp)
 
-    print("what what")
     for _ in range(3):
         tc.add(reg_1, ("enzo", "temperature"), (im, im_kwargs, "image", domain))
 
@@ -408,7 +410,7 @@ def test_timeseries_container(selection_objs):
         shp,
         n_d=2,
     )
-    im = np.random.random(shp)
+    im = rng.random(shp)
 
     for _ in range(2):
         tc.add(slc_1, ("enzo", "temperature"), (im, im_kwargs, "image", domain))
@@ -494,7 +496,8 @@ def test_yt_data_dir_check(tmp_path):
 
 
 def test_linear_rescale():
-    data = 10 * np.random.random((5, 5))
+    rng = np.random.default_rng()
+    data = 10 * rng.random((5, 5))
     rsc = _mi._linear_rescale(data)
     assert rsc.min() == 0.0
     assert rsc.max() == 1.0
@@ -509,7 +512,7 @@ def test_linear_rescale():
     assert np.nanmin(rsc) == 0.0
     assert np.nanmax(rsc) == 1.0
 
-    data = 10 * np.random.random((5, 5))
+    data = 10 * rng.random((5, 5))
     data[1, 1] = np.inf
     with pytest.warns(RuntimeWarning, match="invalid value"):
         rsc = _mi._linear_rescale(data, fill_inf=False)

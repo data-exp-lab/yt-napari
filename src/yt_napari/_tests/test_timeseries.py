@@ -14,7 +14,8 @@ from yt_napari._special_loaders import _construct_ugrid_timeseries
 def yt_ds_0():
     # this fixture generates a random yt dataset saved to disk that can be
     # re-loaded and sampled.
-    arr = np.random.random(size=(16, 16, 16))
+    rng = np.random.default_rng()
+    arr = rng.random(size=(16, 16, 16))
     d = dict(density=(arr, "g/cm**3"), temperature=(arr, "K"))
     bbox = np.array([[-1.5, 1.5], [-1.5, 1.5], [-1.5, 1.5]])
     shp = arr.shape
@@ -179,7 +180,8 @@ def test_validate_scale(selection):
     assert kwargdict["scale"][0] == 10.0
 
     # check that existing scale is not over-ridden
-    sc_scale = np.random.random((selection.nd,))
+    rng = np.random.default_rng()
+    sc_scale = rng.random((selection.nd,))
     kwargdict = {"scale": sc_scale}
     ts._validate_scale(selection, kwargdict, False, 1.0)
     assert np.all(kwargdict["scale"] == sc_scale)

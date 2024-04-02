@@ -46,7 +46,8 @@ def _rebuild_data(final_shape, data):
     # dataset will not have the full functionality of a ds. so here, we
     # inject a correctly shaped random array here. If we start using full
     # test datasets from yt in testing, this should be changed.
-    return np.random.random(final_shape) * data.mean()
+    rng = np.random.default_rng()
+    return rng.random(final_shape) * data.mean()
 
 
 def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):

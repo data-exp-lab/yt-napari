@@ -7,7 +7,8 @@ import yt
 def yt_ugrid_ds_fn(tmpdir_factory):
     # this fixture generates a random yt dataset saved to disk that can be
     # re-loaded and sampled.
-    arr = np.random.random(size=(64, 64, 64))
+    rng = np.random.default_rng()
+    arr = rng.random(size=(64, 64, 64))
     d = dict(density=(arr, "g/cm**3"), temperature=(arr, "K"))
     bbox = np.array([[-1.5, 1.5], [-1.5, 1.5], [-1.5, 1.5]])
     shp = arr.shape
