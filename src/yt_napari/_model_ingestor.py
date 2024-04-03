@@ -45,6 +45,15 @@ def _get_covering_grid(
     return frb, dims
 
 
+def _get_region_frb(ds, LE, RE, res):
+    frb = ds.r[
+        LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
+        LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
+        LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
+    ]
+    return frb
+
+
 class LayerDomain:
     # container for domain info for a single layer
     # left_edge, right_edge, resolution, n_d are all self explanatory.
@@ -471,11 +480,7 @@ def _load_3D_regions(
 
         if isinstance(sel, Region):
             res = sel.resolution
-            frb = ds.r[
-                LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
-                LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
-                LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
-            ]
+            frb = _get_region_frb(ds, LE, RE, res)
         elif isinstance(sel, CoveringGrid):
             frb, dims = _get_covering_grid(ds, LE, RE, sel.level, sel.num_ghost_zones)
             res = dims

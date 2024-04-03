@@ -47,7 +47,60 @@ class _Selection(abc.ABC):
         return None, None
 
 
-class Region(_Selection):
+class _RegionBase(_Selection, abc.ABC):
+    """
+    Base class for 3D box-like regions
+    """
+
+    nd = 3
+
+    def __init__(
+        self,
+        field: Tuple[str, str],
+        left_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
+        right_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
+        take_log: Optional[bool] = None,
+    ):
+        super().__init__(field, take_log=take_log)
+        self.left_edge = left_edge
+        self.right_edge = right_edge
+        self._le, self._le_units = self._validate_unit_tuple(left_edge)
+        self._re, self._re_units = self._validate_unit_tuple(right_edge)
+
+        if self.left_edge is not None and self.right_edge is not None:
+            if self._le is not None:
+                LE = self._le
+            else:
+                LE = self.left_edge
+
+            if self._re is not None:
+                RE = self._re
+            else:
+                RE = self.right_edge
+            self._calc_aspect_ratio(LE, RE)
+
+    def _calc_aspect_ratio(self, LE, RE):
+        wid = RE - LE
+        self._aspect_ratio = wid / wid[0]
+
+    def _get_edges(self, ds):
+        if self.left_edge is None:
+            LE = ds.domain_left_edge
+        elif self._le is not None:
+            LE = ds.arr(self._le, self._le_units)
+        else:
+            LE = self.left_edge
+
+        if self.right_edge is None:
+            RE = ds.domain_right_edge
+        elif self._re is not None:
+            RE = ds.arr(self._re, self._re_units)
+        else:
+            RE = self.right_edge
+        return LE, RE
+
+
+class Region(_RegionBase):
     """
     A 3D rectangular selection through a domain.
 
@@ -79,28 +132,10 @@ class Region(_Selection):
         resolution: Optional[Tuple[int, int, int]] = (400, 400, 400),
         take_log: Optional[bool] = None,
     ):
-        super().__init__(field, take_log=take_log)
-        self.left_edge = left_edge
-        self.right_edge = right_edge
+        super().__init__(
+            field, left_edge=left_edge, right_edge=right_edge, take_log=take_log
+        )
         self.resolution = resolution
-        self._le, self._le_units = self._validate_unit_tuple(left_edge)
-        self._re, self._re_units = self._validate_unit_tuple(right_edge)
-
-        if self.left_edge is not None and self.right_edge is not None:
-            if self._le is not None:
-                LE = self._le
-            else:
-                LE = self.left_edge
-
-            if self._re is not None:
-                RE = self._re
-            else:
-                RE = self.right_edge
-            self._calc_aspect_ratio(LE, RE)
-
-    def _calc_aspect_ratio(self, LE, RE):
-        wid = RE - LE
-        self._aspect_ratio = wid / wid[0]
 
     def sample_ds(self, ds):
         """
@@ -128,31 +163,46 @@ class Region(_Selection):
         This is equivalent to `ds.r[...,...,..][field]`, but is a useful
         abstraction for applying the same selection to a series of datasets.
         """
-        if self.left_edge is None:
-            LE = ds.domain_left_edge
-        elif self._le is not None:
-            LE = ds.arr(self._le, self._le_units)
-        else:
-            LE = self.left_edge
 
-        if self.right_edge is None:
-            RE = ds.domain_right_edge
-        elif self._re is not None:
-            RE = ds.arr(self._re, self._re_units)
-        else:
-            RE = self.right_edge
+        LE, RE = self._get_edges(ds)
 
         res = self.resolution
         if self._aspect_ratio is None:
             self._calc_aspect_ratio(LE, RE)
 
-        # create the fixed resolution buffer
-        frb = ds.r[
-            LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
-            LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
-            LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
-        ]
+        frb = _mi._get_region_frb(ds, LE, RE, res)
 
+        data = frb[self.field]
+        return self._finalize_array(ds, data)
+
+
+class CoveringGrid(_RegionBase):
+
+    def __init__(
+        self,
+        field: Tuple[str, str],
+        left_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
+        right_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
+        level: Optional[int] = 0,
+        num_ghost_zones: Optional[int] = 0,
+        take_log: Optional[bool] = None,
+    ):
+
+        super().__init__(
+            field, left_edge=left_edge, right_edge=right_edge, take_log=take_log
+        )
+        self.level = level
+        self.num_ghost_zones = num_ghost_zones
+
+    def sample_ds(self, ds):
+        LE, RE = self._get_edges(ds)
+
+        if self._aspect_ratio is None:
+            self._calc_aspect_ratio(LE, RE)
+
+        frb, _ = _mi._get_covering_grid(
+            ds, LE, RE, self.level, self.num_ghost_zones, test_dims=None
+        )
         data = frb[self.field]
         return self._finalize_array(ds, data)
 

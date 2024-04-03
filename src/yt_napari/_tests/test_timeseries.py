@@ -90,6 +90,13 @@ def test_region(yt_ds_0):
     assert np.all(np.log10(data4) == data)
 
 
+def test_covering_grid(yt_ds_0):
+    cg = ts.CoveringGrid(_field)
+    data = cg.sample_ds(yt_ds_0)
+    # sampled at level 0 for full domain, so should get out the base dimensions
+    assert data.shape == tuple(yt_ds_0.domain_dimensions)
+
+
 def test_slice(yt_ds_0):
     sample_res = (20, 20)
     slc = ts.Slice(_field, "x", resolution=sample_res)
