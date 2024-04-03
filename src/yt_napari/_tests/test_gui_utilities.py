@@ -80,6 +80,10 @@ def test_registry(Model, backend):
     pyvalue = reg.get_pydantic_attr(Model, "field_1", widget_instance)
     assert pyvalue == "2_testxyz"
 
+    with pytest.raises(RuntimeError, match="Could not retrieve pydantic attribute."):
+        reg.get_pydantic_attr(
+            Model, "field_does_not_exist", widget_instance, required=False
+        )
     widget_instance.close()
 
 

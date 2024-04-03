@@ -44,7 +44,7 @@ def _rebuild_data(final_shape, data):
     # the yt file thats being loaded from the pytest fixture is a saved
     # dataset created from an in-memory uniform grid, and the re-loaded
     # dataset will not have the full functionality of a ds. so here, we
-    # inject a correctly shaped random array here. If we start using full
+    # inject a correctly shaped random array. If we start using full
     # test datasets from yt in testing, this should be changed.
     rng = np.random.default_rng()
     return rng.random(final_shape) * data.mean()
@@ -237,3 +237,28 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
     _ = InputModel.model_validate(saved_data)
 
     tsr.deleteLater()
+
+
+def test_covering_grid_selection(make_napari_viewer, yt_ugrid_ds_fn):
+    viewer = make_napari_viewer()
+    r = _wr.ReaderWidget(napari_viewer=viewer)
+    r.ds_container.filename.value = yt_ugrid_ds_fn
+    r.ds_container.store_in_cache.value = False
+    r.new_selection_type.setCurrentIndex(2)
+    r.add_new_button.click()
+    assert len(r.active_selections) == 1
+    sel = list(r.active_selections.values())[0]
+    assert isinstance(sel, _wr.SelectionEntry)
+    assert sel.selection_type == "CoveringGrid"
+
+    mgui_region = sel.selection_container_raw
+    mgui_region.fields.field_type.value = "gas"
+    mgui_region.fields.field_name.value = "density"
+    mgui_region.level.value = 0
+
+    mgui_region.left_edge.value.value = (-1.5,) * 3
+    mgui_region.right_edge.value.value = (1.5,) * 3
+    rebuild = partial(_rebuild_data, (64, 64, 64))
+    r._post_load_function = rebuild
+    r.load_data()
+    r.deleteLater()
