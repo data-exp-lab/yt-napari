@@ -1,3 +1,12 @@
+## v0.5.0
+
+### New Features
+* covering grid support ([#120](https://github.com/data-exp-lab/yt-napari/pull/120))
+
+### Maintenance
+* replace np.random.random with new Generator api ([#130](https://github.com/data-exp-lab/yt-napari/pull/130))
+
+
 ## v0.4.0
 This release upgrades required dependencies:
 * napari >= 0.4.19
