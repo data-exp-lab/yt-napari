@@ -47,9 +47,9 @@ def _get_covering_grid(
 
 def _get_region_frb(ds, LE, RE, res):
     frb = ds.r[
-        LE[0] : RE[0] : complex(0, res[0]),  # noqa: E203
-        LE[1] : RE[1] : complex(0, res[1]),  # noqa: E203
-        LE[2] : RE[2] : complex(0, res[2]),  # noqa: E203
+        LE[0] : RE[0] : res[0] * 1j,  # noqa: E203
+        LE[1] : RE[1] : res[1] * 1j,  # noqa: E203
+        LE[2] : RE[2] : res[2] * 1j,  # noqa: E203
     ]
     return frb
 
