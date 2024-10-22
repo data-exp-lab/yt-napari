@@ -758,14 +758,13 @@ def _process_validated_model(
     return layer_list, timeseries_layers
 
 
-def load_from_json(json_paths: List[str]) -> List[Layer]:
+def load_from_json_strs(json_strs: List[str]) -> List[Layer]:
     layer_lists = []  # we will concatenate layers across json paths
     timeseries_layers = []  # timeseries layers handled separately
-    for json_path in json_paths:
+    for json_str in json_strs:
         # InputModel is a pydantic class, the following will validate the json
-        with open(json_path, "r") as open_file:
-            model = InputModel.model_validate_json(open_file.read())
-
+        model = InputModel.model_validate_json(json_str)
+        print(model)
         # now that we have a validated model, we can use the model attributes
         # to execute the code that will return our array for the image
         layer_lists_j, timeseries_layers_j = _process_validated_model(model)
@@ -783,6 +782,14 @@ def load_from_json(json_paths: List[str]) -> List[Layer]:
     # timeseries layers are internally aligned
     out_layers = layer_lists + timeseries_layers
     return out_layers
+
+
+def load_from_json(json_paths: List[str]) -> List[Layer]:
+    json_strs = []  # list of json strings
+    for json_path in json_paths:
+        with open(json_path, "r") as open_file:
+            json_strs.append(open_file.read())
+    return load_from_json_strs(json_strs)
 
 
 def _choose_ref_layer(

@@ -14,6 +14,9 @@ contributions:
     - id: yt-napari.metadata_widget
       title: Inspect the metadata for a yt dataset
       python_name: yt_napari._widget_matadata:MetadataWidget
+    - id: yt-napari.data.isogal
+      title: Load Isolated Galaxy
+      python_name: yt_napari._sample_data:isogal
   readers:
     - command: yt-napari.get_reader
       accepts_directories: false
@@ -25,3 +28,7 @@ contributions:
       display_name: yt Time Series Reader
     - command: yt-napari.metadata_widget
       display_name: yt Metadata Explorer
+  sample_data:
+    - key: isogal
+      display_name: IsolatedGalaxy
+      command: yt-napari.data.isogal

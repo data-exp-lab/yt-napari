@@ -9,6 +9,13 @@ from yt_napari.config import ytcfg
 from yt_napari.logging import ytnapari_log
 
 
+def _load_sample(filename):
+    # TODO: check for pooch, pandas.
+    # TODO: catch key errors, etc.
+    ds = yt.load_sample(filename)
+    return ds
+
+
 class DatasetCache:
     def __init__(self):
         self.available = {}
@@ -53,7 +60,15 @@ class DatasetCache:
             ds_callable = getattr(_special_loaders, callable_name)
             ds = ds_callable()
         else:
-            ds = yt.load(filename)
+            # TODO: have this sample files registry come from yt,
+            # just setting up the napari side for now. Should
+            # also add a config option maybe to handle name
+            # conflicts between sample files and local files?
+            sample_files = ["IsolatedGalaxy"]
+            if filename in sample_files:
+                ds = _load_sample(filename)
+            else:
+                ds = yt.load(filename)
 
         if ytcfg.get("yt_napari", "in_memory_cache") and cache_if_not_found:
             self.add_ds(ds, filename)
