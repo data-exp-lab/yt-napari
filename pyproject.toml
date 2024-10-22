@@ -10,4 +10,5 @@ skip =  ["venv", "benchmarks"]
 [tool.taskipy.tasks]
 validate_release = { cmd = "python repo_utilities/validate.py", help = "validates for a release" }
 update_schema_docs = { cmd = "python repo_utilities/update_schema_docs.py", help = "updates the schema related documentation" }
+update_sample_data = { cmd = "python repo_utilities/update_sample_data.py", help = "updates sample data code" }
 test = "pytest -v --color=yes --cov=yt_napari --cov-report=html"

@@ -1,0 +1,20 @@
+{
+    "datasets": [
+        {
+            "filename": "cm1_tornado_lofs",
+            "selections": {
+                "regions": [
+                    {
+                        "fields": [
+                            {
+                                "field_name": "dbz",
+                                "field_type": "cm1",
+                                "take_log": false
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

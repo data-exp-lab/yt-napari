@@ -764,7 +764,6 @@ def load_from_json_strs(json_strs: List[str]) -> List[Layer]:
     for json_str in json_strs:
         # InputModel is a pydantic class, the following will validate the json
         model = InputModel.model_validate_json(json_str)
-        print(model)
         # now that we have a validated model, we can use the model attributes
         # to execute the code that will return our array for the image
         layer_lists_j, timeseries_layers_j = _process_validated_model(model)

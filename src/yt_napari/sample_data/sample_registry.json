@@ -1,0 +1,13 @@
+{
+    "enabled": [
+        "DeeplyNestedZoom",
+        "Enzo_64",
+        "GalaxyClusterMerger",
+        "GaussianCloud",
+        "HiresIsolatedGalaxy",
+        "IsolatedGalaxy",
+        "PopIII_mini",
+        "SmartStars",
+        "cm1_tornado_lofs"
+    ]
+}

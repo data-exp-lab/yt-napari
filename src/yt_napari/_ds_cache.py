@@ -1,6 +1,7 @@
+import json
 import os.path
 from os import PathLike
-from typing import Optional
+from typing import List, Optional
 
 import yt
 
@@ -11,15 +12,27 @@ from yt_napari.logging import ytnapari_log
 
 def _load_sample(filename):
     # TODO: check for pooch, pandas.
-    # TODO: catch key errors, etc.
     ds = yt.load_sample(filename)
     return ds
+
+
+def get_sample_set_list() -> List[str]:
+    import importlib.resources as importlib_resources
+
+    jdata = json.loads(
+        importlib_resources.files("yt_napari")
+        .joinpath("sample_data")
+        .joinpath("sample_registry.json")
+        .read_bytes()
+    )
+    return jdata["enabled"]
 
 
 class DatasetCache:
     def __init__(self):
         self.available = {}
         self._most_recent: str = None
+        self.sample_sets: List[str] = get_sample_set_list()
 
     def add_ds(self, ds, name: str):
         if name in self.available:
@@ -60,12 +73,7 @@ class DatasetCache:
             ds_callable = getattr(_special_loaders, callable_name)
             ds = ds_callable()
         else:
-            # TODO: have this sample files registry come from yt,
-            # just setting up the napari side for now. Should
-            # also add a config option maybe to handle name
-            # conflicts between sample files and local files?
-            sample_files = ["IsolatedGalaxy"]
-            if filename in sample_files:
+            if filename in self.sample_sets:
                 ds = _load_sample(filename)
             else:
                 ds = yt.load(filename)
