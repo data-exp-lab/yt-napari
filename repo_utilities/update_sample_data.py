@@ -132,17 +132,25 @@ def write_sample_jsons(json_dir):
         load_dict = get_load_dict(sample)
         with open(json_name, "w") as fi:
             json.dump(load_dict, fi, indent=4)
+        # add newline at end of file to satisfy linting
+        with open(json_name, "a") as fi:
+            fi.write("\n")
 
     enabled_j = {"enabled": enabled}
     enabled_file = os.path.join(json_dir, "sample_registry.json")
     with open(enabled_file, "w") as fi:
         json.dump(enabled_j, fi, indent=4)
+    with open(enabled_file, "a") as fi:
+        fi.write("\n")
 
 
 def single_sample_loader(sample: str):
     code = []
     code.append(f"def {get_sample_func_name(sample)}():")
-    code.append(f"    return load_sample_data('{sample}')")
+    loadstr = '    return load_sample_data("'
+    loadstr += sample
+    loadstr += '")'
+    code.append(loadstr)
     code.append("")
     code.append("")
     return code
