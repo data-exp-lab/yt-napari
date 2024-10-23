@@ -7,7 +7,10 @@ After installation, there are three modes of using :code:`yt-napari`:
 2. :ref:`loading a json file from the napari gui<jsonload>`
 3. :ref:`napari gui plugins<naparigui>`
 
-Additionally, you can configure some behavior between napari sessions: see  :ref:`Configuring yt-napari<configfile>`.
+Additional quick start topics include:
+
+* Configuring some :code:`yt-napari` behavior between napari sessions: see  :ref:`Configuring yt-napari<configfile>`.
+* Loading sample data: see :ref:`Loading sample data<sampledata>`.
 
 .. _jupyusage:
 
@@ -148,10 +151,24 @@ The following options are available:
 
 * :code:`in_memory_cache`, :code:`bool` (default :code:`true`). When :code:`true`,
 the widget and json-readers will store references to yt datasets in an in-memory
-cache. Subsequents loads of the same dataset will then use the available dataset
+cache. Subsequent loads of the same dataset will then use the available dataset
 handle. This behavior can also be manually controlled in the widget and json
 options -- changing it in the configuration will simply change the default value.
 
 
 Note that boolean values in :code:`toml` files start with lowercase: :code:`true` and
 :code:`false` (instead of :code:`True` and :code:`False`).
+
+.. _sampledata:
+
+Loading sample data
+*******************
+
+A full install of :code:`yt-napari` (:code:`pip install yt-napari[full]`) will
+allow you to load a selection of the
+`yt sample datasets  <https://yt-project.org/data/>`_ from the napari GUI.
+
+Note that some of the sample datasets are large (multiple GBs) and the first time
+that you try to load a dataset you'll have to wait for the datafile to download.
+
+.. image:: _static/readme_sample_data.gif
