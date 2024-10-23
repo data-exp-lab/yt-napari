@@ -19,6 +19,7 @@ from yt_napari._data_model import (
     TimeSeriesFileSelection,
 )
 from yt_napari._ds_cache import dataset_cache
+from yt_napari._types import Layer, SpatialLayer
 
 
 def _le_re_to_cen_wid(
@@ -123,11 +124,6 @@ def _insert_to_unyt_array(
         new_value = new_value.to(x.units).d
 
     return unyt_array(np.insert(x.d, position, new_value), x.units)
-
-
-# define types for the napari layer tuples
-Layer = Tuple[np.ndarray, dict, str]
-SpatialLayer = Tuple[np.ndarray, dict, str, LayerDomain]
 
 
 class ReferenceLayer:

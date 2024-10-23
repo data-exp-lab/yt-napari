@@ -146,7 +146,7 @@ def write_sample_jsons(json_dir):
 
 def single_sample_loader(sample: str):
     code = []
-    code.append(f"def {get_sample_func_name(sample)}():")
+    code.append(f"def {get_sample_func_name(sample)}() -> List[Layer]:")
     loadstr = '    return load_sample_data("'
     loadstr += sample
     loadstr += '")'
@@ -162,6 +162,9 @@ def write_sample_data_python_loaders(sample_data_dir):
     sd_py.append("# to re-generate it, along with all the json files in this dir, run:")
     sd_py.append("#     task update_sample_data")
     sd_py.append("# (requires taskipy: pip install taskipy)")
+    sd_py.append("from typing import List")
+    sd_py.append("")
+    sd_py.append("from yt_napari._types import Layer")
     sd_py.append("from yt_napari.sample_data._generic_loader import load_sample_data")
     sd_py.append("")
     sd_py.append("")
