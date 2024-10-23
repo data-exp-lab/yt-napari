@@ -135,6 +135,7 @@ def write_sample_jsons(json_dir):
         # add newline at end of file to satisfy linting
         with open(json_name, "a") as fi:
             fi.write("\n")
+        print(f"    {json_name}")
 
     enabled_j = {"enabled": enabled}
     enabled_file = os.path.join(json_dir, "sample_registry.json")
@@ -142,6 +143,7 @@ def write_sample_jsons(json_dir):
         json.dump(enabled_j, fi, indent=4)
     with open(enabled_file, "a") as fi:
         fi.write("\n")
+    print(f"    {enabled_file}")
 
 
 def single_sample_loader(sample: str):
@@ -182,6 +184,9 @@ def write_sample_data_python_loaders(sample_data_dir):
 
 if __name__ == "__main__":
 
+    print("updating src/yt_napari/napari.yaml")
     update_napari_hooks("src/yt_napari/napari.yaml")
+    print("writing out sample jsons to src/yt_napari/sample_data/")
     write_sample_jsons("src/yt_napari/sample_data/")
+    print("writing src/yt_napari/sample_data/_sample_data.py")
     write_sample_data_python_loaders("src/yt_napari/sample_data/")
