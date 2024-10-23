@@ -149,7 +149,7 @@ def write_sample_jsons(json_dir):
 def single_sample_loader(sample: str):
     code = []
     code.append(f"def {get_sample_func_name(sample)}() -> List[Layer]:")
-    loadstr = '    return load_sample_data("'
+    loadstr = '    return gl.load_sample_data("'
     loadstr += sample
     loadstr += '")'
     code.append(loadstr)
@@ -167,7 +167,7 @@ def write_sample_data_python_loaders(sample_data_dir):
     sd_py.append("from typing import List")
     sd_py.append("")
     sd_py.append("from yt_napari._types import Layer")
-    sd_py.append("from yt_napari.sample_data._generic_loader import load_sample_data")
+    sd_py.append("from yt_napari.sample_data import _generic_loader as gl")
     sd_py.append("")
     sd_py.append("")
 

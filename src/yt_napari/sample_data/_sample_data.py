@@ -5,40 +5,40 @@
 from typing import List
 
 from yt_napari._types import Layer
-from yt_napari.sample_data._generic_loader import load_sample_data
+from yt_napari.sample_data import _generic_loader as gl
 
 
 def sample_deeplynestedzoom() -> List[Layer]:
-    return load_sample_data("DeeplyNestedZoom")
+    return gl.load_sample_data("DeeplyNestedZoom")
 
 
 def sample_enzo_64() -> List[Layer]:
-    return load_sample_data("Enzo_64")
+    return gl.load_sample_data("Enzo_64")
 
 
 def sample_galaxyclustermerger() -> List[Layer]:
-    return load_sample_data("GalaxyClusterMerger")
+    return gl.load_sample_data("GalaxyClusterMerger")
 
 
 def sample_gaussiancloud() -> List[Layer]:
-    return load_sample_data("GaussianCloud")
+    return gl.load_sample_data("GaussianCloud")
 
 
 def sample_hiresisolatedgalaxy() -> List[Layer]:
-    return load_sample_data("HiresIsolatedGalaxy")
+    return gl.load_sample_data("HiresIsolatedGalaxy")
 
 
 def sample_isolatedgalaxy() -> List[Layer]:
-    return load_sample_data("IsolatedGalaxy")
+    return gl.load_sample_data("IsolatedGalaxy")
 
 
 def sample_popiii_mini() -> List[Layer]:
-    return load_sample_data("PopIII_mini")
+    return gl.load_sample_data("PopIII_mini")
 
 
 def sample_smartstars() -> List[Layer]:
-    return load_sample_data("SmartStars")
+    return gl.load_sample_data("SmartStars")
 
 
 def sample_cm1_tornado_lofs() -> List[Layer]:
-    return load_sample_data("cm1_tornado_lofs")
+    return gl.load_sample_data("cm1_tornado_lofs")
