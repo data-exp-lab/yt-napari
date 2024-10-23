@@ -42,4 +42,4 @@ def test_generic_load_sample_data(tmp_path, monkeypatch):
     monkeypatch.setattr(importlib_resources, "files", mock_importlib_files)
 
     result = gl.load_sample_data(sample_name)
-    assert isinstance(result[0], np.ndarray)
+    assert isinstance(result[0][0], np.ndarray)
