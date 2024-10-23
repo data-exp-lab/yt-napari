@@ -1,18 +1,56 @@
+import json
 import os.path
 from os import PathLike
-from typing import Optional
+from typing import List, Optional
 
 import yt
 
-from yt_napari import _special_loaders
+from yt_napari import _special_loaders, _utilities
 from yt_napari.config import ytcfg
 from yt_napari.logging import ytnapari_log
+
+
+def _load_sample(filename: str):
+
+    missing = False
+    msg = (
+        "Loading sample data requires additional dependencies but "
+        "the following dependencies are missing:"
+    )
+    for dep in ("pooch", "pandas", "h5py", "libconf"):
+        if _utilities.dependency_is_missing(dep):
+            msg += f"\n    {dep}"
+            missing = True
+
+    if missing:
+        msg += (
+            "\ninstall individual dependencies with pip, or install them all with "
+            "pip install yt-napari[full]."
+        )
+
+        raise ModuleNotFoundError(msg)
+
+    ds = yt.load_sample(filename)
+    return ds
+
+
+def get_sample_set_list() -> List[str]:
+    import importlib.resources as importlib_resources
+
+    jdata = json.loads(
+        importlib_resources.files("yt_napari")
+        .joinpath("sample_data")
+        .joinpath("sample_registry.json")
+        .read_bytes()
+    )
+    return jdata["enabled"]
 
 
 class DatasetCache:
     def __init__(self):
         self.available = {}
         self._most_recent: str = None
+        self.sample_sets: List[str] = get_sample_set_list()
 
     def add_ds(self, ds, name: str):
         if name in self.available:
@@ -53,7 +91,10 @@ class DatasetCache:
             ds_callable = getattr(_special_loaders, callable_name)
             ds = ds_callable()
         else:
-            ds = yt.load(filename)
+            if filename in self.sample_sets:
+                ds = _load_sample(filename)
+            else:
+                ds = yt.load(filename)
 
         if ytcfg.get("yt_napari", "in_memory_cache") and cache_if_not_found:
             self.add_ds(ds, filename)

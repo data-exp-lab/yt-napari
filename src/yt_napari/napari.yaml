@@ -1,27 +1,83 @@
-name: yt-napari
-display_name: yt-napari
 contributions:
   commands:
-    - id: yt-napari.get_reader
-      python_name: yt_napari._reader:napari_get_reader
-      title: Open data with yt-napari
-    - id: yt-napari.reader_widget
-      title: Read in a selection of data from yt
-      python_name: yt_napari._widget_reader:ReaderWidget
-    - id: yt-napari.timeseries_widget
-      title: Read 2D selections from yt timeseries
-      python_name: yt_napari._widget_reader:TimeSeriesReader
-    - id: yt-napari.metadata_widget
-      title: Inspect the metadata for a yt dataset
-      python_name: yt_napari._widget_matadata:MetadataWidget
+  - id: yt-napari.get_reader
+    python_name: yt_napari._reader:napari_get_reader
+    title: Open data with yt-napari
+  - id: yt-napari.reader_widget
+    python_name: yt_napari._widget_reader:ReaderWidget
+    title: Read in a selection of data from yt
+  - id: yt-napari.timeseries_widget
+    python_name: yt_napari._widget_reader:TimeSeriesReader
+    title: Read 2D selections from yt timeseries
+  - id: yt-napari.metadata_widget
+    python_name: yt_napari._widget_matadata:MetadataWidget
+    title: Inspect the metadata for a yt dataset
+  - id: yt-napari.data.deeplynestedzoom
+    python_name: yt_napari.sample_data._sample_data:sample_deeplynestedzoom
+    title: Load DeeplyNestedZoom
+  - id: yt-napari.data.enzo_64
+    python_name: yt_napari.sample_data._sample_data:sample_enzo_64
+    title: Load Enzo_64
+  - id: yt-napari.data.galaxyclustermerger
+    python_name: yt_napari.sample_data._sample_data:sample_galaxyclustermerger
+    title: Load GalaxyClusterMerger
+  - id: yt-napari.data.gaussiancloud
+    python_name: yt_napari.sample_data._sample_data:sample_gaussiancloud
+    title: Load GaussianCloud
+  - id: yt-napari.data.hiresisolatedgalaxy
+    python_name: yt_napari.sample_data._sample_data:sample_hiresisolatedgalaxy
+    title: Load HiresIsolatedGalaxy
+  - id: yt-napari.data.isolatedgalaxy
+    python_name: yt_napari.sample_data._sample_data:sample_isolatedgalaxy
+    title: Load IsolatedGalaxy
+  - id: yt-napari.data.popiii_mini
+    python_name: yt_napari.sample_data._sample_data:sample_popiii_mini
+    title: Load PopIII_mini
+  - id: yt-napari.data.smartstars
+    python_name: yt_napari.sample_data._sample_data:sample_smartstars
+    title: Load SmartStars
+  - id: yt-napari.data.cm1_tornado_lofs
+    python_name: yt_napari.sample_data._sample_data:sample_cm1_tornado_lofs
+    title: Load cm1_tornado_lofs
   readers:
-    - command: yt-napari.get_reader
-      accepts_directories: false
-      filename_patterns: ['*.json']
+  - accepts_directories: false
+    command: yt-napari.get_reader
+    filename_patterns:
+    - '*.json'
+  sample_data:
+  - command: yt-napari.data.deeplynestedzoom
+    display_name: DeeplyNestedZoom
+    key: deeplynestedzoom
+  - command: yt-napari.data.enzo_64
+    display_name: Enzo_64
+    key: enzo_64
+  - command: yt-napari.data.galaxyclustermerger
+    display_name: GalaxyClusterMerger
+    key: galaxyclustermerger
+  - command: yt-napari.data.gaussiancloud
+    display_name: GaussianCloud
+    key: gaussiancloud
+  - command: yt-napari.data.hiresisolatedgalaxy
+    display_name: HiresIsolatedGalaxy
+    key: hiresisolatedgalaxy
+  - command: yt-napari.data.isolatedgalaxy
+    display_name: IsolatedGalaxy
+    key: isolatedgalaxy
+  - command: yt-napari.data.popiii_mini
+    display_name: PopIII_mini
+    key: popiii_mini
+  - command: yt-napari.data.smartstars
+    display_name: SmartStars
+    key: smartstars
+  - command: yt-napari.data.cm1_tornado_lofs
+    display_name: cm1_tornado_lofs
+    key: cm1_tornado_lofs
   widgets:
-    - command: yt-napari.reader_widget
-      display_name: yt Reader
-    - command: yt-napari.timeseries_widget
-      display_name: yt Time Series Reader
-    - command: yt-napari.metadata_widget
-      display_name: yt Metadata Explorer
+  - command: yt-napari.reader_widget
+    display_name: yt Reader
+  - command: yt-napari.timeseries_widget
+    display_name: yt Time Series Reader
+  - command: yt-napari.metadata_widget
+    display_name: yt Metadata Explorer
+display_name: yt-napari
+name: yt-napari

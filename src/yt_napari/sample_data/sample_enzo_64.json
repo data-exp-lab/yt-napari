@@ -1,0 +1,20 @@
+{
+    "datasets": [
+        {
+            "filename": "Enzo_64",
+            "selections": {
+                "regions": [
+                    {
+                        "fields": [
+                            {
+                                "field_name": "density",
+                                "field_type": "gas",
+                                "take_log": true
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

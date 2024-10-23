@@ -27,11 +27,17 @@ See the :code:`yt` `documentation <https://yt-project.org/doc/installing.html#le
 2. install :code:`yt-napari`
 ****************************
 
-You can install the `yt-napari` plugin with:
+You can install the `yt-napari` plugin with minimal dependencies using:
 
 .. code-block:: bash
 
     pip install yt-napari
+
+To include optional dependencies required for loading sample data:
+
+.. code-block:: bash
+
+    pip install yt-napari[full]
 
 If you are missing either :code:`yt` or :code:`napari` (or they need to be updated), the above installation will fetch and run a minimal installation for both.
 
