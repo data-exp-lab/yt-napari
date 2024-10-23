@@ -19,12 +19,12 @@ def _load_sample(filename: str):
     )
     for dep in ("pooch", "pandas", "h5py", "libconf"):
         if _utilities.dependency_is_missing(dep):
-            msg += f"    {dep}"
+            msg += f"\n    {dep}"
             missing = True
 
     if missing:
         msg += (
-            "install individual dependencies with pip, or run "
+            "\ninstall individual dependencies with pip, or install them all with "
             "pip install yt-napari[full]."
         )
 
