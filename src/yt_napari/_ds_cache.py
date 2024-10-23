@@ -5,13 +5,31 @@ from typing import List, Optional
 
 import yt
 
-from yt_napari import _special_loaders
+from yt_napari import _special_loaders, _utilities
 from yt_napari.config import ytcfg
 from yt_napari.logging import ytnapari_log
 
 
-def _load_sample(filename):
-    # TODO: check for pooch, pandas.
+def _load_sample(filename: str):
+
+    missing = False
+    msg = (
+        "Loading sample data requires additional dependencies but "
+        "the following dependencies are missing:"
+    )
+    for dep in ("pooch", "pandas", "h5py", "libconf"):
+        if _utilities.dependency_is_missing(dep):
+            msg += f"    {dep}"
+            missing = True
+
+    if missing:
+        msg += (
+            "install individual dependencies with pip, or run "
+            "pip install yt-napari[full]."
+        )
+
+        raise ModuleNotFoundError(msg)
+
     ds = yt.load_sample(filename)
     return ds
 
