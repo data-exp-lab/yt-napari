@@ -152,13 +152,21 @@ Contributions are very welcome! Development follows a fork and pull request work
 
 ### development environment
 
-To start developing, fork the repository and clone your fork to get a local copy. You can then install in development mode with
+To start developing, fork the repository and clone your fork to get a local copy. You can then install in development mode along with
+all the extra requirements for developing:
 
-    pip install -e .
+    pip install -e .[full,dev]
 
 ### tests and style checks
 
-Both bug fixes and new features will need to pass the existing test suite and style checks. While both will be run automatically when you submit a pull request, it is helpful to run the test suites locally and run style checks throughout development. For testing, you can use [tox] to test different python versions on your platform.
+Both bug fixes and new features will need to pass the existing test suite and style checks. While both will be run
+automatically when you submit a pull request, it is helpful to run the test suites locally and run style checks
+throughout development. For testing, you can use [tox] to test different python versions on your platform or
+simply run `pytest` and rely on the github actions to test the additional python environments.
+
+#### testing with tox
+
+first install `tox` with:
 
     pip install tox
 
@@ -168,15 +176,26 @@ And then from the top level of the `yt-napari` directory, run
 
 Tox will then run a series of tests in isolated environments. In addition to checking the terminal output for test results, the tox run will generate a test coverage report: a `coverage.xml` file and a `htmlcov` folder -- to view the results, open `htmlcov/index.html` in a browser.
 
+#### testing with pytest
+
 If you prefer a lighter weight test, you can also use `pytest` directly and rely on the Github CI to test different python versions and systems. To do so, first install `pytest` and some related plugins:
 
     pip install pytest pytest-qt pytest-cov
 
-Now, to run the tests:
+Note that if you set up your dev environment with `pip install -e .[full,dev]` as suggested above, you'll arelady
+have these dependencies.
+
+To run the tests you can use the `pytest` command
 
     pytest -v --cov=yt_napari --cov-report=html
 
+Or the `taskipy` task:
+
+    task test
+
 In addition to telling you whether or not the tests pass, the above command will write out a code coverage report to the `htmlcov` directory. You can open up `htmlcov/index.html` in a browser and check out the lines of code that were missed by existing tests.
+
+#### style checks
 
 For style checks, you can use [pre-commit](https://pre-commit.com/) to run checks as you develop. To set up `pre-commit`:
 
@@ -236,6 +255,22 @@ task update_schema_docs -v vX.X.X
 ```
 It will write a schema file for the current pydantic model, overwriting any on-disk schema files for
 the provided version.
+
+### updating the sample data
+
+The sample data utilizes another helper script: `repo_utilities/update_sample_data.py` that you can invoke
+with `taskipy` as:
+
+    task update_sample_data
+
+To adjust which sample datasets are included, go edit the `enabled` list in `repo_utilities/update_sample_data.py`. The names in `enabled` must match those accepted by `yt.load_sample`. In addition to enabling
+a dataset, you may need to adjust the field settings for the sample dataset that you are adding: see the `sample_field` and `log_field` dictionaries.
+
+When you run `update_sample_data`, a number of things happen:
+
+1. The napari plugin manifest is updated. For every dataset in the `enabled` list, `yt_napari/napari.yaml` will include 2 entries: a new entry in `commands` and a new entry in `sample_data`.
+2. For every dataset in the `enabled` list, a `json` file will be generated in `yt_napari/sample_data/` along with a single `yt_napari/sample_data/sample_registry.json`. These `json` files are used for actually loading the sample data.
+3. `yt_napari/sample_data/_sample_data.py` will be rewritten and for every dataset in the `enabled` list, there will be a corresponding function. The function name maps to the python name in `yt_napari/napari.yaml` (the plugin manifest file). If `yt_napari/sample_data/_sample_data.py` is incorrect then the code generation in  `repo_utilities/update_sample_data.py` should be updated, do not edit `yt_napari/sample_data/_sample_data.py` directly.
 
 ## License
 
