@@ -665,8 +665,6 @@ def layers_to_yt(
         layers = available_layer_names
 
     # some validation
-    layer_shape = available_layers[layers[0]].data.shape
-    # ndim = available_layers[layers[0]].ndim  # use below...
     for layer in layers:
         if isinstance(layer, int) and layer not in available_layer_ids:
             msg = (
@@ -687,6 +685,9 @@ def layers_to_yt(
             )
             raise TypeError(msg)
 
+    layer_shape = available_layers[layers[0]].data.shape
+    # ndim = available_layers[layers[0]].ndim  # use below...
+    for layer in layers:
         active_layer = available_layers[layer]
         if layer_shape != active_layer.data.shape:
             msg = (

@@ -26,12 +26,12 @@ class YTPhasePlot(QWidget):
             value=active_layers[0], choices=active_layers, name="Layer 3"
         ).native
 
+        active_layers = [
+            "None",
+        ] + active_layers
         self.layer_4_weight: QComboBox = widgets.ComboBox(
             value="None",
-            choices=[
-                "None",
-            ]
-            + active_layers,
+            choices=active_layers,
             name="Layer 4",
         ).native
 
@@ -56,30 +56,23 @@ class YTPhasePlot(QWidget):
         self.fig = None
         self.canvas = None
 
+    @staticmethod
+    def reset_layer_combobox(combobox: QComboBox, new_layers: list[str]):
+        combobox.clear()
+        combobox.addItems(new_layers)
+        combobox.setCurrentIndex(0)
+
     def update_available_layers(self):
-        print("update those layers")
         layers = self.available_layer_list
-        # layers = list(zip(range(len(layers)), layers))
         self.current_layers = layers
 
-        self.layer_1.clear()
-        self.layer_1.addItems(layers)
-        self.layer_1.setCurrentIndex(0)
-        self.layer_2.clear()
-        self.layer_2.addItems(layers)
-        self.layer_2.setCurrentIndex(0)
-        self.layer_3.clear()
-        self.layer_3.addItems(layers)
-        self.layer_3.setCurrentIndex(0)
-        # weight field
-        self.layer_4.clear()
-        self.layer_4.addItems(
-            [
-                "None",
-            ]
-            + layers
-        )
-        self.layer_4.setCurrentIndex(0)
+        for combobox in (self.layer_1, self.layer_2, self.layer_3):
+            self.reset_layer_combobox(combobox, layers)
+
+        layers = [
+            "None",
+        ] + layers
+        self.reset_layer_combobox(self.layer_4_weight, layers)
 
     def render_phaseplot(self):
 
@@ -94,7 +87,6 @@ class YTPhasePlot(QWidget):
         layers_for_yt = []
         pp_args = []
         for layer in layers:
-            print(layer)
             if _is_index_field(layer):
                 pp_args.append(("index", layer))
             elif layer is not None:
@@ -103,7 +95,7 @@ class YTPhasePlot(QWidget):
             else:
                 pp_args.append(None)
 
-        ds = layers_to_yt(self.viewer, layers_for_yt, axis_order=("z", "y", "x"))
+        ds = layers_to_yt(self.viewer, layers=layers_for_yt, axis_order=("z", "y", "x"))
 
         pp = yt.PhasePlot(
             ds,
