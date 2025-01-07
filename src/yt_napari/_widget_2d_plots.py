@@ -2,7 +2,7 @@ import napari
 import yt
 from magicgui import widgets
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from qtpy.QtWidgets import QComboBox, QLabel, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from yt_napari._gui_utilities import clearLayout
 from yt_napari.viewer import layers_to_yt
@@ -11,50 +11,65 @@ from yt_napari.viewer import layers_to_yt
 class YTPhasePlot(QWidget):
     def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
         super().__init__(parent)
-        self.setLayout(QVBoxLayout())
         self.viewer = napari_viewer
+        root_vbox = QVBoxLayout()
 
         active_layers = self.available_layer_list
         self.current_layers = active_layers
-        self.layer_1: QComboBox = widgets.ComboBox(
-            value=active_layers[0], choices=active_layers, name="Layer 1"
-        ).native
-        self.layer_2: QComboBox = widgets.ComboBox(
-            value=active_layers[0], choices=active_layers, name="Layer 2"
-        ).native
-        self.layer_3: QComboBox = widgets.ComboBox(
-            value=active_layers[0], choices=active_layers, name="Layer 3"
-        ).native
+        self.add_layer_dropdown("layer_1", "x field", root_vbox)
+        self.add_layer_dropdown("layer_2", "y field", root_vbox)
+        self.add_layer_dropdown("layer_3", "z field", root_vbox)
+        self.add_layer_dropdown(
+            "layer_4_weight", "weight_field", root_vbox, allow_none=True, value="None"
+        )
 
-        active_layers = [
-            "None",
-        ] + active_layers
-        self.layer_4_weight: QComboBox = widgets.ComboBox(
-            value="None",
-            choices=active_layers,
-            name="Layer 4",
-        ).native
-
-        self.layout().addWidget(self.layer_1)
-        self.layout().addWidget(self.layer_2)
-        self.layout().addWidget(self.layer_3)
-        self.layout().addWidget(self.layer_4_weight)
-
+        sub_QVbox = QVBoxLayout()
         update_layers = widgets.PushButton(text="Refresh layers")
         update_layers.clicked.connect(self.update_available_layers)
         self.update_layers = update_layers
-        self.layout().addWidget(self.update_layers.native)
+        sub_QVbox.addWidget(self.update_layers.native)
 
         self.render_button = widgets.PushButton(text="Render")
         self.render_button.clicked.connect(self.render_phaseplot)
-        self.layout().addWidget(self.render_button.native)
+        sub_QVbox.addWidget(self.render_button.native)
 
         self.phaseplot_container = QVBoxLayout()
         self.phaseplot_container.addWidget(QLabel(text="Click render to generate plot"))
-        self.layout().addLayout(self.phaseplot_container)
+        sub_QVbox.addLayout(self.phaseplot_container)
+
+        root_vbox.addLayout(sub_QVbox)
+        self.setLayout(root_vbox)
 
         self.fig = None
         self.canvas = None
+
+    def add_layer_dropdown(
+        self,
+        layer_attr: str,
+        layer_label: str,
+        root_qt_layout: QVBoxLayout,
+        value: str = None,
+        allow_none: bool = False,
+    ):
+
+        layer_hbox = QHBoxLayout()
+        active_layers = self.available_layer_list
+        if allow_none:
+            active_layers = [
+                "None",
+            ] + active_layers
+
+        if value is None:
+            value = active_layers[0]
+
+        layer_hbox.addWidget(QLabel(layer_label))
+        new_box: QComboBox = widgets.ComboBox(
+            value=value, choices=active_layers, name=layer_label
+        ).native
+        setattr(self, layer_attr, new_box)
+
+        layer_hbox.addWidget(getattr(self, layer_attr))
+        root_qt_layout.addLayout(layer_hbox)
 
     @staticmethod
     def reset_layer_combobox(combobox: QComboBox, new_layers: list[str]):
