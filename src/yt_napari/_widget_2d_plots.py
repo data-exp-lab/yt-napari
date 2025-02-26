@@ -1,10 +1,7 @@
 import napari
 import yt
 from magicgui import widgets
-from matplotlib.backends.backend_qtagg import (
-    FigureCanvasQTAgg,
-    NavigationToolbar2QT as NavigationToolbar,
-)
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from yt_napari._gui_utilities import clearLayout
@@ -32,27 +29,35 @@ class YTPhasePlot(QWidget):
         self.update_layers = update_layers
         sub_QVbox.addWidget(self.update_layers.native)
 
+        self.render_button = widgets.PushButton(text="Render")
+        self.render_button.clicked.connect(self.render_phaseplot)
+        sub_QVbox.addWidget(self.render_button.native)
+
         self.callback_container = QVBoxLayout()
         _cmap_choices = _get_cmap_choices()
 
         cmaps = widgets.Dropdown(value=_cmap_choices[0], choices=_cmap_choices)
         self.callback_cmap = cmaps
         self.callback_cmap_reverse = widgets.CheckBox(value=False, text="reverse cmap")
-        self.callback_container.addWidget(cmaps.native)
-        self.callback_container.addWidget(self.callback_cmap_reverse.native)
-        self.callback_logx = widgets.CheckBox(value=False, text="log x field")
-        self.callback_logy = widgets.CheckBox(value=False, text="log y field")
-        self.callback_logz = widgets.CheckBox(value=False, text="log z field")
+        cmap_box = QHBoxLayout()
+        cmap_box.addWidget(cmaps.native)
+        cmap_box.addWidget(self.callback_cmap_reverse.native)
+        self.callback_container.addLayout(cmap_box)
+        # self.callback_container.addWidget(cmaps.native)
+        # self.callback_container.addWidget(self.callback_cmap_reverse.native)
+        self.callback_logx = widgets.CheckBox(value=False, text="x")
+        self.callback_logy = widgets.CheckBox(value=False, text="y")
+        self.callback_logz = widgets.CheckBox(value=False, text="z")
         qh = QHBoxLayout()
+        qh.addWidget(QLabel("log field:"))
         qh.addWidget(self.callback_logx.native)
         qh.addWidget(self.callback_logy.native)
         qh.addWidget(self.callback_logz.native)
         self.callback_container.addLayout(qh)
+        run_cbs = widgets.PushButton(text="Run Callbacks")
+        run_cbs.clicked.connect(self.apply_callbacks)
+        self.callback_container.addWidget(run_cbs.native)
         sub_QVbox.addLayout(self.callback_container)
-
-        self.render_button = widgets.PushButton(text="Render")
-        self.render_button.clicked.connect(self.render_phaseplot)
-        sub_QVbox.addWidget(self.render_button.native)
 
         self.phaseplot_container = QVBoxLayout()
         self.phaseplot_container.addWidget(QLabel(text="Click render to generate plot"))
@@ -146,9 +151,17 @@ class YTPhasePlot(QWidget):
         self._phase_plot_ds = ds
         self.phase_plot = pp
         self._phase_plot_field_args = pp_args
-        self.fig = pp.plots[pp.fields[0]].figure
 
-        # the callbacks
+        self.apply_callbacks()
+
+    def apply_callbacks(self):
+
+        if self.phase_plot is None:
+            self.render_phaseplot()
+
+        pp = self.phase_plot
+        pp_args = self._phase_plot_field_args
+
         cmap_value = _validate_cmyt_name(self.callback_cmap.value)
         if self.callback_cmap_reverse.value is True:
             cmap_value += "_r"
@@ -160,15 +173,22 @@ class YTPhasePlot(QWidget):
         pp.set_log(pp_args[1], self.callback_logy.value)
         pp.set_log(pp_args[2], self.callback_logz.value)
 
-        # finally, render it
+        # using layout parameters doesnt work cause of the way
+        # yt organizes axes. might be able to extract
+        # axes objects directly and auto-scale them in a new
+        # figure.
+        pp.set_figure_size(3)
+        pp.set_font_size(10)
+
         pp.render()
 
-        # and add it to the layout
+        # this replaces the whole QT figure. updating just the data of
+        # the figure is hard cause yt nests the matplotlib figure.
+
         clearLayout(self.phaseplot_container)
-        self.canvas = FigureCanvasQTAgg(self.fig)
+        self.figure = pp.plots[pp.fields[0]].figure
+        self.canvas = FigureCanvasQTAgg(self.figure)
         self.canvas.draw()
-        nt = NavigationToolbar(self.canvas)
-        self.phaseplot_container.addWidget(nt)
         self.phaseplot_container.addWidget(self.canvas)
 
     @property
