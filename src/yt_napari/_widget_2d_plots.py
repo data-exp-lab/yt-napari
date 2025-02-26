@@ -1,7 +1,10 @@
 import napari
 import yt
 from magicgui import widgets
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qtagg import (
+    FigureCanvasQTAgg,
+    NavigationToolbar2QT as NavigationToolbar,
+)
 from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from yt_napari._gui_utilities import clearLayout
@@ -29,6 +32,24 @@ class YTPhasePlot(QWidget):
         self.update_layers = update_layers
         sub_QVbox.addWidget(self.update_layers.native)
 
+        self.callback_container = QVBoxLayout()
+        _cmap_choices = _get_cmap_choices()
+
+        cmaps = widgets.Dropdown(value=_cmap_choices[0], choices=_cmap_choices)
+        self.callback_cmap = cmaps
+        self.callback_cmap_reverse = widgets.CheckBox(value=False, text="reverse cmap")
+        self.callback_container.addWidget(cmaps.native)
+        self.callback_container.addWidget(self.callback_cmap_reverse.native)
+        self.callback_logx = widgets.CheckBox(value=False, text="log x field")
+        self.callback_logy = widgets.CheckBox(value=False, text="log y field")
+        self.callback_logz = widgets.CheckBox(value=False, text="log z field")
+        qh = QHBoxLayout()
+        qh.addWidget(self.callback_logx.native)
+        qh.addWidget(self.callback_logy.native)
+        qh.addWidget(self.callback_logz.native)
+        self.callback_container.addLayout(qh)
+        sub_QVbox.addLayout(self.callback_container)
+
         self.render_button = widgets.PushButton(text="Render")
         self.render_button.clicked.connect(self.render_phaseplot)
         sub_QVbox.addWidget(self.render_button.native)
@@ -40,6 +61,8 @@ class YTPhasePlot(QWidget):
         root_vbox.addLayout(sub_QVbox)
         self.setLayout(root_vbox)
 
+        self._phase_plot_ds = None
+        self.phase_plot = None
         self.fig = None
         self.canvas = None
 
@@ -119,13 +142,33 @@ class YTPhasePlot(QWidget):
             pp_args[2],
             weight_field=pp_args[3],
         )
+
+        self._phase_plot_ds = ds
+        self.phase_plot = pp
+        self._phase_plot_field_args = pp_args
+        self.fig = pp.plots[pp.fields[0]].figure
+
+        # the callbacks
+        cmap_value = _validate_cmyt_name(self.callback_cmap.value)
+        if self.callback_cmap_reverse.value is True:
+            cmap_value += "_r"
+
+        pp_zfield = self._phase_plot_field_args[2]
+        pp.set_cmap(pp_zfield, cmap_value)
+
+        pp.set_log(pp_args[0], self.callback_logx.value)
+        pp.set_log(pp_args[1], self.callback_logy.value)
+        pp.set_log(pp_args[2], self.callback_logz.value)
+
+        # finally, render it
         pp.render()
 
+        # and add it to the layout
         clearLayout(self.phaseplot_container)
-
-        self.fig = pp.plots[pp.fields[0]].figure
         self.canvas = FigureCanvasQTAgg(self.fig)
         self.canvas.draw()
+        nt = NavigationToolbar(self.canvas)
+        self.phaseplot_container.addWidget(nt)
         self.phaseplot_container.addWidget(self.canvas)
 
     @property
@@ -139,3 +182,36 @@ class YTPhasePlot(QWidget):
 
 def _is_index_field(layer_name: str):
     return layer_name in ("x", "y", "z", "ones")
+
+
+def _get_cmap_choices() -> list[str]:
+    import cmyt
+    from matplotlib.colors import Colormap
+
+    cmaps = [
+        "arbre",
+        "viridis",
+        "magma",
+        "doom",
+        "cividis",
+        "plasma",
+        "RdBu",
+        "coolwarm",
+    ]
+
+    # we want to display colormap name then cmyt for sorting purposes
+    cmyt_names = [
+        f"{cm}.cmyt"
+        for cm in dir(cmyt)
+        if isinstance(getattr(cmyt, cm), Colormap) and cm.endswith("_r") is False
+    ]
+
+    cmaps = cmaps + cmyt_names
+    cmaps.sort(key=lambda v: v.lower())
+    return cmaps
+
+
+def _validate_cmyt_name(cm):
+    if cm.endswith(".cmyt"):
+        return "cmyt." + cm.split(".")[0]
+    return cm
