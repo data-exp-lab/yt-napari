@@ -205,8 +205,7 @@ class YTPhasePlot(QWidget):
         ] + layers
         self.reset_layer_combobox(self.layer_4_weight, layers)
 
-    def render_phaseplot(self):
-
+    def get_selected_layers(self) -> list:
         layer1 = self.current_layers[self.layer_1.currentIndex()]
         layer2 = self.current_layers[self.layer_2.currentIndex()]
         layer3 = self.current_layers[self.layer_3.currentIndex()]
@@ -215,6 +214,11 @@ class YTPhasePlot(QWidget):
             wt_field = None
 
         layers = [layer1, layer2, layer3, wt_field]
+        return layers
+
+    def render_phaseplot(self):
+
+        layers = self.get_selected_layers()
         layers_for_yt = []
         pp_args = []
         for layer in layers:
