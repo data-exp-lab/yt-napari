@@ -4,14 +4,21 @@ import napari
 import yt
 from magicgui import widgets
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
 from superqt import QCollapsible
 
 from yt_napari._gui_utilities import clearLayout
 from yt_napari.viewer import layers_to_yt
 
 
-class YTCallbacks(QWidget):
+class YTPhasePlotCallbacks(QWidget):
     def __init__(
         self,
         parent: QWidget | None = None,
@@ -43,6 +50,28 @@ class YTCallbacks(QWidget):
         qh.addWidget(self.apply_logz.native)
         root_vbox.addLayout(qh)
 
+        qh_font_text = QHBoxLayout()
+        qh_font_text.addWidget(QLabel("fontsize:"))
+        self.fontsize = QSpinBox()
+        self.fontsize.setValue(10)
+        qh_font_text.addWidget(self.fontsize)
+        root_vbox.addLayout(qh_font_text)
+
+        qh_font_text = QHBoxLayout()
+        qh_font_text.addWidget(QLabel("figure size (inches):"))
+        self.figsize = QSpinBox()
+        self.figsize.setValue(4)
+        qh_font_text.addWidget(self.figsize)
+        root_vbox.addLayout(qh_font_text)
+
+        self.save = widgets.CheckBox(value=False, text="save figure")
+        root_vbox.addWidget(self.save.native)
+        self.savename = widgets.FileEdit()
+        qh_save = QHBoxLayout()
+        qh_save.addWidget(QLabel("filename:"))
+        qh_save.addWidget(self.savename.native)
+        root_vbox.addLayout(qh_save)
+
         self.setLayout(root_vbox)
 
     def apply_callbacks(
@@ -67,8 +96,12 @@ class YTCallbacks(QWidget):
 
         # using layout parameters doesnt work cause of the way
         # yt organizes axes.
-        yt_plot.set_figure_size(3)
-        yt_plot.set_font_size(10)
+        yt_plot.set_figure_size(self.figsize.value())
+        yt_plot.set_font_size(self.fontsize.value())
+
+        if self.save.value:
+            fname = self.savename.value
+            yt_plot.save(fname)
 
 
 class YTPhasePlot(QWidget):
@@ -96,8 +129,7 @@ class YTPhasePlot(QWidget):
         self.render_button.clicked.connect(self.render_phaseplot)
         sub_QVbox.addWidget(self.render_button.native)
 
-        self.callback_container = YTCallbacks()
-
+        self.callback_container = YTPhasePlotCallbacks()
         cb_container = QCollapsible(title="yt plot callbacks")
         cb_container.addWidget(self.callback_container)
 
