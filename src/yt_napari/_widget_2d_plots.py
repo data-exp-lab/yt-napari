@@ -1,3 +1,5 @@
+from typing import Any
+
 import napari
 import yt
 from magicgui import widgets
@@ -8,6 +10,66 @@ from yt_napari._gui_utilities import clearLayout
 from yt_napari.viewer import layers_to_yt
 
 
+class YTCallbacks(QWidget):
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+
+        # Callbacks
+        root_vbox = QVBoxLayout()
+
+        # colormaps
+        _cmap_choices = _get_cmap_choices()
+        cmaps = widgets.Dropdown(value=_cmap_choices[0], choices=_cmap_choices)
+        self.cmap_dropdown = cmaps
+        self.reverse_cmap = widgets.CheckBox(value=False, text="reverse cmap")
+        cmap_box = QHBoxLayout()
+        cmap_box.addWidget(self.cmap_dropdown.native)
+        cmap_box.addWidget(self.reverse_cmap.native)
+
+        root_vbox.addLayout(cmap_box)
+
+        self.apply_logx = widgets.CheckBox(value=False, text="x")
+        self.apply_logy = widgets.CheckBox(value=False, text="y")
+        self.apply_logz = widgets.CheckBox(value=False, text="z")
+
+        qh = QHBoxLayout()
+        qh.addWidget(QLabel("log field:"))
+        qh.addWidget(self.apply_logx.native)
+        qh.addWidget(self.apply_logy.native)
+        qh.addWidget(self.apply_logz.native)
+        root_vbox.addLayout(qh)
+
+        self.setLayout(root_vbox)
+
+    def apply_callbacks(
+        self,
+        yt_plot: Any,
+        xfield: tuple[str, str],
+        yfield: tuple[str, str],
+        zfield: tuple[str, str],
+    ):
+
+        # set colormap
+        cmap_value = self.cmap_dropdown.value
+        cmap_value = _validate_cmyt_name(cmap_value)
+        if self.reverse_cmap.value is True:
+            cmap_value += "_r"
+        yt_plot.set_cmap(zfield, cmap_value)
+
+        # set axis scales
+        yt_plot.set_log(xfield, self.apply_logx.value)
+        yt_plot.set_log(yfield, self.apply_logy.value)
+        yt_plot.set_log(zfield, self.apply_logz.value)
+
+        # using layout parameters doesnt work cause of the way
+        # yt organizes axes.
+        yt_plot.set_figure_size(3)
+        yt_plot.set_font_size(10)
+
+
 class YTPhasePlot(QWidget):
     def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
         super().__init__(parent)
@@ -16,9 +78,9 @@ class YTPhasePlot(QWidget):
 
         active_layers = self.available_layer_list
         self.current_layers = active_layers
-        self.add_layer_dropdown("layer_1", "x field", root_vbox)
-        self.add_layer_dropdown("layer_2", "y field", root_vbox)
-        self.add_layer_dropdown("layer_3", "z field", root_vbox)
+        self.add_layer_dropdown("layer_1", "x field", root_vbox, value_index=0)
+        self.add_layer_dropdown("layer_2", "y field", root_vbox, value_index=1)
+        self.add_layer_dropdown("layer_3", "z field", root_vbox, value_index=2)
         self.add_layer_dropdown(
             "layer_4_weight", "weight_field", root_vbox, allow_none=True, value="None"
         )
@@ -33,31 +95,12 @@ class YTPhasePlot(QWidget):
         self.render_button.clicked.connect(self.render_phaseplot)
         sub_QVbox.addWidget(self.render_button.native)
 
-        self.callback_container = QVBoxLayout()
-        _cmap_choices = _get_cmap_choices()
+        self.callback_container = YTCallbacks()
+        sub_QVbox.addWidget(self.callback_container)
 
-        cmaps = widgets.Dropdown(value=_cmap_choices[0], choices=_cmap_choices)
-        self.callback_cmap = cmaps
-        self.callback_cmap_reverse = widgets.CheckBox(value=False, text="reverse cmap")
-        cmap_box = QHBoxLayout()
-        cmap_box.addWidget(cmaps.native)
-        cmap_box.addWidget(self.callback_cmap_reverse.native)
-        self.callback_container.addLayout(cmap_box)
-        # self.callback_container.addWidget(cmaps.native)
-        # self.callback_container.addWidget(self.callback_cmap_reverse.native)
-        self.callback_logx = widgets.CheckBox(value=False, text="x")
-        self.callback_logy = widgets.CheckBox(value=False, text="y")
-        self.callback_logz = widgets.CheckBox(value=False, text="z")
-        qh = QHBoxLayout()
-        qh.addWidget(QLabel("log field:"))
-        qh.addWidget(self.callback_logx.native)
-        qh.addWidget(self.callback_logy.native)
-        qh.addWidget(self.callback_logz.native)
-        self.callback_container.addLayout(qh)
         run_cbs = widgets.PushButton(text="Run Callbacks")
-        run_cbs.clicked.connect(self.apply_callbacks)
-        self.callback_container.addWidget(run_cbs.native)
-        sub_QVbox.addLayout(self.callback_container)
+        run_cbs.clicked.connect(self.apply_callbacks_and_render)
+        sub_QVbox.addWidget(run_cbs.native)
 
         self.phaseplot_container = QVBoxLayout()
         self.phaseplot_container.addWidget(QLabel(text="Click render to generate plot"))
@@ -77,6 +120,7 @@ class YTPhasePlot(QWidget):
         layer_label: str,
         root_qt_layout: QVBoxLayout,
         value: str = None,
+        value_index: int = None,
         allow_none: bool = False,
     ):
 
@@ -87,8 +131,12 @@ class YTPhasePlot(QWidget):
                 "None",
             ] + active_layers
 
-        if value is None:
+        if value is None and value_index is None:
             value = active_layers[0]
+        elif value is None and value_index is not None:
+            if value_index > len(active_layers) - 1:
+                value_index = len(active_layers) - 1
+            value = active_layers[value_index]
 
         layer_hbox.addWidget(QLabel(layer_label))
         new_box: QComboBox = widgets.ComboBox(
@@ -100,17 +148,21 @@ class YTPhasePlot(QWidget):
         root_qt_layout.addLayout(layer_hbox)
 
     @staticmethod
-    def reset_layer_combobox(combobox: QComboBox, new_layers: list[str]):
+    def reset_layer_combobox(
+        combobox: QComboBox, new_layers: list[str], current_index: int = 0
+    ):
         combobox.clear()
         combobox.addItems(new_layers)
-        combobox.setCurrentIndex(0)
+        if current_index > len(new_layers) - 1:
+            current_index = len(new_layers) - 1
+        combobox.setCurrentIndex(current_index)
 
     def update_available_layers(self):
         layers = self.available_layer_list
         self.current_layers = layers
 
-        for combobox in (self.layer_1, self.layer_2, self.layer_3):
-            self.reset_layer_combobox(combobox, layers)
+        for ilayer, cbox in enumerate((self.layer_1, self.layer_2, self.layer_3)):
+            self.reset_layer_combobox(cbox, layers, current_index=ilayer)
 
         layers = [
             "None",
@@ -152,9 +204,9 @@ class YTPhasePlot(QWidget):
         self.phase_plot = pp
         self._phase_plot_field_args = pp_args
 
-        self.apply_callbacks()
+        self.apply_callbacks_and_render()
 
-    def apply_callbacks(self):
+    def apply_callbacks_and_render(self):
 
         if self.phase_plot is None:
             self.render_phaseplot()
@@ -162,29 +214,12 @@ class YTPhasePlot(QWidget):
         pp = self.phase_plot
         pp_args = self._phase_plot_field_args
 
-        cmap_value = _validate_cmyt_name(self.callback_cmap.value)
-        if self.callback_cmap_reverse.value is True:
-            cmap_value += "_r"
-
-        pp_zfield = self._phase_plot_field_args[2]
-        pp.set_cmap(pp_zfield, cmap_value)
-
-        pp.set_log(pp_args[0], self.callback_logx.value)
-        pp.set_log(pp_args[1], self.callback_logy.value)
-        pp.set_log(pp_args[2], self.callback_logz.value)
-
-        # using layout parameters doesnt work cause of the way
-        # yt organizes axes. might be able to extract
-        # axes objects directly and auto-scale them in a new
-        # figure.
-        pp.set_figure_size(3)
-        pp.set_font_size(10)
+        self.callback_container.apply_callbacks(pp, pp_args[0], pp_args[1], pp_args[2])
 
         pp.render()
 
         # this replaces the whole QT figure. updating just the data of
         # the figure is hard cause yt nests the matplotlib figure.
-
         clearLayout(self.phaseplot_container)
         self.figure = pp.plots[pp.fields[0]].figure
         self.canvas = FigureCanvasQTAgg(self.figure)
