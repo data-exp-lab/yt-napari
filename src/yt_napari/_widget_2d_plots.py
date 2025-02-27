@@ -66,7 +66,7 @@ class YTPhasePlotCallbacks(QWidget):
 
         self.save = widgets.CheckBox(value=False, text="save figure")
         root_vbox.addWidget(self.save.native)
-        self.savename = widgets.FileEdit()
+        self.savename = widgets.FileEdit("w")
         qh_save = QHBoxLayout()
         qh_save.addWidget(QLabel("filename:"))
         qh_save.addWidget(self.savename.native)
