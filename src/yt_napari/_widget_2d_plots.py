@@ -5,6 +5,7 @@ import yt
 from magicgui import widgets
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from superqt import QCollapsible
 
 from yt_napari._gui_utilities import clearLayout
 from yt_napari.viewer import layers_to_yt
@@ -96,11 +97,14 @@ class YTPhasePlot(QWidget):
         sub_QVbox.addWidget(self.render_button.native)
 
         self.callback_container = YTCallbacks()
-        sub_QVbox.addWidget(self.callback_container)
+
+        cb_container = QCollapsible(title="yt plot callbacks")
+        cb_container.addWidget(self.callback_container)
 
         run_cbs = widgets.PushButton(text="Run Callbacks")
         run_cbs.clicked.connect(self.apply_callbacks_and_render)
-        sub_QVbox.addWidget(run_cbs.native)
+        cb_container.addWidget(run_cbs.native)
+        sub_QVbox.addWidget(cb_container)
 
         self.phaseplot_container = QVBoxLayout()
         self.phaseplot_container.addWidget(QLabel(text="Click render to generate plot"))
