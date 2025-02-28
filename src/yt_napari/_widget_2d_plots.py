@@ -174,6 +174,7 @@ class YTPhasePlot(QWidget):
 
         run_cbs = widgets.PushButton(text="Run Callbacks")
         run_cbs.clicked.connect(self.apply_callbacks_and_render)
+        self.run_callback_button = run_cbs
         cb_container.addWidget(run_cbs.native)
         sub_QVbox.addWidget(cb_container)
 

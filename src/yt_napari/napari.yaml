@@ -83,6 +83,6 @@ contributions:
   - command: yt-napari.metadata_widget
     display_name: yt Metadata Explorer
   - command: yt-napari.phaseplot
-    display_name: PhasePlot
+    display_name: yt PhasePlot
 display_name: yt-napari
 name: yt-napari
