@@ -678,12 +678,6 @@ def layers_to_yt(
                 f"{available_layer_names}."
             )
             raise RuntimeError(msg)
-        elif not isinstance(layer, str) and not isinstance(layer, int):
-            msg = (
-                f"Unexpected layer type, type({layer})={type(layer)} but it "
-                f" must be a str or int."
-            )
-            raise TypeError(msg)
 
     layer_shape = available_layers[layers[0]].data.shape
     # ndim = available_layers[layers[0]].ndim  # use below...

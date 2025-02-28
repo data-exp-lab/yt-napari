@@ -17,7 +17,7 @@ from superqt import QCollapsible
 from yt_napari._gui_utilities import clearLayout
 from yt_napari.viewer import layers_to_yt
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     import matplotlib.figure
 
 
@@ -144,6 +144,9 @@ class YTFigureContainer(QWidget):
 
 
 class YTPhasePlot(QWidget):
+
+    _default_index_fields = ["x", "y", "z", "ones"]
+
     def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
         super().__init__(parent)
         self.viewer = napari_viewer
@@ -151,6 +154,11 @@ class YTPhasePlot(QWidget):
 
         active_layers = self.available_layer_list
         self.current_layers = active_layers
+
+        self.layer_1: QComboBox = None
+        self.layer_2: QComboBox = None
+        self.layer_3: QComboBox = None
+        self.layer_4_weight: QComboBox = None
         self.add_layer_dropdown("layer_1", "x field", root_vbox, value_index=0)
         self.add_layer_dropdown("layer_2", "y field", root_vbox, value_index=1)
         self.add_layer_dropdown("layer_3", "z field", root_vbox, value_index=2)
@@ -304,8 +312,8 @@ class YTPhasePlot(QWidget):
     def available_layer_list(self):
         layers = [layer.name for layer in self.viewer.layers]
 
-        dims = ["x", "y", "z", "ones"]  # TODO: check ndim
-        layers += dims
+        # TODO: check ndim
+        layers += self._default_index_fields
         return layers
 
 
