@@ -693,7 +693,7 @@ def layers_to_yt(
             msg = (
                 "Can only export layers as a yt dataset if they have "
                 f"the same dimensions. {layers[0]} has shape of {layer_shape},"
-                f" while {layer} has shape { active_layer.data.shape}"
+                f" while {layer} has shape {active_layer.data.shape}"
             )
             raise RuntimeError(msg)
 
