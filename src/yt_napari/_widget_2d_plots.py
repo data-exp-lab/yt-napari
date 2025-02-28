@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import napari
 import yt
@@ -16,6 +16,9 @@ from superqt import QCollapsible
 
 from yt_napari._gui_utilities import clearLayout
 from yt_napari.viewer import layers_to_yt
+
+if TYPE_CHECKING:
+    import matplotlib.figure
 
 
 class YTPhasePlotCallbacks(QWidget):
@@ -104,6 +107,42 @@ class YTPhasePlotCallbacks(QWidget):
             yt_plot.save(fname)
 
 
+class YTFigureContainer(QWidget):
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        initial_text: str | None = None,
+    ) -> None:
+        """a widget for holding a yt figure
+
+        Parameters
+        ----------
+        parent : QWidget | None, optional
+            _description_, by default None
+        initial_text : str | None, optional
+            _description_, by default None
+        """
+        super().__init__(parent)
+
+        self.figure: "matplotlib.figure.Figure" = None
+        self.canvas: FigureCanvasQTAgg = None
+
+        self.figure_container = QVBoxLayout()
+
+        if initial_text is not None:
+            self.figure_container.addWidget(QLabel(text=initial_text))
+
+        self.setLayout(self.figure_container)
+
+    def set_figure(self, figure: "matplotlib.figure.Figure"):
+        self.figure = figure
+        self.canvas = FigureCanvasQTAgg(self.figure)
+        self.canvas.draw()
+
+        clearLayout(self.figure_container)
+        self.figure_container.addWidget(self.canvas)
+
+
 class YTPhasePlot(QWidget):
     def __init__(self, napari_viewer: "napari.viewer.Viewer", parent=None):
         super().__init__(parent)
@@ -138,10 +177,9 @@ class YTPhasePlot(QWidget):
         cb_container.addWidget(run_cbs.native)
         sub_QVbox.addWidget(cb_container)
 
-        self.phaseplot_container = QVBoxLayout()
-        self.phaseplot_container.addWidget(QLabel(text="Click render to generate plot"))
-        sub_QVbox.addLayout(self.phaseplot_container)
-
+        render_text = "Click render to generate plot"
+        self.phaseplot_widget = YTFigureContainer(initial_text=render_text)
+        sub_QVbox.addWidget(self.phaseplot_widget)
         root_vbox.addLayout(sub_QVbox)
         self.setLayout(root_vbox)
 
@@ -258,13 +296,8 @@ class YTPhasePlot(QWidget):
 
         pp.render()
 
-        # this replaces the whole QT figure. updating just the data of
-        # the figure is hard cause yt nests the matplotlib figure.
-        clearLayout(self.phaseplot_container)
-        self.figure = pp.plots[pp.fields[0]].figure
-        self.canvas = FigureCanvasQTAgg(self.figure)
-        self.canvas.draw()
-        self.phaseplot_container.addWidget(self.canvas)
+        fig = pp.plots[pp.fields[0]].figure
+        self.phaseplot_widget.set_figure(fig)
 
     @property
     def available_layer_list(self):
