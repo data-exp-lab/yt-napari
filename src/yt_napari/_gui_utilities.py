@@ -4,6 +4,7 @@ from typing import Callable, List, Optional, Union, get_args, get_origin
 import pydantic
 from magicgui import type_map, widgets
 from pydantic_core import PydanticUndefinedType
+from qtpy.QtWidgets import QLayout
 
 from yt_napari import _data_model
 from yt_napari.logging import ytnapari_log
@@ -380,3 +381,11 @@ def get_yt_metadata_container():
 def _is_base_model_or_yt_obj(field_info: pydantic.fields.FieldInfo):
     ftype = field_info.annotation
     return ftype in _data_model._data_model_list
+
+
+def clearLayout(layout: QLayout):
+    # remove all widgets from a layout
+    while layout.count():
+        child = layout.takeAt(0)
+        if child.widget():
+            child.widget().deleteLater()
