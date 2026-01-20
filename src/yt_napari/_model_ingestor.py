@@ -250,7 +250,7 @@ class TimeseriesContainer:
     ):
         sel_id = self.check_for_selection(selection, current_field)
 
-        (im, im_kwargs, im_label, layer_domain) = new_layer
+        im, im_kwargs, im_label, layer_domain = new_layer
         if layer_domain.requires_scale:
             im_kwargs["scale"] = 1.0 / layer_domain.aspect_ratio
             new_layer = (im, im_kwargs, im_label, layer_domain)
