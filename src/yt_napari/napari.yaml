@@ -12,6 +12,9 @@ contributions:
   - id: yt-napari.metadata_widget
     python_name: yt_napari._widget_matadata:MetadataWidget
     title: Inspect the metadata for a yt dataset
+  - id: yt-napari.phaseplot
+    python_name: yt_napari._widget_2d_plots:YTPhasePlot
+    title: Create 2d Phase Plots with yt
   - id: yt-napari.data.deeplynestedzoom
     python_name: yt_napari.sample_data._sample_data:sample_deeplynestedzoom
     title: Load DeeplyNestedZoom
@@ -79,5 +82,7 @@ contributions:
     display_name: yt Time Series Reader
   - command: yt-napari.metadata_widget
     display_name: yt Metadata Explorer
+  - command: yt-napari.phaseplot
+    display_name: yt PhasePlot
 display_name: yt-napari
 name: yt-napari
