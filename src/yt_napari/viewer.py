@@ -2,11 +2,13 @@ import warnings
 from typing import Any, List, Optional, Set, Tuple, Union
 
 import numpy as np
+import yt
 from napari import Viewer
 from napari.components.layerlist import LayerList
 from napari.layers import Layer
 from napari.layers.utils._link_layers import get_linked_layers
 from unyt import unyt_array, unyt_quantity
+from yt.data_objects.static_output import Dataset as ytDataset
 
 import yt_napari._model_ingestor as _mi
 from yt_napari.logging import ytnapari_log
@@ -617,3 +619,106 @@ class Scene:
                 max_val = max([max_val, layer.data.max()])
 
         return (min_val, max_val)
+
+
+def layers_to_yt(
+    viewer: Viewer,
+    layers: Optional[List[Union[str, int]]] = None,
+    bbox: Optional[np.ndarray] = None,
+    **kwargs,
+) -> ytDataset:
+    """
+    Load layers from the napari viewer as a yt uniformg grid dataset.
+
+    Parameters
+    ----------
+    viewer: napari.Viewer
+        the active napari Viewer instance
+    layers: List[str, int]
+        optional list of layers to load. If not supplied, will attempt
+        to use all available layers.
+    bbox: np.ndarray
+        optional bounding box array
+    kwargs
+        any additional keyword arguments are passed to yt.load_uniform_grid
+
+    Returns
+    -------
+    Dataset
+        a yt dataset
+
+    Notes
+    -----
+
+    Current limitations:
+    * Multi-level data is not currently supported
+    * Selected layers must all have the same shape (and extent)
+    * Data is copied
+
+    """
+
+    available_layers = viewer.layers
+    available_layer_names = [layer.name for layer in available_layers]
+    available_layer_ids = range(0, len(available_layers))
+    if layers is None:
+        # try to load them all
+        layers = available_layer_names
+
+    # some validation
+    for layer in layers:
+        if isinstance(layer, int) and layer not in available_layer_ids:
+            msg = (
+                f"Layer {layer} not found in valid range of layer ids: "
+                f"{available_layer_ids}."
+            )
+            raise RuntimeError(msg)
+        elif isinstance(layer, str) and layer not in available_layers:
+            msg = (
+                f"Layer {layer} not found in list of available layers: "
+                f"{available_layer_names}."
+            )
+            raise RuntimeError(msg)
+
+    layer_shape = available_layers[layers[0]].data.shape
+    # ndim = available_layers[layers[0]].ndim  # use below...
+    for layer in layers:
+        active_layer = available_layers[layer]
+        if layer_shape != active_layer.data.shape:
+            msg = (
+                "Can only export layers as a yt dataset if they have "
+                f"the same dimensions. {layers[0]} has shape of {layer_shape},"
+                f" while {layer} has shape {active_layer.data.shape}"
+            )
+            raise RuntimeError(msg)
+
+    # first go: just copy the data.
+    # note: not using layer for name directly, because it could be an integer
+    # index or
+    data = {
+        available_layers[layer].name: available_layers[layer].data for layer in layers
+    }
+
+    # TODO: check dimensionality (2D layers)
+
+    # TODO: check for multi-level and just load the finest level?
+    # layer.level_shapes is a list of shapes for each level
+
+    # TODO: axis order? common for bio images to be ordered z, y, x...
+    #       is there metadata for that?
+
+    if bbox is None:
+        bbox = np.array([[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]])
+        # TODO: layers have an extent attribute, looks like, e.g.,:
+        # Extent(data=array([[  0.,   0.,   0.],
+        # [ 16., 512., 512.]]), world=array([[-5.000e-01, -5.000e-01, -5.000e-01],
+        # [ 1.550e+01,  5.115e+02,  5.115e+02]]), step=array([1., 1., 1.]))
+        # that world array could be used as a bounding box.
+
+    if "length_unit" in kwargs:
+        lu = kwargs.pop("length_unit")
+    else:
+        lu = 1.0
+
+    ds = yt.load_uniform_grid(data, layer_shape, bbox=bbox, length_unit=lu, **kwargs)
+
+    return ds
