@@ -1,11 +1,13 @@
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ['py310']
+target-version = "py310"
+extend-exclude = ["benchmarks", "docs/examples", "*.md"]
 
-[tool.isort]
-profile = "black"
-combine_as_imports = true
-skip =  ["venv", "benchmarks"]
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
 
 [tool.taskipy.tasks]
 validate_release = { cmd = "python repo_utilities/validate.py", help = "validates for a release" }
