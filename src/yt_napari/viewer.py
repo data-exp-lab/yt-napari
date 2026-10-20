@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, List, Optional, Set, Tuple, Union
+from typing import Any
 
 import numpy as np
 from napari import Viewer
@@ -14,7 +14,7 @@ from yt_napari.logging import ytnapari_log
 
 def _check_for_reference_layer(
     napari_layer_list: LayerList,
-) -> Optional[_mi.ReferenceLayer]:
+) -> _mi.ReferenceLayer | None:
     # check the napari viewer layer list for an existing reference layer
     for layer in napari_layer_list:
         if "_yt_napari_layer" in layer.metadata:
@@ -24,18 +24,18 @@ def _check_for_reference_layer(
 
 
 class Scene:
-    def __init__(self, reference_layer: Optional[_mi.ReferenceLayer] = None):
+    def __init__(self, reference_layer: _mi.ReferenceLayer | None = None):
         self._reference_layer = reference_layer
 
     def _check_for_reference_layer(
         self, current_layers: list
-    ) -> Optional[_mi.ReferenceLayer]:
+    ) -> _mi.ReferenceLayer | None:
         return _check_for_reference_layer(current_layers)
 
     def _get_reference_layer(
         self,
-        layer_list: List[Layer],
-        default_if_missing: Optional[_mi.LayerDomain] = None,
+        layer_list: list[Layer],
+        default_if_missing: _mi.LayerDomain | None = None,
     ):
         if len(layer_list) == 0:
             # always check, in case all layers have been deleted.
@@ -115,14 +115,14 @@ class Scene:
         self,
         viewer: Viewer,
         ds,
-        field: Tuple[str, str],
-        resolution: Optional[Tuple[int, int, int]] = None,
-        left_edge: Optional[unyt_array] = None,
-        right_edge: Optional[unyt_array] = None,
-        take_log: Optional[bool] = None,
-        colormap: Optional[str] = None,
-        link_to: Optional[Union[str, Layer]] = None,
-        rescale: Optional[bool] = False,
+        field: tuple[str, str],
+        resolution: tuple[int, int, int] | None = None,
+        left_edge: unyt_array | None = None,
+        right_edge: unyt_array | None = None,
+        take_log: bool | None = None,
+        colormap: str | None = None,
+        link_to: str | Layer | None = None,
+        rescale: bool | None = False,
         **kwargs,
     ):
         """
@@ -204,15 +204,15 @@ class Scene:
         self,
         viewer: Viewer,
         ds,
-        field: Tuple[str, str],
-        left_edge: Optional[unyt_array] = None,
-        right_edge: Optional[unyt_array] = None,
-        level: Optional[int] = 0,
-        num_ghost_zones: Optional[int] = 0,
-        take_log: Optional[bool] = None,
-        colormap: Optional[str] = None,
-        link_to: Optional[Union[str, Layer]] = None,
-        rescale: Optional[bool] = False,
+        field: tuple[str, str],
+        left_edge: unyt_array | None = None,
+        right_edge: unyt_array | None = None,
+        level: int | None = 0,
+        num_ghost_zones: int | None = 0,
+        take_log: bool | None = None,
+        colormap: str | None = None,
+        link_to: str | Layer | None = None,
+        rescale: bool | None = False,
         **kwargs,
     ):
         """
@@ -294,13 +294,13 @@ class Scene:
         self,
         viewer: Viewer,
         ds,
-        field: Tuple[str, str],
-        resolution: Optional[Tuple[int, int, int]] = None,
-        left_edge: Optional[unyt_array] = None,
-        right_edge: Optional[unyt_array] = None,
-        take_log: Optional[bool] = None,
-        colormap: Optional[str] = None,
-        link_to: Optional[Union[str, Layer]] = None,
+        field: tuple[str, str],
+        resolution: tuple[int, int, int] | None = None,
+        left_edge: unyt_array | None = None,
+        right_edge: unyt_array | None = None,
+        take_log: bool | None = None,
+        colormap: str | None = None,
+        link_to: str | Layer | None = None,
         **kwargs,
     ):
         """deprecated, will be removed in v>0.1.0. use add_region"""
@@ -326,17 +326,17 @@ class Scene:
         self,
         viewer: Viewer,
         ds,
-        normal: Union[str, int],
-        field: Tuple[str, str],
-        center: Optional[unyt_array] = None,
-        resolution: Optional[Tuple[int, int]] = (400, 400),
-        width: Optional[unyt_quantity] = None,
-        height: Optional[unyt_quantity] = None,
-        take_log: Optional[bool] = None,
-        periodic: Optional[bool] = False,
-        colormap: Optional[str] = None,
-        link_to: Optional[Union[str, Layer]] = None,
-        rescale: Optional[bool] = False,
+        normal: str | int,
+        field: tuple[str, str],
+        center: unyt_array | None = None,
+        resolution: tuple[int, int] | None = (400, 400),
+        width: unyt_quantity | None = None,
+        height: unyt_quantity | None = None,
+        take_log: bool | None = None,
+        periodic: bool | None = False,
+        colormap: str | None = None,
+        link_to: str | Layer | None = None,
+        rescale: bool | None = False,
         **kwargs,
     ):
         """
@@ -416,9 +416,9 @@ class Scene:
 
     def normalize_color_limits(
         self,
-        layers: List[Union[str, Layer]],
-        layer_list: Optional[LayerList] = None,
-        check_linked: Optional[bool] = True,
+        layers: list[str | Layer],
+        layer_list: LayerList | None = None,
+        check_linked: bool | None = True,
     ):
         """
         normalize the color limits (the `contrast_limits`) across layers.
@@ -484,10 +484,10 @@ class Scene:
 
     def set_across_layers(
         self,
-        layers: List[Union[str, Layer]],
+        layers: list[str | Layer],
         attribute: str,
         value: Any,
-        layer_list: Optional[LayerList] = None,
+        layer_list: LayerList | None = None,
     ):
         """
         set the value of an attribute for all the provided layers
@@ -519,10 +519,10 @@ class Scene:
 
     @staticmethod
     def _sanitize_layers(
-        layers: List[Union[str, Layer]],
-        layer_list: Optional[LayerList] = None,
-        check_linked: Optional[bool] = True,
-    ) -> Set[Layer]:
+        layers: list[str | Layer],
+        layer_list: LayerList | None = None,
+        check_linked: bool | None = True,
+    ) -> set[Layer]:
         """
         returns a set of napari Layer objects scrubbed of string names
 
@@ -566,10 +566,10 @@ class Scene:
 
     def get_data_range(
         self,
-        layers: List[Union[str, Layer]],
-        layer_list: Optional[LayerList] = None,
-        check_linked: Optional[bool] = True,
-    ) -> Tuple[float, float]:
+        layers: list[str | Layer],
+        layer_list: LayerList | None = None,
+        check_linked: bool | None = True,
+    ) -> tuple[float, float]:
         """
         retrieve the extrema across layers
 

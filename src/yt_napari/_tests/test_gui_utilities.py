@@ -1,4 +1,4 @@
-from typing import List, Tuple, TypeVar
+from typing import TypeVar
 
 import pydantic
 import pytest
@@ -33,11 +33,11 @@ def Model():
 
     class TestModel(pydantic.BaseModel):
         field_1: int = 1
-        vec_field1: Tuple[float, float] = pydantic.Field((1.0, 2.0))
-        vec_field2: Tuple[float, float, float]
+        vec_field1: tuple[float, float] = pydantic.Field((1.0, 2.0))
+        vec_field2: tuple[float, float, float]
         bad_field: TypeVar("BadType")
         low_model: LowerModel
-        multi_low_model: List[LowerModel]
+        multi_low_model: list[LowerModel]
 
     return TestModel
 

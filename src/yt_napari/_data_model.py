@@ -1,7 +1,6 @@
 import inspect
 import json
 from pathlib import PosixPath
-from typing import List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field
 
@@ -27,28 +26,28 @@ class Length_Value(_ytBaseModel):
 
 
 class Left_Edge(_ytBaseModel):
-    value: Tuple[float, float, float] = Field(
+    value: tuple[float, float, float] = Field(
         (0.0, 0.0, 0.0), description="3-element unitful tuple."
     )
     unit: str = Field("code_length", description="the unit length string.")
 
 
 class Right_Edge(_ytBaseModel):
-    value: Tuple[float, float, float] = Field(
+    value: tuple[float, float, float] = Field(
         (1.0, 1.0, 1.0), description="3-element unitful tuple."
     )
     unit: str = Field("code_length", description="the unit length string.")
 
 
 class Length_Tuple(_ytBaseModel):
-    value: Tuple[float, float, float] = Field(
+    value: tuple[float, float, float] = Field(
         None, description="3-element unitful tuple."
     )
     unit: str = Field("code_length", description="the unit length string.")
 
 
 class Region(_ytBaseModel):
-    fields: List[ytField] = Field(
+    fields: list[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
     left_edge: Left_Edge = Field(
@@ -59,7 +58,7 @@ class Region(_ytBaseModel):
         None,
         description="the right edge (max x, max y, max z)",
     )
-    resolution: Tuple[int, int, int] = Field(
+    resolution: tuple[int, int, int] = Field(
         (400, 400, 400),
         description="the resolution at which to sample between the edges.",
     )
@@ -67,7 +66,7 @@ class Region(_ytBaseModel):
 
 
 class CoveringGrid(_ytBaseModel):
-    fields: List[ytField] = Field(
+    fields: list[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
     left_edge: Left_Edge = Field(
@@ -87,7 +86,7 @@ class CoveringGrid(_ytBaseModel):
 
 
 class Slice(_ytBaseModel):
-    fields: List[ytField] = Field(
+    fields: list[ytField] = Field(
         None, description="list of fields to load for this selection"
     )
     normal: str = Field(None, description="the normal axis of the slice")
@@ -100,7 +99,7 @@ class Slice(_ytBaseModel):
     slice_height: Length_Value = Field(
         None, description="The slice width, defaults to full domain"
     )
-    resolution: Tuple[int, int] = Field(
+    resolution: tuple[int, int] = Field(
         (400, 400),
         description="the resolution at which to sample the slice",
     )
@@ -111,9 +110,9 @@ class Slice(_ytBaseModel):
 
 
 class SelectionObject(_ytBaseModel):
-    regions: List[Region] = Field(None, description="a list of regions to load")
-    slices: List[Slice] = Field(None, description="a list of slices to load")
-    covering_grids: List[CoveringGrid] = Field(
+    regions: list[Region] = Field(None, description="a list of regions to load")
+    slices: list[Slice] = Field(None, description="a list of slices to load")
+    covering_grids: list[CoveringGrid] = Field(
         None, description="a list of covering grids to load"
     )
 
@@ -132,8 +131,8 @@ class DataContainer(_ytBaseModel):
 class TimeSeriesFileSelection(_ytBaseModel):
     directory: str = Field(None, description="The directory of the timseries")
     file_pattern: str = Field(None, description="The file pattern to match")
-    file_list: List[str] = Field(None, description="List of files to load.")
-    file_range: Tuple[int, int, int] = Field(
+    file_list: list[str] = Field(None, description="List of files to load.")
+    file_range: tuple[int, int, int] = Field(
         None,
         description="Given files matched by file_pattern, "
         "this option will select a range. Argument order"
@@ -155,21 +154,21 @@ class Timeseries(_ytBaseModel):
 
 
 class InputModel(_ytBaseModel):
-    datasets: List[DataContainer] = Field(
+    datasets: list[DataContainer] = Field(
         None, description="list of dataset containers to load"
     )
-    timeseries: List[Timeseries] = Field(None, description="List of timeseries to load")
+    timeseries: list[Timeseries] = Field(None, description="List of timeseries to load")
     _schema_prefix = "yt-napari"
 
 
-def _get_standard_schema_contents() -> Tuple[str, str]:
+def _get_standard_schema_contents() -> tuple[str, str]:
     prefix = InputModel._schema_prefix.default
     schema_contents = InputModel.model_json_schema()
     schema_contents = json.dumps(schema_contents, indent=2)
     return prefix, schema_contents
 
 
-def _store_schema(schema_db: Optional[Union[PosixPath, str]] = None, **kwargs):
+def _store_schema(schema_db: PosixPath | str | None = None, **kwargs):
     # save the current data model as a new schema
     if schema_db is None:
         schema_db = PosixPath(inspect.getfile(_manager)).parent
@@ -181,7 +180,7 @@ def _store_schema(schema_db: Optional[Union[PosixPath, str]] = None, **kwargs):
 class MetadataModel(_ytBaseModel):
     filename: str = Field(None, description="the filename for the dataset")
     include_field_list: bool = Field(True, description="whether to list the fields")
-    _ds_attrs: Tuple[str] = (
+    _ds_attrs: tuple[str] = (
         "domain_left_edge",
         "domain_right_edge",
         "current_time",

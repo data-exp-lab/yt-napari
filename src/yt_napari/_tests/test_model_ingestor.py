@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import numpy as np
 import pytest
 import unyt
@@ -18,8 +16,8 @@ class DomainExpectation:
         right_edge: unyt.unyt_array,
         center: unyt.unyt_array,
         width: unyt.unyt_array,
-        res: Tuple[int, int, int],
-        finest_grid: Optional[bool] = False,
+        res: tuple[int, int, int],
+        finest_grid: bool | None = False,
     ):
         self.left_edge = left_edge
         self.right_edge = right_edge

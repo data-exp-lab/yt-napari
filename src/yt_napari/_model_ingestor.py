@@ -1,6 +1,5 @@
 import os
 from collections import defaultdict
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yt
@@ -24,7 +23,7 @@ from yt_napari._types import Layer, SpatialLayer
 
 def _le_re_to_cen_wid(
     left_edge: unyt_array, right_edge: unyt_array
-) -> Tuple[unyt_array, unyt_array]:
+) -> tuple[unyt_array, unyt_array]:
     # return the center and width from a left and right edge
     center = (right_edge + left_edge) / 2.0
     width = right_edge - left_edge
@@ -70,9 +69,9 @@ class LayerDomain:
         left_edge: unyt_array,
         right_edge: unyt_array,
         resolution: tuple,
-        n_d: Optional[int] = 3,
-        new_dim_value: Optional[unyt_quantity] = None,
-        new_dim_axis: Optional[int] = 2,
+        n_d: int | None = 3,
+        new_dim_value: unyt_quantity | None = None,
+        new_dim_axis: int | None = 2,
     ):
         if len(left_edge) != len(right_edge):
             raise ValueError("length of edge arrays must match")
@@ -116,7 +115,7 @@ class LayerDomain:
 
 
 def _insert_to_unyt_array(
-    x: unyt_array, new_value: Union[float, unyt_array], position: int
+    x: unyt_array, new_value: float | unyt_array, position: int
 ) -> unyt_array:
     # just for scalars
     if isinstance(new_value, unyt_array):
@@ -198,7 +197,7 @@ class ReferenceLayer:
         # return a standard image layer tuple
         return (im_arr, im_kwargs, layer_type)
 
-    def align_sanitize_layers(self, layer_list: List[SpatialLayer]) -> List[Layer]:
+    def align_sanitize_layers(self, layer_list: list[SpatialLayer]) -> list[Layer]:
         # calculate scale and translation for each layer
         # will use the current domain extents if process_layers is False
         # (the default), otherwise the domain extent will be updated with the
@@ -206,7 +205,7 @@ class ReferenceLayer:
         return [self.align_sanitize_layer(layer) for layer in layer_list]
 
 
-def selections_match(sel_1: Union[Slice, Region], sel_2: Union[Slice, Region]) -> bool:
+def selections_match(sel_1: Slice | Region, sel_2: Slice | Region) -> bool:
     # compare selections, ignoring fields
     if type(sel_2) is not type(sel_1):
         return False
@@ -229,7 +228,7 @@ class TimeseriesContainer:
         self.selection_field = {}
 
     def check_for_selection(
-        self, selection: Union[Slice, Region], current_field: Tuple[str, str]
+        self, selection: Slice | Region, current_field: tuple[str, str]
     ) -> int:
         for sel_id, sel_obj in self.selection_objs.items():
             sel_field = self.selection_field[sel_id]
@@ -244,8 +243,8 @@ class TimeseriesContainer:
 
     def add(
         self,
-        selection: Union[Slice, Region],
-        current_field: Tuple[str, str],
+        selection: Slice | Region,
+        current_field: tuple[str, str],
         new_layer: SpatialLayer,
     ):
         sel_id = self.check_for_selection(selection, current_field)
@@ -274,7 +273,7 @@ class TimeseriesContainer:
         return [self.concat_by_selection_id(id) for id in self.selection_objs.keys()]
 
     @property
-    def layer_list(self) -> List[Layer]:
+    def layer_list(self) -> list[Layer]:
         layer_list = []
         for layers in self.layers_in_selections.values():
             for im_data, im_kwargs, layer_type, _ in layers:
@@ -286,7 +285,7 @@ def create_metadata_dict(
     data: np.ndarray,
     layer_domain: LayerDomain,
     is_log: bool,
-    reference_layer: Optional[ReferenceLayer] = None,
+    reference_layer: ReferenceLayer | None = None,
     **kwargs,
 ) -> dict:
     """
@@ -342,8 +341,8 @@ class PhysicalDomainTracker:
 
     def __init__(
         self,
-        unit: Optional[Union[str, unit_object.Unit]] = "kpc",
-        registry: Optional[unit_registry.UnitRegistry] = None,
+        unit: str | unit_object.Unit | None = "kpc",
+        registry: unit_registry.UnitRegistry | None = None,
     ):
         self.unit = None
         self.unit_registry = None
@@ -351,8 +350,8 @@ class PhysicalDomainTracker:
 
     def update_unit_info(
         self,
-        unit: Union[str, unit_object.Unit] = None,
-        registry: Optional[unit_registry.UnitRegistry] = None,
+        unit: str | unit_object.Unit = None,
+        registry: unit_registry.UnitRegistry | None = None,
     ):
         if unit == "code_length" and registry is None:
             raise ValueError("To use 'code_length', you must provide a unit_registry")
@@ -375,7 +374,7 @@ class PhysicalDomainTracker:
                     setattr(self, attr, self._register_array(current))
 
     def update_from_layer(
-        self, layer_domain: LayerDomain, update_c_w: Optional[bool] = True
+        self, layer_domain: LayerDomain, update_c_w: bool | None = True
     ):
         """
         update the full extent of the domain given a new layer
@@ -399,9 +398,9 @@ class PhysicalDomainTracker:
 
     def update_edges(
         self,
-        left_edge: Optional[unyt_array] = None,
-        right_edge: Optional[unyt_array] = None,
-        update_c_w: Optional[bool] = True,
+        left_edge: unyt_array | None = None,
+        right_edge: unyt_array | None = None,
+        update_c_w: bool | None = True,
     ):
         # update the left and/or the right edges. If update_c_w,
         # then width and center will be calculated and updated.
@@ -453,7 +452,7 @@ def _load_3D_regions(
     ds,
     selections: SelectionObject,
     layer_list: list,
-    timeseries_container: Optional[TimeseriesContainer] = None,
+    timeseries_container: TimeseriesContainer | None = None,
 ) -> list:
 
     sels = []
@@ -508,12 +507,12 @@ def _load_3D_regions(
 
 def _process_slice(
     ds,
-    normal: Union[str, int],
-    center: Optional[unyt_array] = None,
-    width: Optional[unyt_quantity] = None,
-    height: Optional[unyt_quantity] = None,
-    resolution: Optional[Tuple[int, int]] = (400, 400),
-    periodic: Optional[bool] = False,
+    normal: str | int,
+    center: unyt_array | None = None,
+    width: unyt_quantity | None = None,
+    height: unyt_quantity | None = None,
+    resolution: tuple[int, int] | None = (400, 400),
+    periodic: bool | None = False,
 ) -> tuple:
     # returns a slice frb and a LayerDomain for a slice
     axis_id = ds.coordinates.axis_id
@@ -569,7 +568,7 @@ def _load_2D_slices(
     ds,
     selections: SelectionObject,
     layer_list: list,
-    timeseries_container: Optional[TimeseriesContainer] = None,
+    timeseries_container: TimeseriesContainer | None = None,
 ) -> list:
     for slice in selections.slices:
         if slice.center is None:
@@ -623,9 +622,9 @@ def _load_2D_slices(
 def _load_selections_from_ds(
     ds,
     selections: SelectionObject,
-    layer_list: List[SpatialLayer],
-    timeseries_container: Optional[TimeseriesContainer] = None,
-) -> List[SpatialLayer]:
+    layer_list: list[SpatialLayer],
+    timeseries_container: TimeseriesContainer | None = None,
+) -> list[SpatialLayer]:
     if selections.regions is not None or selections.covering_grids is not None:
         layer_list = _load_3D_regions(
             ds, selections, layer_list, timeseries_container=timeseries_container
@@ -638,8 +637,8 @@ def _load_selections_from_ds(
 
 
 def _load_dataset_selections(
-    m_data: DataContainer, layer_list: List[SpatialLayer]
-) -> List[SpatialLayer]:
+    m_data: DataContainer, layer_list: list[SpatialLayer]
+) -> list[SpatialLayer]:
     ds = dataset_cache.check_then_load(m_data.filename)
     return _load_selections_from_ds(ds, m_data.selections, layer_list)
 
@@ -731,7 +730,7 @@ def _load_timeseries(m_data: Timeseries, layer_list: list) -> list:
 
 def _process_validated_model(
     model: InputModel,
-) -> Tuple[List[SpatialLayer], List[Layer]]:
+) -> tuple[list[SpatialLayer], list[Layer]]:
     # return a list of layer tuples with domain information
 
     if model.datasets is None:
@@ -754,7 +753,7 @@ def _process_validated_model(
     return layer_list, timeseries_layers
 
 
-def load_from_json_strs(json_strs: List[str]) -> List[Layer]:
+def load_from_json_strs(json_strs: list[str]) -> list[Layer]:
     layer_lists = []  # we will concatenate layers across json paths
     timeseries_layers = []  # timeseries layers handled separately
     for json_str in json_strs:
@@ -779,16 +778,16 @@ def load_from_json_strs(json_strs: List[str]) -> List[Layer]:
     return out_layers
 
 
-def load_from_json(json_paths: List[str]) -> List[Layer]:
+def load_from_json(json_paths: list[str]) -> list[Layer]:
     json_strs = []  # list of json strings
     for json_path in json_paths:
-        with open(json_path, "r") as open_file:
+        with open(json_path) as open_file:
             json_strs.append(open_file.read())
     return load_from_json_strs(json_strs)
 
 
 def _choose_ref_layer(
-    layer_list: List[SpatialLayer], method: Optional[str] = "first_in_list"
+    layer_list: list[SpatialLayer], method: str | None = "first_in_list"
 ) -> ReferenceLayer:
     # decides on which layer to use as the reference
     if method == "first_in_list":
@@ -829,7 +828,7 @@ def _load_with_timeseries_specials_check(file):
     return ds
 
 
-def _process_metadata_model(model: MetadataModel) -> Tuple[dict, dict]:
+def _process_metadata_model(model: MetadataModel) -> tuple[dict, dict]:
     fname = model.filename
     ds = dataset_cache.check_then_load(fname)
     meta_data_dict = {}

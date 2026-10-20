@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from yt_napari._data_model import InputModel
 from yt_napari._version import version, version_tuple
 from yt_napari.logging import ytnapari_log
@@ -60,7 +58,7 @@ def schema_version_is_valid(
     return True
 
 
-def _schema_version_tuple_from_str(schema_version_raw: str) -> Tuple[int, int, int]:
+def _schema_version_tuple_from_str(schema_version_raw: str) -> tuple[int, int, int]:
     # schema_version_raw may be a single string or a file-like address
 
     if "yt-napari_latest" in schema_version_raw:

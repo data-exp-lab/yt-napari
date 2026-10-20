@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Callable, List, Optional, Union, get_args, get_origin
+from collections.abc import Callable
+from typing import get_args, get_origin
 
 import pydantic
 from magicgui import type_map, widgets
@@ -28,12 +29,12 @@ class MagicPydanticRegistry:
         pydantic_model: pydantic.BaseModel,
         field: str,
         magicgui_factory: Callable = None,
-        magicgui_args: Optional[tuple] = None,
-        magicgui_kwargs: Optional[dict] = None,
+        magicgui_args: tuple | None = None,
+        magicgui_kwargs: dict | None = None,
         pydantic_attr_factory: Callable = None,
-        pydantic_attr_args: Optional[tuple] = None,
-        pydantic_attr_kwargs: Optional[dict] = None,
-        auto_list_handling: Optional[bool] = False,
+        pydantic_attr_args: tuple | None = None,
+        pydantic_attr_kwargs: dict | None = None,
+        auto_list_handling: bool | None = False,
     ):
         """
 
@@ -116,7 +117,7 @@ class MagicPydanticRegistry:
         self,
         py_model: pydantic.BaseModel,
         container: widgets.Container,
-        ignore_attrs: Optional[Union[str, List[str]]] = None,
+        ignore_attrs: str | list[str] | None = None,
     ):
         # recursively traverse a pydantic model adding widgets to a container.
         # When a nested pydantic model is encountered, add a new container
@@ -157,7 +158,7 @@ class MagicPydanticRegistry:
         container: widgets.Container,
         py_model: pydantic.BaseModel,
         pydantic_kwargs: dict,
-        ignore_attrs: Optional[Union[str, List[str]]] = None,
+        ignore_attrs: str | list[str] | None = None,
     ):
         # given a container that was instantiated from a pydantic model, get
         # the arguments needed to instantiate that pydantic model
@@ -255,7 +256,7 @@ def embed_in_list(widget_instance) -> list:
     return returnval
 
 
-def handle_str_list_edit(widget_instance) -> List[str]:
+def handle_str_list_edit(widget_instance) -> list[str]:
     # recent versions of magicgui will return a ListEdit
     # where the value is a list of strings here, just
     # return it.
@@ -337,8 +338,8 @@ _register_yt_data_model(translator)
 
 
 def get_yt_data_container(
-    ignore_attrs: Optional[Union[str, List[str]]] = None,
-    pydantic_model_class: Optional[pydantic.BaseModel] = None,
+    ignore_attrs: str | list[str] | None = None,
+    pydantic_model_class: pydantic.BaseModel | None = None,
 ) -> widgets.Container:
     if pydantic_model_class is None:
         pydantic_model_class = _data_model.DataContainer

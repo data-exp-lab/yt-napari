@@ -3,7 +3,6 @@ import shutil
 from collections import defaultdict
 from os import PathLike
 from pathlib import PosixPath
-from typing import DefaultDict, Optional, Set, Union
 
 from packaging.version import Version
 
@@ -15,15 +14,15 @@ class Manager:
     # tracking development of new schema files.
     default_schema_prefix = "yt-napari"
 
-    def __init__(self, schema_db: Union[str, PosixPath]):
+    def __init__(self, schema_db: str | PosixPath):
         """
         schema_db : Union[str, PosixPath]
             filepath to where the schema are stored on disk.
         """
 
         self.schema_db: PosixPath = PosixPath(schema_db).expanduser()
-        self.verions: DefaultDict[str, Set] = defaultdict(set)
-        self.max_versions: DefaultDict[str, Version] = defaultdict(
+        self.verions: defaultdict[str, set] = defaultdict(set)
+        self.max_versions: defaultdict[str, Version] = defaultdict(
             lambda: Version("0.0.0")
         )
         self.schema_files = []
@@ -41,7 +40,7 @@ class Manager:
                     self.max_versions[prefix] = vers
                 self.schema_files.append(path)
 
-    def _validate_prefix(self, schema_prefix: Optional[str] = None) -> str:
+    def _validate_prefix(self, schema_prefix: str | None = None) -> str:
         if schema_prefix is None:
             schema_prefix = self.default_schema_prefix
         if "_" in schema_prefix:
@@ -56,13 +55,13 @@ class Manager:
 
     def write_new_schema(
         self,
-        schema_json: Union[str, dict],
-        schema_prefix: Optional[str] = None,
-        inc_micro: Optional[bool] = True,
-        inc_minor: Optional[bool] = False,
-        inc_major: Optional[bool] = False,
-        version: Optional[str] = None,
-        overwrite_version: Optional[bool] = False,
+        schema_json: str | dict,
+        schema_prefix: str | None = None,
+        inc_micro: bool | None = True,
+        inc_minor: bool | None = False,
+        inc_major: bool | None = False,
+        version: str | None = None,
+        overwrite_version: bool | None = False,
     ):
         """
         write a schema to the schema_db of the form schema_prefix_0.1.2.json
@@ -126,9 +125,7 @@ class Manager:
         with open(filename, "w") as f:
             f.write(schema_json)
 
-    def update_docs(
-        self, source: Union[str, PathLike], schema_prefix: Optional[str] = None
-    ):
+    def update_docs(self, source: str | PathLike, schema_prefix: str | None = None):
         """
         copies all schema to _static, updates latest and updates schema.rst
 

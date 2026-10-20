@@ -62,10 +62,10 @@ def validate(version: str):
 
     existing = os.path.join(docs_dir, schema_file.name)
 
-    with open(existing, "r") as jdata:
+    with open(existing) as jdata:
         existing_in_docs = json.load(jdata)
 
-    with open(schema_file, "r") as jdata:
+    with open(schema_file) as jdata:
         existing_in_yt_napari = json.load(jdata)
 
     if existing_in_docs != existing_in_yt_napari:
