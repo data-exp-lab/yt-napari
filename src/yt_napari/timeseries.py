@@ -177,7 +177,6 @@ class Region(_RegionBase):
 
 
 class CoveringGrid(_RegionBase):
-
     def __init__(
         self,
         field: Tuple[str, str],

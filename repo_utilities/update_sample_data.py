@@ -185,7 +185,6 @@ def write_sample_data_python_loaders(sample_data_dir):
 
 
 if __name__ == "__main__":
-
     print("updating src/yt_napari/napari.yaml")
     update_napari_hooks("src/yt_napari/napari.yaml")
     print("writing out sample jsons to src/yt_napari/sample_data/")

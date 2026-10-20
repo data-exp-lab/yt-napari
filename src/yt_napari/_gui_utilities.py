@@ -233,7 +233,7 @@ def get_magicguidefault(field_name: str, field_def: pydantic.fields.Field):
     ftype = field_def.annotation
     opts_dict = dict(name=field_name, annotation=ftype)
     if (
-        not type(field_def.default) is PydanticUndefinedType
+        type(field_def.default) is not PydanticUndefinedType
         and field_def.default is not None
     ):
         opts_dict["value"] = field_def.default
@@ -359,8 +359,7 @@ def get_yt_selection_container(selection_type: str, return_native: bool = False)
     # return a container for a single selection
     if selection_type not in _valid_selections:
         raise ValueError(
-            f"selection_type must be one of {_valid_selections}, "
-            f"found {selection_type}"
+            f"selection_type must be one of {_valid_selections}, found {selection_type}"
         )
 
     selection_container = widgets.Container()

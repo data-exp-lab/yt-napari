@@ -17,7 +17,6 @@ def yt_ugrid_ds_fn(tmpdir_factory):
     mylog.setLevel(50)
 
     try:
-
         # this fixture generates a random yt dataset saved to disk that can be
         # re-loaded and sampled.
         rng = np.random.default_rng()

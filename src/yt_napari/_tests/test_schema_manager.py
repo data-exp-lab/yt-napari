@@ -81,7 +81,7 @@ def test_schema_update_docs(tmp_path):
     # create a schem.rst with the anchor test
     schema_rst = docsdir / "schema.rst"
     content = (
-        "some stuff to put into a file\n" "\n with the special schemalistanchor! \n\n"
+        "some stuff to put into a file\n\n with the special schemalistanchor! \n\n"
     )
     schema_rst.write_text(content)
 
