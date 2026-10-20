@@ -69,7 +69,7 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):
 
     temp_file = tmp_path / "test.json"
     with (
-        patch("qtpy.QtWidgets.QFileDialog.exec_") as mock_exec,
+        patch("qtpy.QtWidgets.QFileDialog.exec") as mock_exec,
         patch("qtpy.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
     ):
         # Set the return values for the mocked functions
@@ -201,7 +201,7 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
 
     # Use patch to replace the actual QFileDialog functions with mock functions
     with (
-        patch("qtpy.QtWidgets.QFileDialog.exec_") as mock_exec,
+        patch("qtpy.QtWidgets.QFileDialog.exec") as mock_exec,
         patch("qtpy.QtWidgets.QFileDialog.selectedFiles") as mock_selectedFiles,
     ):
         # Set the return values for the mocked functions

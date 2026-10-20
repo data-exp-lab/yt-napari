@@ -129,7 +129,7 @@ class ReaderWidget(YTReader):
         file_dialog.setAcceptMode(QFileDialog.AcceptSave)
         file_dialog.setNameFilter("JSON Files (*.json);;All Files (*)")
 
-        if file_dialog.exec_():
+        if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0]
             if file_path:
                 # Save the JSON data to the selected file
@@ -270,7 +270,7 @@ class TimeSeriesReader(YTReader):
         file_dialog.setAcceptMode(QFileDialog.AcceptSave)
         file_dialog.setNameFilter("JSON Files (*.json);;All Files (*)")
 
-        if file_dialog.exec_():
+        if file_dialog.exec():
             file_path = file_dialog.selectedFiles()[0]
             if file_path:
                 # Save the JSON data to the selected file
