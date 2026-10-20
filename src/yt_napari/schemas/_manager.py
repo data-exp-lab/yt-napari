@@ -10,16 +10,22 @@ from yt_napari.logging import ytnapari_log
 
 
 class Manager:
-    # This is a simple on-disk schema version management class meant for
-    # tracking development of new schema files.
+    """
+    On-disk management of versioned JSON schema files.
+
+    Used by the repository utilities to write a new schema from the current
+    pydantic data model and to update the schema documentation; it is not
+    needed at runtime.
+
+    Parameters
+    ----------
+    schema_db : str or PosixPath
+        the directory where the schema files are stored
+    """
+
     default_schema_prefix = "yt-napari"
 
     def __init__(self, schema_db: str | PosixPath):
-        """
-        schema_db : Union[str, PosixPath]
-            filepath to where the schema are stored on disk.
-        """
-
         self.schema_db: PosixPath = PosixPath(schema_db).expanduser()
         self.verions: defaultdict[str, set] = defaultdict(set)
         self.max_versions: defaultdict[str, Version] = defaultdict(
@@ -67,8 +73,8 @@ class Manager:
         write a schema to the schema_db of the form schema_prefix_0.1.2.json
         where 0, 1, 2 are the major, minor and patch version numbers.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         schema_json: str or dict
             the json string or dict to write, assumes that it is already validated.
             If dict, will call json_dumps with indent=2.
@@ -129,13 +135,15 @@ class Manager:
         """
         copies all schema to _static, updates latest and updates schema.rst
 
-        Parameters:
+        Parameters
         ----------
-        source: the docs directory path
-        schema_prefix: the schema prefix to include (default yt-napari).
+        source : str or PathLike
+            the docs directory path
+        schema_prefix : str
+            the schema prefix to include (default yt-napari).
 
-        Examples:
-        ---------
+        Examples
+        --------
 
         From the top level of the repository:
 

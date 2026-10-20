@@ -30,9 +30,21 @@ author = "Chris Havlin, Matthew Turk"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
     "nbsphinx",
     "sphinx-jsonschema",
 ]
+
+autodoc_member_order = "bysource"
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "napari": ("https://napari.org/stable", None),
+    "yt": ("https://yt-project.org/doc", None),
+    "unyt": ("https://unyt.readthedocs.io/en/stable", None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -40,7 +52,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ["_build", "**.ipynb_checkpoints"]
 
 
 # -- Options for HTML output -------------------------------------------------

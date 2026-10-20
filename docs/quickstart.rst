@@ -150,10 +150,11 @@ Configuration options
 The following options are available:
 
 * :code:`in_memory_cache`, :code:`bool` (default :code:`true`). When :code:`true`,
-the widget and json-readers will store references to yt datasets in an in-memory
-cache. Subsequent loads of the same dataset will then use the available dataset
-handle. This behavior can also be manually controlled in the widget and json
-options -- changing it in the configuration will simply change the default value.
+  the widget and json-readers will store references to yt datasets in an in-memory
+  cache. Subsequent loads of the same dataset will then use the available dataset
+  handle. This behavior can also be manually controlled in the widget and json
+  options -- changing it in the configuration will simply change the default value.
+  See :doc:`source/yt_napari.runtime` for the cache API.
 
 
 Note that boolean values in :code:`toml` files start with lowercase: :code:`true` and

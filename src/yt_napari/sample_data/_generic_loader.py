@@ -10,6 +10,21 @@ def _get_sample_json(sample_name: str) -> str:
 
 
 def load_sample_data(sample_name: str) -> list[Layer]:
+    """
+    load a sample dataset using the yt-napari JSON bundled for it
+
+    Parameters
+    ----------
+    sample_name : str
+        the sample dataset name, e.g. "IsolatedGalaxy". The first load of a
+        sample downloads it with ``yt.load_sample`` and requires the
+        ``yt-napari[full]`` dependencies.
+
+    Returns
+    -------
+    list[Layer]
+        napari ``LayerData`` tuples for the default selection of that sample
+    """
 
     json_file = _get_sample_json(sample_name)
 
