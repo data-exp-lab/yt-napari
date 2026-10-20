@@ -1,10 +1,13 @@
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-extend-exclude = ["benchmarks", "docs/examples", "*.md"]
+extend-exclude = ["benchmarks", "*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"*.ipynb" = ["B018"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
