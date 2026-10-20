@@ -1,0 +1,458 @@
+{
+  "$defs": {
+    "CoveringGrid": {
+      "properties": {
+        "fields": {
+          "default": null,
+          "description": "list of fields to load for this selection",
+          "items": {
+            "$ref": "#/$defs/ytField"
+          },
+          "title": "Fields",
+          "type": "array"
+        },
+        "left_edge": {
+          "$ref": "#/$defs/Left_Edge",
+          "default": null,
+          "description": "the left edge (min x, min y, min z)"
+        },
+        "right_edge": {
+          "$ref": "#/$defs/Right_Edge",
+          "default": null,
+          "description": "the right edge (max x, max y, max z)"
+        },
+        "level": {
+          "default": 0,
+          "description": "Grid level to sample at",
+          "title": "Level",
+          "type": "integer"
+        },
+        "num_ghost_zones": {
+          "default": 0,
+          "description": "Number of ghost zones to include",
+          "title": "Num Ghost Zones",
+          "type": "integer"
+        },
+        "rescale": {
+          "default": false,
+          "description": "rescale the final image between 0,1",
+          "title": "Rescale",
+          "type": "boolean"
+        }
+      },
+      "title": "CoveringGrid",
+      "type": "object"
+    },
+    "DataContainer": {
+      "properties": {
+        "filename": {
+          "default": null,
+          "description": "the filename for the dataset",
+          "title": "Filename",
+          "type": "string"
+        },
+        "selections": {
+          "$ref": "#/$defs/SelectionObject",
+          "default": null,
+          "description": "selections to load in this dataset"
+        },
+        "store_in_cache": {
+          "default": true,
+          "description": "if enabled, will store references to yt datasets.",
+          "title": "Store In Cache",
+          "type": "boolean"
+        }
+      },
+      "title": "DataContainer",
+      "type": "object"
+    },
+    "Left_Edge": {
+      "properties": {
+        "value": {
+          "default": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "description": "3-element unitful tuple.",
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value",
+          "type": "array"
+        },
+        "unit": {
+          "default": "code_length",
+          "description": "the unit length string.",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Left_Edge",
+      "type": "object"
+    },
+    "Length_Tuple": {
+      "properties": {
+        "value": {
+          "default": null,
+          "description": "3-element unitful tuple.",
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value",
+          "type": "array"
+        },
+        "unit": {
+          "default": "code_length",
+          "description": "the unit length string.",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Length_Tuple",
+      "type": "object"
+    },
+    "Length_Value": {
+      "properties": {
+        "value": {
+          "default": null,
+          "description": "Single unitful value.",
+          "title": "Value",
+          "type": "number"
+        },
+        "unit": {
+          "default": "code_length",
+          "description": "the unit length string.",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Length_Value",
+      "type": "object"
+    },
+    "Region": {
+      "properties": {
+        "fields": {
+          "default": null,
+          "description": "list of fields to load for this selection",
+          "items": {
+            "$ref": "#/$defs/ytField"
+          },
+          "title": "Fields",
+          "type": "array"
+        },
+        "left_edge": {
+          "$ref": "#/$defs/Left_Edge",
+          "default": null,
+          "description": "the left edge (min x, min y, min z)"
+        },
+        "right_edge": {
+          "$ref": "#/$defs/Right_Edge",
+          "default": null,
+          "description": "the right edge (max x, max y, max z)"
+        },
+        "resolution": {
+          "default": [
+            400,
+            400,
+            400
+          ],
+          "description": "the resolution at which to sample between the edges.",
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Resolution",
+          "type": "array"
+        },
+        "rescale": {
+          "default": false,
+          "description": "rescale the final image between 0,1",
+          "title": "Rescale",
+          "type": "boolean"
+        }
+      },
+      "title": "Region",
+      "type": "object"
+    },
+    "Right_Edge": {
+      "properties": {
+        "value": {
+          "default": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "description": "3-element unitful tuple.",
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value",
+          "type": "array"
+        },
+        "unit": {
+          "default": "code_length",
+          "description": "the unit length string.",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Right_Edge",
+      "type": "object"
+    },
+    "SelectionObject": {
+      "properties": {
+        "regions": {
+          "default": null,
+          "description": "a list of regions to load",
+          "items": {
+            "$ref": "#/$defs/Region"
+          },
+          "title": "Regions",
+          "type": "array"
+        },
+        "slices": {
+          "default": null,
+          "description": "a list of slices to load",
+          "items": {
+            "$ref": "#/$defs/Slice"
+          },
+          "title": "Slices",
+          "type": "array"
+        },
+        "covering_grids": {
+          "default": null,
+          "description": "a list of covering grids to load",
+          "items": {
+            "$ref": "#/$defs/CoveringGrid"
+          },
+          "title": "Covering Grids",
+          "type": "array"
+        }
+      },
+      "title": "SelectionObject",
+      "type": "object"
+    },
+    "Slice": {
+      "properties": {
+        "fields": {
+          "default": null,
+          "description": "list of fields to load for this selection",
+          "items": {
+            "$ref": "#/$defs/ytField"
+          },
+          "title": "Fields",
+          "type": "array"
+        },
+        "normal": {
+          "default": null,
+          "description": "the normal axis of the slice",
+          "title": "Normal",
+          "type": "string"
+        },
+        "center": {
+          "$ref": "#/$defs/Length_Tuple",
+          "default": null,
+          "description": "The center point of the slice, default domain center"
+        },
+        "slice_width": {
+          "$ref": "#/$defs/Length_Value",
+          "default": null,
+          "description": "The slice width, defaults to full domain"
+        },
+        "slice_height": {
+          "$ref": "#/$defs/Length_Value",
+          "default": null,
+          "description": "The slice width, defaults to full domain"
+        },
+        "resolution": {
+          "default": [
+            400,
+            400
+          ],
+          "description": "the resolution at which to sample the slice",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Resolution",
+          "type": "array"
+        },
+        "periodic": {
+          "default": false,
+          "description": "should the slice be periodic? default False.",
+          "title": "Periodic",
+          "type": "boolean"
+        },
+        "rescale": {
+          "default": false,
+          "description": "rescale the final image between 0,1",
+          "title": "Rescale",
+          "type": "boolean"
+        }
+      },
+      "title": "Slice",
+      "type": "object"
+    },
+    "TimeSeriesFileSelection": {
+      "properties": {
+        "directory": {
+          "default": null,
+          "description": "The directory of the timseries",
+          "title": "Directory",
+          "type": "string"
+        },
+        "file_pattern": {
+          "default": null,
+          "description": "The file pattern to match",
+          "title": "File Pattern",
+          "type": "string"
+        },
+        "file_list": {
+          "default": null,
+          "description": "List of files to load.",
+          "items": {
+            "type": "string"
+          },
+          "title": "File List",
+          "type": "array"
+        },
+        "file_range": {
+          "default": null,
+          "description": "Given files matched by file_pattern, this option will select a range. Argument orderis taken as start:stop:step.",
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "File Range",
+          "type": "array"
+        }
+      },
+      "title": "TimeSeriesFileSelection",
+      "type": "object"
+    },
+    "Timeseries": {
+      "properties": {
+        "file_selection": {
+          "$ref": "#/$defs/TimeSeriesFileSelection"
+        },
+        "selections": {
+          "$ref": "#/$defs/SelectionObject",
+          "default": null,
+          "description": "selections to load in this dataset"
+        },
+        "load_as_stack": {
+          "default": false,
+          "description": "If True, will stack images along a new dimension.",
+          "title": "Load As Stack",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "file_selection"
+      ],
+      "title": "Timeseries",
+      "type": "object"
+    },
+    "ytField": {
+      "properties": {
+        "field_type": {
+          "default": null,
+          "description": "a field type in the yt dataset",
+          "title": "Field Type",
+          "type": "string"
+        },
+        "field_name": {
+          "default": null,
+          "description": "a field in the yt dataset",
+          "title": "Field Name",
+          "type": "string"
+        },
+        "take_log": {
+          "default": true,
+          "description": "if true, will apply log10 to the selected data",
+          "title": "Take Log",
+          "type": "boolean"
+        }
+      },
+      "title": "ytField",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "datasets": {
+      "default": null,
+      "description": "list of dataset containers to load",
+      "items": {
+        "$ref": "#/$defs/DataContainer"
+      },
+      "title": "Datasets",
+      "type": "array"
+    },
+    "timeseries": {
+      "default": null,
+      "description": "List of timeseries to load",
+      "items": {
+        "$ref": "#/$defs/Timeseries"
+      },
+      "title": "Timeseries",
+      "type": "array"
+    }
+  },
+  "title": "InputModel",
+  "type": "object"
+}

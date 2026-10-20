@@ -12,20 +12,12 @@
           "type": "array"
         },
         "left_edge": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Left_Edge"
-            }
-          ],
+          "$ref": "#/$defs/Left_Edge",
           "default": null,
           "description": "the left edge (min x, min y, min z)"
         },
         "right_edge": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Right_Edge"
-            }
-          ],
+          "$ref": "#/$defs/Right_Edge",
           "default": null,
           "description": "the right edge (max x, max y, max z)"
         },
@@ -60,11 +52,7 @@
           "type": "string"
         },
         "selections": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/SelectionObject"
-            }
-          ],
+          "$ref": "#/$defs/SelectionObject",
           "default": null,
           "description": "selections to load in this dataset"
         },
@@ -174,20 +162,12 @@
           "type": "array"
         },
         "left_edge": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Left_Edge"
-            }
-          ],
+          "$ref": "#/$defs/Left_Edge",
           "default": null,
           "description": "the left edge (min x, min y, min z)"
         },
         "right_edge": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Right_Edge"
-            }
-          ],
+          "$ref": "#/$defs/Right_Edge",
           "default": null,
           "description": "the right edge (max x, max y, max z)"
         },
@@ -310,29 +290,17 @@
           "type": "string"
         },
         "center": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Length_Tuple"
-            }
-          ],
+          "$ref": "#/$defs/Length_Tuple",
           "default": null,
           "description": "The center point of the slice, default domain center"
         },
         "slice_width": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Length_Value"
-            }
-          ],
+          "$ref": "#/$defs/Length_Value",
           "default": null,
           "description": "The slice width, defaults to full domain"
         },
         "slice_height": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Length_Value"
-            }
-          ],
+          "$ref": "#/$defs/Length_Value",
           "default": null,
           "description": "The slice width, defaults to full domain"
         },
@@ -423,11 +391,7 @@
           "$ref": "#/$defs/TimeSeriesFileSelection"
         },
         "selections": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/SelectionObject"
-            }
-          ],
+          "$ref": "#/$defs/SelectionObject",
           "default": null,
           "description": "selections to load in this dataset"
         },

@@ -1,10 +1,25 @@
-## v0.5.0dev
+## v0.6.0
+
+This release adds sample data loading and drops support for Python 3.10.
 
 ### New Features
-* sample data now available!
+* sample data: a selection of yt sample datasets can be loaded from the napari GUI via `File -> Open Sample -> yt-napari` ([#149](https://github.com/data-exp-lab/yt-napari/pull/149))
 
 ### Bug fixes
-* ship the sample data and schema JSON files in the wheel (fixes import errors in non-editable installs and the empty API docs pages, [#161](https://github.com/data-exp-lab/yt-napari/issues/161))
+* ship the sample data and schema JSON files in the wheel (fixes import errors in non-editable installs and the empty API docs pages, [#161](https://github.com/data-exp-lab/yt-napari/issues/161), [#197](https://github.com/data-exp-lab/yt-napari/pull/197))
+* disable yt logging during tests that use `yt_ugrid_ds_fn` ([#182](https://github.com/data-exp-lab/yt-napari/pull/182))
+
+### Documentation
+* extend the API reference ([#197](https://github.com/data-exp-lab/yt-napari/pull/197))
+* update the images in notebooks 1 and 2 ([#147](https://github.com/data-exp-lab/yt-napari/pull/147))
+
+### Maintenance
+* drop Python 3.10, test on 3.11-3.14, and switch CI to PyQt6 ([#151](https://github.com/data-exp-lab/yt-napari/pull/151), [#187](https://github.com/data-exp-lab/yt-napari/pull/187), [#196](https://github.com/data-exp-lab/yt-napari/pull/196))
+* move packaging config from setup.cfg/setup.py to pyproject.toml ([#198](https://github.com/data-exp-lab/yt-napari/pull/198))
+* replace flake8, autoflake, isort, and black with ruff in pre-commit, enable the bugbear and pyupgrade rules, and lint the example notebooks ([#193](https://github.com/data-exp-lab/yt-napari/pull/193), [#194](https://github.com/data-exp-lab/yt-napari/pull/194), [#195](https://github.com/data-exp-lab/yt-napari/pull/195))
+* add a dependabot configuration ([#189](https://github.com/data-exp-lab/yt-napari/pull/189))
+* add a `task test` command to run the test suite ([#150](https://github.com/data-exp-lab/yt-napari/pull/150))
+* simplify complex index ([#146](https://github.com/data-exp-lab/yt-napari/pull/146))
 
 ## v0.5.0
 
