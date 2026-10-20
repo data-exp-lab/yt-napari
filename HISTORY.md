@@ -3,6 +3,9 @@
 ### New Features
 * sample data now available!
 
+### Bug fixes
+* ship the sample data and schema JSON files in the wheel (fixes import errors in non-editable installs and the empty API docs pages, [#161](https://github.com/data-exp-lab/yt-napari/issues/161))
+
 ## v0.5.0
 
 ### New Features

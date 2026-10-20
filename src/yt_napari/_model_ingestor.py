@@ -55,15 +55,35 @@ def _get_region_frb(ds, LE, RE, res):
 
 
 class LayerDomain:
-    # container for domain info for a single layer
-    # left_edge, right_edge, resolution, n_d are all self explanatory.
-    # other parameters:
-    #
-    # new_dim_value: optional unyt_quantity.
-    #   If n_d == 2, and upgrade_to_3D is subsequently called, then this value
-    #   will be used for the new
-    # new_dim_axis: optional int.
-    #   the index position to add the new_dim_position, default is last
+    """
+    Container for the physical domain covered by a single image layer.
+
+    Parameters
+    ----------
+    left_edge : unyt_array
+        the left edge of the sampled region
+    right_edge : unyt_array
+        the right edge of the sampled region
+    resolution : tuple
+        the number of pixels along each dimension. A length-1 tuple is
+        broadcast to every dimension.
+    n_d : int
+        the dimensionality of the layer, 2 or 3 (default 3)
+    new_dim_value : unyt_quantity
+        for 2D layers, the coordinate value to use for the missing dimension
+        if :meth:`upgrade_to_3D` is called (default 0 in the edge units)
+    new_dim_axis : int
+        for 2D layers, the index at which to insert the new dimension when
+        :meth:`upgrade_to_3D` is called (default 2)
+
+    Attributes
+    ----------
+    center, width, grid_width, aspect_ratio : unyt_array
+        derived quantities used when aligning layers
+    requires_scale : bool
+        True if the pixel aspect ratio is not 1 in every dimension
+    """
+
     def __init__(
         self,
         left_edge: unyt_array,
@@ -99,6 +119,7 @@ class LayerDomain:
         self.new_dim_axis = new_dim_axis
 
     def upgrade_to_3D(self):
+        """insert the missing dimension so that a 2D layer domain becomes 3D"""
         # note: this is not (yet) used when loading planes in 3d scenes.
         if self.n_d == 3:
             return  # already 3D, nothing to do
@@ -126,8 +147,19 @@ def _insert_to_unyt_array(
 
 
 class ReferenceLayer:
-    # a layer to use as reference from which to calculate transformations for
-    # aligning layers.
+    """
+    A layer domain used as the reference frame when aligning other layers.
+
+    napari image layers are positioned in pixel space, so every yt-napari
+    layer is translated and scaled relative to one reference layer. The
+    reference layer is stored in the ``_reference_layer`` entry of each
+    layer's ``metadata`` dict (see :func:`create_metadata_dict`).
+
+    Parameters
+    ----------
+    ref_layer_domain : LayerDomain
+        the domain of the layer to use as the reference
+    """
 
     def __init__(self, ref_layer_domain: LayerDomain):
         # copy over standard layer attributes
@@ -143,7 +175,7 @@ class ReferenceLayer:
         self.layer_domain = ref_layer_domain
 
     def calculate_scale(self, other_layer: LayerDomain) -> unyt_array:
-        # calculate the pixel scale for a layer relative to the reference
+        """calculate the napari ``scale`` for a layer relative to the reference"""
 
         # the scale accounts for different grid resolutions and is calculated
         # relative to the minimum grid resolution in each direction across
@@ -206,7 +238,20 @@ class ReferenceLayer:
 
 
 def selections_match(sel_1: Slice | Region, sel_2: Slice | Region) -> bool:
-    # compare selections, ignoring fields
+    """
+    check whether two selection models describe the same spatial selection
+
+    Parameters
+    ----------
+    sel_1, sel_2 : yt_napari._data_model.Slice or yt_napari._data_model.Region
+        the pydantic selection models to compare
+
+    Returns
+    -------
+    bool
+        True if the selections are the same type and all attributes other
+        than ``fields`` match
+    """
     if type(sel_2) is not type(sel_1):
         return False
 
@@ -221,7 +266,14 @@ def selections_match(sel_1: Slice | Region, sel_2: Slice | Region) -> bool:
 
 
 class TimeseriesContainer:
-    # for storing image layers across timesteps by selections
+    """
+    Accumulates image layers across timesteps, grouped by selection and field.
+
+    Layers added with :meth:`add` are keyed by a selection id so that the
+    layers for a single selection can later be stacked along a new leading
+    (time) axis with :meth:`concat_by_selection`.
+    """
+
     def __init__(self):
         self.layers_in_selections = defaultdict(lambda: [])
         self.selection_objs = {}
@@ -306,18 +358,14 @@ def create_metadata_dict(
     Returns
     -------
     dict
-        a metadata dict for napari with some consistent key-value pairs, will
-        always include the following:
-        _data_range : Tuple(float, float)
-            the min/max value of the supplied data
-        _layer_domain :
-            the LayerDomain object of the new layer
-        _is_log :
-            True if the data has been logged
-        _yt_napari_layer :
-            bool, always True.
-        _reference_layer :
-            the ReferenceLayer object used in aligning this layer
+        a metadata dict for napari that always includes the following keys:
+
+        * ``_data_range`` : the (min, max) of the supplied data
+        * ``_layer_domain`` : the :class:`LayerDomain` of the new layer
+        * ``_is_log`` : True if the data has been logged
+        * ``_yt_napari_layer`` : always True, marks the layer as yt-napari's
+        * ``_reference_layer`` : the :class:`ReferenceLayer` used to align
+          this layer
     """
     md = {}
     md["_data_range"] = (data.min(), data.max())
@@ -331,7 +379,20 @@ def create_metadata_dict(
 
 
 class PhysicalDomainTracker:
-    # a container for tracking the domain coordinate extents across layers
+    """
+    Tracks the full physical extent spanned by a collection of layers.
+
+    Used when loading from JSON to work out the overall domain (in a single
+    unit) covered by selections from one or more datasets.
+
+    Parameters
+    ----------
+    unit : str or unyt.Unit
+        the length unit to track the domain in (default "kpc"). Using
+        "code_length" requires a ``registry``.
+    registry : unyt.UnitRegistry
+        the unit registry to use with ``unit``
+    """
 
     # the following track across layers
     left_edge: unyt_array = None
@@ -754,6 +815,25 @@ def _process_validated_model(
 
 
 def load_from_json_strs(json_strs: list[str]) -> list[Layer]:
+    """
+    load and sample yt datasets described by yt-napari JSON strings
+
+    Parameters
+    ----------
+    json_strs : list[str]
+        a list of JSON strings, each conforming to the yt-napari schema
+
+    Returns
+    -------
+    list[Layer]
+        a list of napari ``LayerData`` tuples, ``(data, kwargs, layer_type)``,
+        with all layers aligned to a common reference layer. Add them to a
+        viewer with, e.g., ``viewer.add_image(data, **kwargs)``.
+
+    See Also
+    --------
+    load_from_json : the same, but reading the JSON from files
+    """
     layer_lists = []  # we will concatenate layers across json paths
     timeseries_layers = []  # timeseries layers handled separately
     for json_str in json_strs:
@@ -779,6 +859,32 @@ def load_from_json_strs(json_strs: list[str]) -> list[Layer]:
 
 
 def load_from_json(json_paths: list[str]) -> list[Layer]:
+    """
+    load and sample yt datasets described by yt-napari JSON files
+
+    This is the function called by the napari reader plugin when a yt-napari
+    JSON file is opened from the GUI.
+
+    Parameters
+    ----------
+    json_paths : list[str]
+        paths to JSON files, each conforming to the yt-napari schema
+
+    Returns
+    -------
+    list[Layer]
+        a list of napari ``LayerData`` tuples, ``(data, kwargs, layer_type)``,
+        with all layers aligned to a common reference layer.
+
+    Examples
+    --------
+
+    >>> import napari
+    >>> from yt_napari._model_ingestor import load_from_json
+    >>> viewer = napari.Viewer()
+    >>> for data, kwargs, layer_type in load_from_json(["my_selection.json"]):
+    >>>     viewer.add_image(data, **kwargs)
+    """
     json_strs = []  # list of json strings
     for json_path in json_paths:
         with open(json_path) as open_file:

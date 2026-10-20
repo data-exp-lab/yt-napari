@@ -176,6 +176,28 @@ class Region(_RegionBase):
 
 
 class CoveringGrid(_RegionBase):
+    """
+    A 3D rectangular selection sampled with a yt covering grid.
+
+    Parameters
+    ----------
+    field: (str, str)
+        a yt field present in all timeseries to load.
+    left_edge: unyt_array or (ndarray, str)
+        (optional) a 3-element unyt_array defining the left edge of the region,
+        defaults to the domain left_edge of each active timestep.
+    right_edge: unyt_array or (ndarray, str)
+        (optional) a 3-element unyt_array defining the right edge of the region,
+        defaults to the domain right_edge of each active timestep.
+    level: int
+        (optional) the refinement level to sample at, default 0.
+    num_ghost_zones: int
+        (optional) the number of ghost zones to include, default 0.
+    take_log: bool
+        (optional) If True, take the log10 of the sampled field. Defaults to the
+        default behavior for the field in the dataset.
+    """
+
     def __init__(
         self,
         field: tuple[str, str],
