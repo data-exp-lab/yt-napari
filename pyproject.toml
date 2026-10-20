@@ -1,3 +1,88 @@
+[build-system]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yt-napari"
+description = "A napari plugin for loading data from yt"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [{ name = "Chris Havlin", email = "chris.havlin@gmail.com" }]
+requires-python = ">=3.11"
+dynamic = ["version"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: napari",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "magicgui>=0.6.1",
+    "napari>=0.4.19",
+    "numpy",
+    "packaging",
+    "pydantic>2.0",
+    "qtpy",
+    "unyt",
+    "yt>=4.0.1",
+]
+
+[project.optional-dependencies]
+full = [
+    "dask[distributed,array]",
+    "pooch",
+    "pandas",
+    "yt[enzo]",
+]
+docs = [
+    "sphinx",
+    "nbsphinx<0.8.8",
+    "sphinx-jsonschema<1.19.0",
+    "Jinja2<3.1.0",
+]
+dev = [
+    "pytest",
+    "pytest-qt",
+    "pytest-cov",
+    "taskipy",
+]
+
+[project.urls]
+Homepage = "https://github.com/data-exp-lab/yt-napari"
+"Bug Tracker" = "https://github.com/data-exp-lab/yt-napari/issues"
+Documentation = "https://github.com/data-exp-lab/yt-napari#README.md"
+"Source Code" = "https://github.com/data-exp-lab/yt-napari"
+"User Support" = "https://github.com/data-exp-lab/yt-napari/issues"
+
+[project.entry-points."napari.manifest"]
+yt-napari = "yt_napari:napari.yaml"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+yt_napari = ["napari.yaml"]
+"yt_napari.sample_data" = ["*.json"]
+"yt_napari.schemas" = ["*.json"]
+
+[tool.setuptools_scm]
+version_file = "src/yt_napari/_version.py"
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
