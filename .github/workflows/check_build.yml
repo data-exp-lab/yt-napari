@@ -19,3 +19,7 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine check dist/*
+    - name: Install wheel and import outside the source tree
+      run: |
+        pip install dist/*.whl
+        cd /tmp && python -c "import yt_napari.viewer, yt_napari.timeseries; from yt_napari._ds_cache import get_sample_set_list; assert get_sample_set_list()"
