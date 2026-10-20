@@ -14,7 +14,7 @@ For :code:`napari`,
 
     pip install napari[all]
 
-will install :code:`napari` with the default :code:`Qt` backend (see `here <https://napari.org/tutorials/fundamentals/installation#choosing-a-different-qt-backend>`_ for how to choose between :code:`PyQt5` or :code:`PySide2`).
+will install :code:`napari` with the default :code:`Qt` backend (see `here <https://napari.org/tutorials/fundamentals/installation#choosing-a-different-qt-backend>`_ for how to choose between :code:`PyQt6` or :code:`PySide6`).
 
 For :code:`yt`, you will need :code:`yt>=4.0.1` and any of the optional dependencies for your particular workflow. If you know that you'll need more than the base `yt` install, you can install the full suite of dependent packages with
 
