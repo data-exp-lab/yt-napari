@@ -79,7 +79,7 @@ def test_save_widget_reader(make_napari_viewer, yt_ugrid_ds_fn, tmp_path):
         r.save_selection()
 
     assert os.path.exists(temp_file)
-    with open(temp_file, "r") as json_file:
+    with open(temp_file) as json_file:
         saved_data = json.load(json_file)
 
     assert (
@@ -212,7 +212,7 @@ def test_timeseries_widget_reader(make_napari_viewer, tmp_path):
         tsr.save_selection()
 
     assert os.path.exists(temp_file)
-    with open(temp_file, "r") as json_file:
+    with open(temp_file) as json_file:
         saved_data = json.load(json_file)
 
     assert (

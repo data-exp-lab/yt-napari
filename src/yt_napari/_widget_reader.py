@@ -1,6 +1,6 @@
 import json
 from collections import defaultdict
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import napari
 from magicgui import widgets
@@ -28,7 +28,7 @@ class YTReader(QWidget):
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
         self.viewer = napari_viewer
-        self._post_load_function: Optional[Callable] = None
+        self._post_load_function: Callable | None = None
 
         self.add_dataset_selection_widget()
         self.add_spatial_selection_widgets()

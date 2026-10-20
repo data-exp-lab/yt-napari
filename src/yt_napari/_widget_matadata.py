@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import napari
 from magicgui import widgets
@@ -28,7 +28,7 @@ class MetadataWidget(QWidget):
         self.big_container = widgets.Container()
         self.metadata_input_container = _gui_utilities.get_yt_metadata_container()
         self.big_container.append(self.metadata_input_container)
-        self._post_load_function: Optional[Callable] = None
+        self._post_load_function: Callable | None = None
 
         pb = widgets.PushButton(text="Inspect")
         pb.clicked.connect(self.inspect_file)

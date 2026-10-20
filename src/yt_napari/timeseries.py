@@ -1,6 +1,5 @@
 import abc
 import os.path
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yt
@@ -13,7 +12,7 @@ from yt_napari import _data_model as _dm, _model_ingestor as _mi
 class _Selection(abc.ABC):
     nd: int = None
 
-    def __init__(self, field: Tuple[str, str], take_log: Optional[bool] = None):
+    def __init__(self, field: tuple[str, str], take_log: bool | None = None):
         self.field = field
         self._take_log = take_log
         self._aspect_ratio = None
@@ -56,10 +55,10 @@ class _RegionBase(_Selection, abc.ABC):
 
     def __init__(
         self,
-        field: Tuple[str, str],
-        left_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
-        right_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
-        take_log: Optional[bool] = None,
+        field: tuple[str, str],
+        left_edge: unyt_array | tuple[np.ndarray, str] | None = None,
+        right_edge: unyt_array | tuple[np.ndarray, str] | None = None,
+        take_log: bool | None = None,
     ):
         super().__init__(field, take_log=take_log)
         self.left_edge = left_edge
@@ -126,11 +125,11 @@ class Region(_RegionBase):
 
     def __init__(
         self,
-        field: Tuple[str, str],
-        left_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
-        right_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
-        resolution: Optional[Tuple[int, int, int]] = (400, 400, 400),
-        take_log: Optional[bool] = None,
+        field: tuple[str, str],
+        left_edge: unyt_array | tuple[np.ndarray, str] | None = None,
+        right_edge: unyt_array | tuple[np.ndarray, str] | None = None,
+        resolution: tuple[int, int, int] | None = (400, 400, 400),
+        take_log: bool | None = None,
     ):
         super().__init__(
             field, left_edge=left_edge, right_edge=right_edge, take_log=take_log
@@ -179,12 +178,12 @@ class Region(_RegionBase):
 class CoveringGrid(_RegionBase):
     def __init__(
         self,
-        field: Tuple[str, str],
-        left_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
-        right_edge: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
-        level: Optional[int] = 0,
-        num_ghost_zones: Optional[int] = 0,
-        take_log: Optional[bool] = None,
+        field: tuple[str, str],
+        left_edge: unyt_array | tuple[np.ndarray, str] | None = None,
+        right_edge: unyt_array | tuple[np.ndarray, str] | None = None,
+        level: int | None = 0,
+        num_ghost_zones: int | None = 0,
+        take_log: bool | None = None,
     ):
 
         super().__init__(
@@ -239,14 +238,14 @@ class Slice(_Selection):
 
     def __init__(
         self,
-        field: Tuple[str, str],
-        normal: Union[str, int],
-        center: Optional[Union[unyt_array, Tuple[np.ndarray, str]]] = None,
-        width: Optional[Union[unyt_quantity, Tuple[float, str]]] = None,
-        height: Optional[Union[unyt_quantity, Tuple[float, str]]] = None,
-        resolution: Optional[Tuple[int, int]] = (400, 400),
-        periodic: Optional[bool] = False,
-        take_log: Optional[bool] = None,
+        field: tuple[str, str],
+        normal: str | int,
+        center: unyt_array | tuple[np.ndarray, str] | None = None,
+        width: unyt_quantity | tuple[float, str] | None = None,
+        height: unyt_quantity | tuple[float, str] | None = None,
+        resolution: tuple[int, int] | None = (400, 400),
+        periodic: bool | None = False,
+        take_log: bool | None = None,
     ):
         super().__init__(field, take_log=take_log)
 
@@ -342,7 +341,7 @@ class Slice(_Selection):
         return self._finalize_array(ds, data)
 
 
-def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
+def _load_and_sample(file, selection: Slice | Region, is_dask):
     if is_dask:
         yt.set_log_level(40)  # errors and critical only
     ds = _mi._load_with_timeseries_specials_check(file)
@@ -350,15 +349,15 @@ def _load_and_sample(file, selection: Union[Slice, Region], is_dask):
 
 
 def _get_im_data(
-    selection: Union[Slice, Region],
-    file_dir: Optional[str] = None,
-    file_pattern: Optional[str] = None,
-    file_list: Optional[List[str]] = None,
-    file_range: Optional[Tuple[int, int, int]] = None,
-    load_as_stack: Optional[bool] = False,
-    use_dask: Optional[bool] = False,
-    return_delayed: Optional[bool] = True,
-    stack_scaling: Optional[float] = 1.0,
+    selection: Slice | Region,
+    file_dir: str | None = None,
+    file_pattern: str | None = None,
+    file_list: list[str] | None = None,
+    file_range: tuple[int, int, int] | None = None,
+    load_as_stack: bool | None = False,
+    use_dask: bool | None = False,
+    return_delayed: bool | None = True,
+    stack_scaling: float | None = 1.0,
     **kwargs,
 ):
     ts_kwargs = dict(
@@ -386,7 +385,7 @@ def _get_im_data(
                 "This functionality requires dask: "
                 'pip install "dask[distributed, array]"'
             )
-            raise ImportError(msg)
+            raise ImportError(msg) from None
         for file in files:
             data = delayed(_load_and_sample)(file, selection, use_dask)
             im_data.append(da.from_delayed(data, selection.resolution, dtype=float))
@@ -404,7 +403,7 @@ def _get_im_data(
 
 
 def _validate_scale(
-    selection: Union[Slice, Region],
+    selection: Slice | Region,
     kwargdict: dict,
     load_as_stack: bool,
     stack_scaling: float,
@@ -433,15 +432,15 @@ def _validate_scale(
 
 def add_to_viewer(
     viewer: Viewer,
-    selection: Union[Slice, Region],
-    file_dir: Optional[str] = None,
-    file_pattern: Optional[str] = None,
-    file_list: Optional[List[str]] = None,
-    file_range: Optional[Tuple[int, int, int]] = None,
-    load_as_stack: Optional[bool] = False,
-    use_dask: Optional[bool] = False,
-    return_delayed: Optional[bool] = True,
-    stack_scaling: Optional[float] = 1.0,
+    selection: Slice | Region,
+    file_dir: str | None = None,
+    file_pattern: str | None = None,
+    file_list: list[str] | None = None,
+    file_range: tuple[int, int, int] | None = None,
+    load_as_stack: bool | None = False,
+    use_dask: bool | None = False,
+    return_delayed: bool | None = True,
+    stack_scaling: float | None = 1.0,
     **kwargs,
 ):
     """

@@ -1,7 +1,6 @@
 import json
 import os.path
 from os import PathLike
-from typing import List, Optional
 
 import yt
 
@@ -34,7 +33,7 @@ def _load_sample(filename: str):
     return ds
 
 
-def get_sample_set_list() -> List[str]:
+def get_sample_set_list() -> list[str]:
     import importlib.resources as importlib_resources
 
     jdata = json.loads(
@@ -50,7 +49,7 @@ class DatasetCache:
     def __init__(self):
         self.available = {}
         self._most_recent: str = None
-        self.sample_sets: List[str] = get_sample_set_list()
+        self.sample_sets: list[str] = get_sample_set_list()
 
     def add_ds(self, ds, name: str):
         if name in self.available:
@@ -104,7 +103,7 @@ class DatasetCache:
 dataset_cache = DatasetCache()
 
 
-def _check_for_special(filename: PathLike) -> Optional[str]:
+def _check_for_special(filename: PathLike) -> str | None:
     # check if a "filename" is one of our short-circuiting special loaders
     # and return the function name if it is valid.
     basename = os.path.basename(filename)

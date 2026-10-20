@@ -78,7 +78,9 @@ def test_basic_validation(jdict):
     _ = InputModel.model_validate(jdict)
 
 
-@pytest.mark.parametrize("jdict,expected_res", zip(jdicts, [(10, 10), (10, 10, 10)]))
+@pytest.mark.parametrize(
+    "jdict,expected_res", zip(jdicts, [(10, 10), (10, 10, 10)], strict=True)
+)
 def test_full_load(tmp_path, jdict, expected_res):
     nfiles = 4
 
