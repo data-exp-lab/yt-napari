@@ -1,3 +1,5 @@
+## v0.6.1.dev
+
 ## v0.6.0
 
 This release adds sample data loading and drops support for Python 3.10.
